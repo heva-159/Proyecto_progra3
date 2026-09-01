@@ -1,6 +1,6 @@
 import java.time.LocalDate;
 
-public class Reclamo {
+public class Reclamo implements Aprobable {
     private static long contador = 0;
 
     private long idReclamo;
@@ -18,5 +18,21 @@ public class Reclamo {
         this.motivo = motivo;
         this.fechaReclamo = LocalDate.now();
         this.estado = EstadoAprobacion.PENDIENTE;
+    }
+
+    @Override
+    public void aprobar() {
+        this.estado = EstadoAprobacion.APROBADA;
+    }
+
+    @Override
+    public void rechazar(String motivo) {
+        this.estado = EstadoAprobacion.RECHAZADA;
+        this.resolucion = motivo;
+    }
+
+    @Override
+    public EstadoAprobacion getEstado() {
+        return estado;
     }
 }

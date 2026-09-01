@@ -1,6 +1,6 @@
 import java.time.LocalDate;
 
-public class Administrador {
+public class Administrador implements Autenticable {
     private static long contador = 0;
 
     private long idAdministrador;
@@ -15,5 +15,10 @@ public class Administrador {
         this.correo = correo;
         this.passwordHash = passwordHash;
         this.fechaCreacion = LocalDate.now();
+    }
+
+    @Override
+    public boolean iniciarSesion(String correo, String password) {
+        return this.correo.equalsIgnoreCase(correo) && passwordHash.equals(password);
     }
 }

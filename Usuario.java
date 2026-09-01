@@ -1,6 +1,6 @@
 import java.time.LocalDate;
 
-public class Usuario {
+public class Usuario implements Autenticable {
     private long idUsuario;
     private String nombreCompleto;
     private String apellidos;
@@ -33,5 +33,12 @@ public class Usuario {
 
     private long generarIdUsuario() {
         return System.currentTimeMillis();
+    }
+
+    @Override
+    public boolean iniciarSesion(String correo, String password) {
+        return estado == EstadoCuenta.ACTIVA
+                && correoInstitucional.equalsIgnoreCase(correo)
+                && passwordHash.equals(password); //faltaría implementar el hash de la contraseña
     }
 }

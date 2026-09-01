@@ -1,6 +1,6 @@
 import java.time.LocalDate;
 
-public class Postulacion {
+public class Postulacion implements Aprobable {
     private static long contador = 0;
 
     private long idPostulacion;
@@ -10,6 +10,7 @@ public class Postulacion {
     private LocalDate fechaPostulacion;
     private EstadoAprobacion estado;
     private LocalDate fechaResolucion;
+    private String resolucion;
 
     public Postulacion(PerfilTutor tutor, Curso curso, String archivoCertificadoUrl) {
         this.idPostulacion = ++contador;
@@ -18,5 +19,23 @@ public class Postulacion {
         this.archivoCertificadoUrl = archivoCertificadoUrl;
         this.fechaPostulacion = LocalDate.now();
         this.estado = EstadoAprobacion.PENDIENTE;
+    }
+
+    @Override
+    public void aprobar() {
+        this.estado = EstadoAprobacion.APROBADA;
+        this.fechaResolucion = LocalDate.now();
+    }
+
+    @Override
+    public void rechazar(String motivo) {
+        this.estado = EstadoAprobacion.RECHAZADA;
+        this.fechaResolucion = LocalDate.now();
+        this.resolucion = motivo;
+    }
+
+    @Override
+    public EstadoAprobacion getEstado() {
+        return estado;
     }
 }
