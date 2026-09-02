@@ -1,12 +1,12 @@
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.time.LocalDateTime;
 
 public class GestorMensajes {
     private List<Mensaje> mensajes = new ArrayList<>();
 
-    public Mensaje enviarMensaje(Usuario emisor, Usuario receptor, String contenido) {
-        Mensaje mensaje = new Mensaje(emisor, receptor, contenido, LocalDateTime.now(), false);
+    public Mensaje enviarMensaje(Usuario emisor, Usuario receptor, String contenido, LocalDateTime fechaEnvio, boolean leido) {
+        Mensaje mensaje = new Mensaje(emisor, receptor, contenido, fechaEnvio, leido);
         mensajes.add(mensaje);
         return mensaje;
     }
