@@ -8,27 +8,27 @@ public class Mensaje {
     private Usuario receptor;
     private String contenido;
     private LocalDateTime fechaEnvio;
+    private boolean leido;
 
-    public Mensaje(Usuario emisor, Usuario receptor, String contenido) {
+    public Mensaje(Usuario emisor, Usuario receptor, String contenido, LocalDateTime fechaEnvio, boolean leido) {
         this.idMensaje = ++contador;
         this.emisor = emisor;
         this.receptor = receptor;
         this.contenido = contenido;
-        this.fechaEnvio = LocalDateTime.now();
+        this.fechaEnvio = fechaEnvio;
+        this.leido = leido;
     }
 
-    public long getIdMensaje() { return idMensaje; }
-    public void setIdMensaje(long idMensaje) { this.idMensaje = idMensaje; }
+    public Usuario getEmisor() {
+        return emisor;
+    }
 
-    public Usuario getEmisor() { return emisor; }
-    public void setEmisor(Usuario emisor) { this.emisor = emisor; }
+    public Usuario getReceptor() {
+        return receptor;
+    }
 
-    public Usuario getReceptor() { return receptor; }
-    public void setReceptor(Usuario receptor) { this.receptor = receptor; }
-
-    public String getContenido() { return contenido; }
-    public void setContenido(String contenido) { this.contenido = contenido; }
-
-    public LocalDateTime getFechaEnvio() { return fechaEnvio; }
-    public void setFechaEnvio(LocalDateTime fechaEnvio) { this.fechaEnvio = fechaEnvio; }
+    public boolean isLeido() {
+        return leido;
+    }
+    
 }
