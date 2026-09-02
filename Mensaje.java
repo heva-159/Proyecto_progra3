@@ -16,4 +16,19 @@ public class Mensaje {
         this.contenido = contenido;
         this.fechaEnvio = LocalDateTime.now();
     }
+
+    public long getIdMensaje() { return idMensaje; }
+    public void setIdMensaje(long idMensaje) { this.idMensaje = idMensaje; }
+
+    public Usuario getEmisor() { return emisor; }
+    public void setEmisor(Usuario emisor) { this.emisor = emisor; }
+
+    public Usuario getReceptor() { return receptor; }
+    public void setReceptor(Usuario receptor) { this.receptor = receptor; }
+
+    public String getContenido() { return contenido; }
+    public void setContenido(String contenido) { this.contenido = contenido; }
+
+    public LocalDateTime getFechaEnvio() { return fechaEnvio; }
+    public void setFechaEnvio(LocalDateTime fechaEnvio) { this.fechaEnvio = fechaEnvio; }
 }

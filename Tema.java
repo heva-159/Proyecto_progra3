@@ -8,4 +8,10 @@ public class Tema {
         this.idTema = ++contador;
         this.nombre = nombre;
     }
+
+    public long getIdTema() { return idTema; }
+    public void setIdTema(long idTema) { this.idTema = idTema; }
+
+    public String getNombre() { return nombre; }
+    public void setNombre(String nombre) { this.nombre = nombre; }
 }

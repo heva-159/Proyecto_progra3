@@ -4,7 +4,7 @@ public class Postulacion implements Aprobable {
     private static long contador = 0;
 
     private long idPostulacion;
-    private PerfilTutor tutor;
+    private Tutor tutor;
     private Curso curso;
     private String archivoCertificadoUrl;
     private LocalDate fechaPostulacion;
@@ -12,7 +12,7 @@ public class Postulacion implements Aprobable {
     private LocalDate fechaResolucion;
     private String resolucion;
 
-    public Postulacion(PerfilTutor tutor, Curso curso, String archivoCertificadoUrl) {
+    public Postulacion(Tutor tutor, Curso curso, String archivoCertificadoUrl) {
         this.idPostulacion = ++contador;
         this.tutor = tutor;
         this.curso = curso;
@@ -35,7 +35,27 @@ public class Postulacion implements Aprobable {
     }
 
     @Override
-    public EstadoAprobacion getEstado() {
-        return estado;
-    }
+    public EstadoAprobacion getEstado() { return estado; }
+    public void setEstado(EstadoAprobacion estado) { this.estado = estado; }
+
+    public long getIdPostulacion() { return idPostulacion; }
+    public void setIdPostulacion(long idPostulacion) { this.idPostulacion = idPostulacion; }
+
+    public Tutor getTutor() { return tutor; }
+    public void setTutor(Tutor tutor) { this.tutor = tutor; }
+
+    public Curso getCurso() { return curso; }
+    public void setCurso(Curso curso) { this.curso = curso; }
+
+    public String getArchivoCertificadoUrl() { return archivoCertificadoUrl; }
+    public void setArchivoCertificadoUrl(String archivoCertificadoUrl) { this.archivoCertificadoUrl = archivoCertificadoUrl; }
+
+    public LocalDate getFechaPostulacion() { return fechaPostulacion; }
+    public void setFechaPostulacion(LocalDate fechaPostulacion) { this.fechaPostulacion = fechaPostulacion; }
+
+    public LocalDate getFechaResolucion() { return fechaResolucion; }
+    public void setFechaResolucion(LocalDate fechaResolucion) { this.fechaResolucion = fechaResolucion; }
+
+    public String getResolucion() { return resolucion; }
+    public void setResolucion(String resolucion) { this.resolucion = resolucion; }
 }

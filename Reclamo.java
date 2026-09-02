@@ -32,7 +32,24 @@ public class Reclamo implements Aprobable {
     }
 
     @Override
-    public EstadoAprobacion getEstado() {
-        return estado;
-    }
+    public EstadoAprobacion getEstado() { return estado; }
+    public void setEstado(EstadoAprobacion estado) { this.estado = estado; }
+
+    public long getIdReclamo() { return idReclamo; }
+    public void setIdReclamo(long idReclamo) { this.idReclamo = idReclamo; }
+
+    public Sesion getSesion() { return sesion; }
+    public void setSesion(Sesion sesion) { this.sesion = sesion; }
+
+    public Usuario getReclamante() { return reclamante; }
+    public void setReclamante(Usuario reclamante) { this.reclamante = reclamante; }
+
+    public String getMotivo() { return motivo; }
+    public void setMotivo(String motivo) { this.motivo = motivo; }
+
+    public LocalDate getFechaReclamo() { return fechaReclamo; }
+    public void setFechaReclamo(LocalDate fechaReclamo) { this.fechaReclamo = fechaReclamo; }
+
+    public String getResolucion() { return resolucion; }
+    public void setResolucion(String resolucion) { this.resolucion = resolucion; }
 }

@@ -10,4 +10,13 @@ public class Tarifa {
         this.curso = curso;
         this.montoPorHora = montoPorHora;
     }
+
+    public long getIdTarifa() { return idTarifa; }
+    public void setIdTarifa(long idTarifa) { this.idTarifa = idTarifa; }
+
+    public Curso getCurso() { return curso; }
+    public void setCurso(Curso curso) { this.curso = curso; }
+
+    public double getMontoPorHora() { return montoPorHora; }
+    public void setMontoPorHora(double montoPorHora) { this.montoPorHora = montoPorHora; }
 }
