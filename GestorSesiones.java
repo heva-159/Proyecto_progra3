@@ -15,20 +15,20 @@ public class GestorSesiones {
         return sesion;
     }
 
-    public void confirmarCheckIn(Sesion sesion, Usuario usuario) {
+    public void confirmarCheckIn(Sesion sesion, PersonaPUCP persona) {
         if (sesion.getEstado() != EstadoSesion.PROGRAMADA) {
             throw new IllegalStateException("Solo se puede hacer check-in de una sesión programada");
         }
-        if (usuario == sesion.getTutor().getUsuario()) sesion.setCheckInTutor(true);
-        else if (usuario == sesion.getAlumno().getUsuario()) sesion.setCheckInAlumno(true);
+        if (persona == sesion.getTutor()) sesion.setCheckInTutor(true);
+        else if (persona == sesion.getAlumno()) sesion.setCheckInAlumno(true);
         if (sesion.isCheckInTutor() && sesion.isCheckInAlumno()) {
             sesion.setEstado(EstadoSesion.EN_CURSO);
         }
     }
 
-    public void confirmarCheckOut(Sesion sesion, Usuario usuario) {
-        if (usuario == sesion.getTutor().getUsuario()) sesion.setCheckOutTutor(true);
-        else if (usuario == sesion.getAlumno().getUsuario()) sesion.setCheckOutAlumno(true);
+    public void confirmarCheckOut(Sesion sesion, PersonaPUCP persona) {
+        if (persona == sesion.getTutor()) sesion.setCheckOutTutor(true);
+        else if (persona == sesion.getAlumno()) sesion.setCheckOutAlumno(true);
         if (sesion.isCheckOutTutor() && sesion.isCheckOutAlumno()) {
             sesion.setEstado(EstadoSesion.REALIZADA);
             sesion.setFechaHoraFin(LocalDateTime.now());

@@ -19,16 +19,21 @@ public class Mensaje {
         this.leido = leido;
     }
 
-    public Usuario getEmisor() {
-        return emisor;
-    }
+    public long getIdMensaje() { return idMensaje; }
+    public void setIdMensaje(long idMensaje) { this.idMensaje = idMensaje; }
 
-    public Usuario getReceptor() {
-        return receptor;
-    }
+    public Usuario getEmisor() { return emisor; }
+    public void setEmisor(Usuario emisor) { this.emisor = emisor; }
 
-    public boolean isLeido() {
-        return leido;
-    }
-    
+    public Usuario getReceptor() { return receptor; }
+    public void setReceptor(Usuario receptor) { this.receptor = receptor; }
+
+    public String getContenido() { return contenido; }
+    public void setContenido(String contenido) { this.contenido = contenido; }
+
+    public LocalDateTime getFechaEnvio() { return fechaEnvio; }
+    public void setFechaEnvio(LocalDateTime fechaEnvio) { this.fechaEnvio = fechaEnvio; }
+
+    public boolean isLeido() { return leido; }
+    public void setLeido(boolean leido) { this.leido = leido; }
 }

@@ -1,10 +1,15 @@
 public abstract class PersonaPUCP {
-    private Usuario usuario;
+    private String nombreCompleto;
+    private String apellidos;
 
-    public PersonaPUCP(Usuario usuario) {
-        this.usuario = usuario;
+    public PersonaPUCP(String nombreCompleto, String apellidos) {
+        this.nombreCompleto = nombreCompleto;
+        this.apellidos = apellidos;
     }
 
-    public Usuario getUsuario() { return usuario; }
-    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
+    public String getNombreCompleto() { return nombreCompleto; }
+    public void setNombreCompleto(String nombreCompleto) { this.nombreCompleto = nombreCompleto; }
+
+    public String getApellidos() { return apellidos; }
+    public void setApellidos(String apellidos) { this.apellidos = apellidos; }
 }

@@ -4,8 +4,8 @@ import java.util.List;
 public class Estudiante extends PersonaPUCP {
     private List<Sesion> sesiones = new ArrayList<>();
 
-    public Estudiante(Usuario usuario) {
-        super(usuario);
+    public Estudiante(String nombreCompleto, String apellidos) {
+        super(nombreCompleto, apellidos);
     }
 
     public List<Sesion> getSesiones() { return sesiones; }

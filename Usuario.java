@@ -7,8 +7,6 @@ import java.util.Set;
 
 public class Usuario implements Autenticable {
     private long idUsuario;
-    private String nombreCompleto;
-    private String apellidos;
     private String correoInstitucional;
     private String passwordHash;
     private LocalDate fechaRegistro;
@@ -27,8 +25,6 @@ public class Usuario implements Autenticable {
             throw new IllegalArgumentException("Debe elegir al menos un rol");
         }
         this.idUsuario = System.currentTimeMillis();
-        this.nombreCompleto = nombreCompleto;
-        this.apellidos = apellidos;
         this.correoInstitucional = correoInstitucional;
         this.passwordHash = passwordHash;
         this.fechaRegistro = LocalDate.now();
@@ -37,11 +33,11 @@ public class Usuario implements Autenticable {
         this.consentimientoCalificaciones = false;
         this.verificado = false;
         if (esTutor) {
-            perfiles.add(new Tutor(this));
+            perfiles.add(new Tutor(nombreCompleto, apellidos));
             roles.add(Rol.TUTOR);
         }
         if (esEstudiante) {
-            perfiles.add(new Estudiante(this));
+            perfiles.add(new Estudiante(nombreCompleto, apellidos));
             roles.add(Rol.ESTUDIANTE);
         }
     }
@@ -55,12 +51,6 @@ public class Usuario implements Autenticable {
 
     public long getIdUsuario() { return idUsuario; }
     public void setIdUsuario(long idUsuario) { this.idUsuario = idUsuario; }
-
-    public String getNombreCompleto() { return nombreCompleto; }
-    public void setNombreCompleto(String nombreCompleto) { this.nombreCompleto = nombreCompleto; }
-
-    public String getApellidos() { return apellidos; }
-    public void setApellidos(String apellidos) { this.apellidos = apellidos; }
 
     public String getCorreoInstitucional() { return correoInstitucional; }
     public void setCorreoInstitucional(String correoInstitucional) { this.correoInstitucional = correoInstitucional; }
