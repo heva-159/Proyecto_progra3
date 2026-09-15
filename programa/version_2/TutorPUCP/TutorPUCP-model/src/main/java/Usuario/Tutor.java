@@ -12,10 +12,13 @@ public class Tutor {
     private List<Tarifa> tarifas;
     private List<Sesion> sesiones;
 
-    public Tutor(String nombreCompleto, String apellidos) {
+    private Usuario usuario;
+
+    public Tutor(Usuario usuario) {
         postulaciones = new ArrayList<>();
         tarifas = new ArrayList<>();
         sesiones = new ArrayList<>();
+        this.usuario = usuario;
     }
     
     public List<Postulacion> getPostulaciones() {
@@ -28,5 +31,13 @@ public class Tutor {
 
     public List<Sesion> getSesiones() {
         return sesiones;
+    }
+
+    public Usuario getUsuario() {
+        return usuario;
+    }
+
+    public void setUsuario(Usuario usuario) {
+        this.usuario = usuario;
     }
 }

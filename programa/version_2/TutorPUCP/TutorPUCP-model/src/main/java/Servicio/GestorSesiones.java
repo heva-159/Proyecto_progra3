@@ -2,6 +2,7 @@ package Servicio;
 
 import Academico.Curso;
 import Academico.Tema;
+import Usuario.Usuario;
 import enums.EstadoSesion;
 import Tutoria.Sesion;
 import Usuario.Estudiante;
@@ -24,20 +25,20 @@ public class GestorSesiones {
         return sesion;
     }
 
-    public void confirmarCheckIn(Sesion sesion, PersonaPUCP persona) {
-        if (sesion.getEstado() != EstadoSesion.PROGRAMADA) {
+    public void confirmarCheckIn(Sesion sesion, Usuario persona) {
+        if (sesion.getEstado() != EstadoSesion.PROGRAMADA) { //todo: error de lógica
             throw new IllegalStateException("Solo se puede hacer check-in de una sesión programada");
         }
-        if (persona == sesion.getTutor()) sesion.setCheckInTutor(true);
-        else if (persona == sesion.getAlumno()) sesion.setCheckInAlumno(true);
+        if (persona == sesion.getTutor().getUsuario()) sesion.setCheckInTutor(true); //si es tutor
+        else if (persona == sesion.getAlumno().getUsuario()) sesion.setCheckInAlumno(true); //si es alumno
         if (sesion.isCheckInTutor() && sesion.isCheckInAlumno()) {
             sesion.setEstado(EstadoSesion.EN_CURSO);
         }
     }
 
-    public void confirmarCheckOut(Sesion sesion, PersonaPUCP persona) {
-        if (persona == sesion.getTutor()) sesion.setCheckOutTutor(true);
-        else if (persona == sesion.getAlumno()) sesion.setCheckOutAlumno(true);
+    public void confirmarCheckOut(Sesion sesion, Usuario persona) {
+        if (persona == sesion.getTutor().getUsuario()) sesion.setCheckOutTutor(true);
+        else if (persona == sesion.getAlumno().getUsuario()) sesion.setCheckOutAlumno(true);
         if (sesion.isCheckOutTutor() && sesion.isCheckOutAlumno()) {
             sesion.setEstado(EstadoSesion.REALIZADA);
             sesion.setFechaHoraFin(LocalDateTime.now());

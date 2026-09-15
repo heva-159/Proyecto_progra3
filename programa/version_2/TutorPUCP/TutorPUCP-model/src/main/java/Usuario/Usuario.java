@@ -10,56 +10,52 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class Usuario implements IAutenticable {
-    //
+    private long idUsuario;
     private String nombreCompleto;
     private String apellidos;
-    private int codigo; //codigo pucp
+    private int codigo;
     private String facultad;
     private String especialidad;
-    //
-    private long idUsuario;
     private String correoInstitucional;
     private String passwordHash;
     private LocalDate fechaRegistro;
     private EstadoCuenta estado;
-    private boolean consentimientoDatos;
-    private boolean consentimientoCalificaciones;
     private boolean verificado;
     private String codigoVerificacion;
     private LocalDateTime codigoExpiracion;
-    private Estudiante perfil_estudiante;
-    private Tutor perfil_tutor;
+    public void setPerfilEstudiante(Estudiante perfilEstudiante) {
+        this.perfilEstudiante = perfilEstudiante;
+    }
+
+    private Tutor perfilTutor;
+    private Estudiante perfilEstudiante;
     private Set<Rol> roles = new HashSet<>();
+    private boolean consentimientoDatos;
+    private boolean consentimientoCalificaciones;
 
     public Usuario(String nombreCompleto, String apellidos, int codigo, String facultad, String especialidad,
                    String correoInstitucional, String passwordHash, boolean esTutor, boolean esEstudiante) {
         if (!esTutor && !esEstudiante) {
             throw new IllegalArgumentException("Debe elegir al menos un rol");
         }
-        this.nombreCompleto=nombreCompleto;
-        this.apellidos=apellidos;
-        this.codigo=codigo;
-        this.facultad=facultad;
-        this.especialidad=especialidad;
         this.idUsuario = System.currentTimeMillis();
+        this.nombreCompleto = nombreCompleto;
+        this.apellidos = apellidos;
+        this.codigo = codigo;
+        this.facultad = facultad;
+        this.especialidad = especialidad;
         this.correoInstitucional = correoInstitucional;
         this.passwordHash = passwordHash;
         this.fechaRegistro = LocalDate.now();
         this.estado = EstadoCuenta.ACTIVA;
-        this.consentimientoDatos = false;
-        this.consentimientoCalificaciones = false;
         this.verificado = false;
         if (esTutor) {
-            perfil_tutor = new Tutor(nombreCompleto, apellidos);
+            this.perfilTutor = new Tutor(this);
             roles.add(Rol.TUTOR);
-        }else{
-            perfil_tutor = null;
         }
         if (esEstudiante) {
-            perfil_estudiante = new Estudiante(nombreCompleto, apellidos);
+            this.perfilEstudiante = new Estudiante(this);
             roles.add(Rol.ESTUDIANTE);
-        }else{
-            perfil_estudiante = null;
         }
     }
 
@@ -135,4 +131,16 @@ public class Usuario implements IAutenticable {
         this.especialidad = especialidad;
     }
 
+    //
+    public Tutor getPerfilTutor() {
+        return perfilTutor;
+    }
+
+    public void setPerfilTutor(Tutor perfilTutor) {
+        this.perfilTutor = perfilTutor;
+    }
+
+    public Estudiante getPerfilEstudiante() {
+        return perfilEstudiante;
+    }
 }
