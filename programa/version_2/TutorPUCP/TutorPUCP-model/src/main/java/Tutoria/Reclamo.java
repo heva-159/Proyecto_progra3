@@ -3,6 +3,7 @@ package Tutoria;
 import Interfaces.IAprobable;
 import Usuario.Usuario;
 import enums.EstadoAprobacion;
+import enums.Rol;
 
 import java.time.LocalDate;
 
@@ -12,15 +13,17 @@ public class Reclamo implements IAprobable {
     private long idReclamo;
     private Sesion sesion;
     private Usuario reclamante;
+    private Rol rolReclamante;
     private String motivo;
     private LocalDate fechaReclamo;
     private EstadoAprobacion estado;
     private String resolucion;
 
-    public Reclamo(Sesion sesion, Usuario reclamante, String motivo) {
+    public Reclamo(Sesion sesion, Usuario reclamante, Rol rolReclamante, String motivo) {
         this.idReclamo = ++contador;
         this.sesion = sesion;
         this.reclamante = reclamante;
+        this.rolReclamante = rolReclamante;
         this.motivo = motivo;
         this.fechaReclamo = LocalDate.now();
         this.estado = EstadoAprobacion.PENDIENTE;
@@ -49,6 +52,9 @@ public class Reclamo implements IAprobable {
 
     public Usuario getReclamante() { return reclamante; }
     public void setReclamante(Usuario reclamante) { this.reclamante = reclamante; }
+
+    public Rol getRolReclamante() { return rolReclamante; }
+    public void setRolReclamante(Rol rolReclamante) { this.rolReclamante = rolReclamante; }
 
     public String getMotivo() { return motivo; }
     public void setMotivo(String motivo) { this.motivo = motivo; }

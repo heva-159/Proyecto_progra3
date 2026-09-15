@@ -10,8 +10,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class Usuario implements IAutenticable {
+    private static long contador = 0;
+
     private long idUsuario;
-    private String nombreCompleto;
+    private String nombres;
     private String apellidos;
     private int codigo;
     private String facultad;
@@ -33,13 +35,13 @@ public class Usuario implements IAutenticable {
     private boolean consentimientoDatos;
     private boolean consentimientoCalificaciones;
 
-    public Usuario(String nombreCompleto, String apellidos, int codigo, String facultad, String especialidad,
+    public Usuario(String nombres, String apellidos, int codigo, String facultad, String especialidad,
                    String correoInstitucional, String passwordHash, boolean esTutor, boolean esEstudiante) {
         if (!esTutor && !esEstudiante) {
             throw new IllegalArgumentException("Debe elegir al menos un rol");
         }
-        this.idUsuario = System.currentTimeMillis();
-        this.nombreCompleto = nombreCompleto;
+        this.idUsuario = ++contador;
+        this.nombres = nombres;
         this.apellidos = apellidos;
         this.codigo = codigo;
         this.facultad = facultad;
@@ -100,11 +102,11 @@ public class Usuario implements IAutenticable {
     public void setRoles(Set<Rol> roles) { this.roles = roles; }
 
     // Getters and Setters
-    public String getNombreCompleto() {
-        return nombreCompleto;
+    public String getNombres() {
+        return nombres;
     }
-    public void setNombreCompleto(String nombreCompleto) {
-        this.nombreCompleto = nombreCompleto;
+    public void setNombres(String nombres) {
+        this.nombres = nombres;
     }
     public String getApellidos() {
         return apellidos;
