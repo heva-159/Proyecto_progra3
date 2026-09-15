@@ -5,6 +5,7 @@ import Tutoria.Reclamo;
 import Tutoria.Sesion;
 import Usuario.Usuario;
 import enums.EstadoAprobacion;
+import enums.Rol;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,8 +13,8 @@ import java.util.List;
 public class GestorReclamos {
     private List<Reclamo> reclamos = new ArrayList<>();
 
-    public Reclamo registrarReclamo(Sesion sesion, Usuario reclamante, String motivo) {
-        Reclamo reclamo = new Reclamo(sesion, reclamante, motivo);
+    public Reclamo registrarReclamo(Sesion sesion, Usuario reclamante, Rol rolReclamente, String motivo) {
+        Reclamo reclamo = new Reclamo(sesion, reclamante, rolReclamente, motivo);
         reclamos.add(reclamo);
         sesion.getReclamos().add(reclamo);
         return reclamo;

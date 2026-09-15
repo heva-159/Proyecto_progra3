@@ -61,6 +61,15 @@ public class GestorSesiones {
         sesion.setMotivoCancelacion(motivo);
     }
 
+    public void verificarInasistencia(Sesion sesion, LocalDateTime ahora) {
+        if (sesion.getEstado() == EstadoSesion.PROGRAMADA
+                && !(sesion.isCheckInTutor() && sesion.isCheckInAlumno())
+                && ahora.isAfter(sesion.getFechaHoraInicio().plusMinutes(15))) {
+            sesion.setEstado(EstadoSesion.CANCELADA);
+            sesion.setMotivoCancelacion("Inasistencia");
+        }
+    }
+
     public List<Sesion> getSesiones() {
         return sesiones;
     }

@@ -10,6 +10,8 @@
     <packaging>pom</packaging>
     <modules>
         <module>TutorPUCP-model</module>
+        <module>TutorPUCP-main</module>
+        <module>TutorPUCP-bl</module>
     </modules>
 
     <properties>
