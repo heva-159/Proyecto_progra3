@@ -13,8 +13,8 @@ import java.util.List;
 public class GestorReclamos {
     private List<Reclamo> reclamos = new ArrayList<>();
 
-    public Reclamo registrarReclamo(Sesion sesion, Usuario reclamante, Rol rolReclamente, String motivo) {
-        Reclamo reclamo = new Reclamo(sesion, reclamante, rolReclamente, motivo);
+    public Reclamo registrarReclamo(Sesion sesion, Usuario reclamante, Rol rolReclamante, String motivo) {
+        Reclamo reclamo = new Reclamo(sesion, reclamante, rolReclamante, motivo);
         reclamos.add(reclamo);
         sesion.getReclamos().add(reclamo);
         return reclamo;

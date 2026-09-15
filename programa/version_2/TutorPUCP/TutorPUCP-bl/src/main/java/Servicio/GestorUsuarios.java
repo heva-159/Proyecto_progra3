@@ -8,9 +8,9 @@ import java.util.List;
 public class GestorUsuarios {
     private List<Usuario> usuarios = new ArrayList<>();
 
-    public Usuario registrar(String nombreCompleto, String apellidos, int codigo, String facultad, String especialidad,
+    public Usuario registrar(String nombres, String apellidos, int codigo, String facultad, String especialidad,
                              String correoInstitucional, String passwordHash, boolean esTutor, boolean esEstudiante) {
-        Usuario usuario = new Usuario(nombreCompleto, apellidos, codigo, facultad, especialidad,
+        Usuario usuario = new Usuario(nombres, apellidos, codigo, facultad, especialidad,
                 correoInstitucional, passwordHash, esTutor, esEstudiante);
         usuarios.add(usuario);
         return usuario;

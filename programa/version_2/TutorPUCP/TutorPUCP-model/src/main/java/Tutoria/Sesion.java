@@ -15,25 +15,25 @@ public class Sesion {
 
     private long idSesion;
     private Tutor tutor;
-    private Estudiante alumno;
+    private Estudiante estudiante;
     private Curso curso;
     private List<Tema> tema = new ArrayList<>();
     private LocalDateTime fechaHoraInicio;
     private LocalDateTime fechaHoraFin;
     private EstadoSesion estado;
     private boolean checkInTutor;
-    private boolean checkInAlumno;
+    private boolean checkInEstudiante;
     private boolean checkOutTutor;
-    private boolean checkOutAlumno;
+    private boolean checkOutEstudiante;
     private int puntaje;
     private String comentario;
     private String motivoCancelacion;
     private List<Reclamo> reclamos = new ArrayList<>();
 
-    public Sesion(Tutor tutor, Estudiante alumno, Curso curso, LocalDateTime fechaHoraInicio) {
+    public Sesion(Tutor tutor, Estudiante estudiante, Curso curso, LocalDateTime fechaHoraInicio) {
         this.idSesion = ++contador;
         this.tutor = tutor;
-        this.alumno = alumno;
+        this.estudiante = estudiante;
         this.curso = curso;
         this.fechaHoraInicio = fechaHoraInicio;
         this.estado = EstadoSesion.PROGRAMADA;
@@ -45,8 +45,8 @@ public class Sesion {
     public Tutor getTutor() { return tutor; }
     public void setTutor(Tutor tutor) { this.tutor = tutor; }
 
-    public Estudiante getAlumno() { return alumno; }
-    public void setAlumno(Estudiante alumno) { this.alumno = alumno; }
+    public Estudiante getEstudiante() { return estudiante; }
+    public void setEstudiante(Estudiante estudiante) { this.estudiante = estudiante; }
 
     public Curso getCurso() { return curso; }
     public void setCurso(Curso curso) { this.curso = curso; }
@@ -66,14 +66,14 @@ public class Sesion {
     public boolean isCheckInTutor() { return checkInTutor; }
     public void setCheckInTutor(boolean checkInTutor) { this.checkInTutor = checkInTutor; }
 
-    public boolean isCheckInAlumno() { return checkInAlumno; }
-    public void setCheckInAlumno(boolean checkInAlumno) { this.checkInAlumno = checkInAlumno; }
+    public boolean isCheckInEstudiante() { return checkInEstudiante; }
+    public void setCheckInEstudiante(boolean checkInEstudiante) { this.checkInEstudiante = checkInEstudiante; }
 
     public boolean isCheckOutTutor() { return checkOutTutor; }
     public void setCheckOutTutor(boolean checkOutTutor) { this.checkOutTutor = checkOutTutor; }
 
-    public boolean isCheckOutAlumno() { return checkOutAlumno; }
-    public void setCheckOutAlumno(boolean checkOutAlumno) { this.checkOutAlumno = checkOutAlumno; }
+    public boolean isCheckOutEstudiante() { return checkOutEstudiante; }
+    public void setCheckOutEstudiante(boolean checkOutEstudiante) { this.checkOutEstudiante = checkOutEstudiante; }
 
     public int getPuntaje() { return puntaje; }
     public void setPuntaje(int puntaje) { this.puntaje = puntaje; }
