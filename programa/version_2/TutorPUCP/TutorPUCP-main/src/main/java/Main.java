@@ -54,7 +54,7 @@ public class Main {
         System.out.println("=== PRUEBA DE INICIO DE SESIÓN ===");
         Usuario logueado = gestorUsuarios.iniciarSesion("luis.quispe@pucp.edu.pe", "clave456");
         if (logueado != null) {
-            System.out.println("Login con clave correcta: correcto (" + logueado.getNombreCompleto() + ")");
+            System.out.println("Login con clave correcta: correcto (" + logueado.getNombres() + ")");
         } else {
             System.out.println("Login con clave correcta: fallo");
         }
@@ -94,7 +94,7 @@ public class Main {
         System.out.println("=== PRUEBA DE POSTULACIÓN ===");
         Postulacion postulacion = new Postulacion(ana.getPerfilTutor(), curso, "certificados/ana_inf282.pdf");
         ana.getPerfilTutor().getPostulaciones().add(postulacion);
-        System.out.println("Tutor: " + postulacion.getTutor().getUsuario().getNombreCompleto()
+        System.out.println("Tutor: " + postulacion.getTutor().getUsuario().getNombres()
                 + " postula a " + postulacion.getCurso().getNombre());
         System.out.println("Estado inicial: " + postulacion.getEstado());
         postulacion.aprobar();
@@ -126,8 +126,8 @@ public class Main {
                 curso, temasSesion, LocalDateTime.now().plusDays(1));
 
         System.out.println("Sesion creada: id " + sesion.getIdSesion() + ", curso " + sesion.getCurso().getNombre());
-        System.out.println("Tutor: " + sesion.getTutor().getUsuario().getNombreCompleto()
-                + " | Estudiante: " + sesion.getAlumno().getUsuario().getNombreCompleto());
+        System.out.println("Tutor: " + sesion.getTutor().getUsuario().getNombres()
+                + " | Estudiante: " + sesion.getEstudiante().getUsuario().getNombres());
         System.out.println("Temas de la sesion: " + sesion.getTemas().size());
         System.out.println("Estado inicial: " + sesion.getEstado());
 
@@ -144,13 +144,13 @@ public class Main {
         System.out.println("Estado despues del check-in del tutor: " + sesion.getEstado());
 
         gestorSesiones.confirmarCheckIn(sesion, luis);
-        System.out.println("Check-in Estudiante: " + (sesion.isCheckInAlumno() ? "correcto" : "fallo"));
+        System.out.println("Check-in Estudiante: " + (sesion.isCheckInEstudiante() ? "correcto" : "fallo"));
         System.out.println("Estado actual: " + sesion.getEstado());
 
         gestorSesiones.confirmarCheckOut(sesion, ana);
         System.out.println("Check-out Tutor: " + (sesion.isCheckOutTutor() ? "correcto" : "fallo"));
         gestorSesiones.confirmarCheckOut(sesion, luis);
-        System.out.println("Check-out Estudiante: " + (sesion.isCheckInAlumno() ? "correcto" : "fallo"));
+        System.out.println("Check-out Estudiante: " + (sesion.isCheckOutEstudiante() ? "correcto" : "fallo"));
         System.out.println("Estado final: " + sesion.getEstado());
         System.out.println("Fecha y hora de fin registrada: " + (sesion.getFechaHoraFin() != null));
 
@@ -186,7 +186,7 @@ public class Main {
         // ------------------------------------------------------------
         System.out.println("=== PRUEBA DE RECLAMO ===");
         Reclamo reclamo = gestorReclamos.registrarReclamo(sesion, luis, Rol.ESTUDIANTE, "El tutor llego 10 minutos tarde");
-        System.out.println("Reclamo registrado por " + reclamo.getReclamante().getNombreCompleto()
+        System.out.println("Reclamo registrado por " + reclamo.getReclamante().getNombres()
                 + ": " + reclamo.getMotivo());
         System.out.println("Rol del reclamante: " + reclamo.getRolReclamante());
         System.out.println("Estado inicial: " + reclamo.getEstado());
@@ -208,8 +208,8 @@ public class Main {
         List<Mensaje> conversacion = gestorMensajes.obtenerConversacion(luis, ana);
         System.out.println("Mensajes entre Luis y Ana: " + conversacion.size());
         for (Mensaje mensaje : conversacion) {
-            System.out.println(" " + mensaje.getEmisor().getNombreCompleto() + " -> "
-                    + mensaje.getReceptor().getNombreCompleto() + ": " + mensaje.getContenido());
+            System.out.println(" " + mensaje.getEmisor().getNombres() + " -> "
+                    + mensaje.getReceptor().getNombres() + ": " + mensaje.getContenido());
         }
         System.out.println();
 
@@ -217,7 +217,7 @@ public class Main {
     }
 
     private static void mostrarUsuario(Usuario usuario) {
-        System.out.println(usuario.getNombreCompleto() + " " + usuario.getApellidos()
+        System.out.println(usuario.getNombres() + " " + usuario.getApellidos()
                 + " | codigo " + usuario.getCodigo() + " | roles " + usuario.getRoles());
         System.out.println("  Puede actuar como Tutor: " + (usuario.getPerfilTutor() != null));
         System.out.println("  Puede actuar como Estudiante: " + (usuario.getPerfilEstudiante() != null));
