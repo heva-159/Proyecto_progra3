@@ -2,5 +2,6 @@ package enums;
 
 public enum Rol {
     ESTUDIANTE,
-    TUTOR
+    TUTOR,
+    AMBOS
 }

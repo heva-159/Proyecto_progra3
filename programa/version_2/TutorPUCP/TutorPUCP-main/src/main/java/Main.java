@@ -29,11 +29,11 @@ public class Main {
         // ------------------------------------------------------------
         System.out.println("=== PRUEBA DE USUARIOS ===");
         Usuario ana = gestorUsuarios.registrar("Ana Lucia", "Torres Rojas", 20201234, "Ciencias e Ingenieria",
-                "Ingenieria Informatica", "ana.torres@pucp.edu.pe", "clave123", true, false);
+                "Ingenieria Informatica", "ana.torres@pucp.edu.pe", "clave123", Rol.TUTOR);
         Usuario luis = gestorUsuarios.registrar("Luis Alberto", "Quispe Mendoza", 20225678, "Estudios Generales Ciencias",
-                "Ingenieria Industrial", "luis.quispe@pucp.edu.pe", "clave456", false, true);
+                "Ingenieria Industrial", "luis.quispe@pucp.edu.pe", "clave456", Rol.ESTUDIANTE);
         Usuario carla = gestorUsuarios.registrar("Carla", "Vega Salas", 20219012, "Ciencias e Ingenieria",
-                "Ingenieria Mecatronica", "carla.vega@pucp.edu.pe", "clave789", true, true);
+                "Ingenieria Mecatronica", "carla.vega@pucp.edu.pe", "clave789", Rol.AMBOS);
 
         System.out.println("Usuarios registrados: " + gestorUsuarios.getUsuarios().size());
         mostrarUsuario(ana);
@@ -43,7 +43,7 @@ public class Main {
         System.out.println("Intentando registrar un usuario sin ningun rol...");
         try {
             gestorUsuarios.registrar("Pedro", "Sin Rol", 20230000, "Letras", "Filosofia",
-                    "pedro@pucp.edu.pe", "clave000", false, false);
+                    "pedro@pucp.edu.pe", "clave000", null);
             System.out.println("Error: se registro un usuario sin rol");
         } catch (IllegalArgumentException e) {
             System.out.println("Registro rechazado: " + e.getMessage());
@@ -139,17 +139,17 @@ public class Main {
             System.out.println("Calificacion rechazada: " + e.getMessage());
         }
 
-        gestorSesiones.confirmarCheckIn(sesion, ana);
+        gestorSesiones.confirmarCheckIn(sesion, Rol.TUTOR);
         System.out.println("Check-in Tutor: " + (sesion.isCheckInTutor() ? "correcto" : "fallo"));
         System.out.println("Estado despues del check-in del tutor: " + sesion.getEstado());
 
-        gestorSesiones.confirmarCheckIn(sesion, luis);
+        gestorSesiones.confirmarCheckIn(sesion, Rol.ESTUDIANTE);
         System.out.println("Check-in Estudiante: " + (sesion.isCheckInEstudiante() ? "correcto" : "fallo"));
         System.out.println("Estado actual: " + sesion.getEstado());
 
-        gestorSesiones.confirmarCheckOut(sesion, ana);
+        gestorSesiones.confirmarCheckOut(sesion, Rol.TUTOR);
         System.out.println("Check-out Tutor: " + (sesion.isCheckOutTutor() ? "correcto" : "fallo"));
-        gestorSesiones.confirmarCheckOut(sesion, luis);
+        gestorSesiones.confirmarCheckOut(sesion, Rol.ESTUDIANTE);
         System.out.println("Check-out Estudiante: " + (sesion.isCheckOutEstudiante() ? "correcto" : "fallo"));
         System.out.println("Estado final: " + sesion.getEstado());
         System.out.println("Fecha y hora de fin registrada: " + (sesion.getFechaHoraFin() != null));
@@ -218,7 +218,7 @@ public class Main {
 
     private static void mostrarUsuario(Usuario usuario) {
         System.out.println(usuario.getNombres() + " " + usuario.getApellidos()
-                + " | codigo " + usuario.getCodigo() + " | roles " + usuario.getRoles());
+                + " | codigo " + usuario.getCodigo() + " | rol " + usuario.getRol());
         System.out.println("  Puede actuar como Tutor: " + (usuario.getPerfilTutor() != null));
         System.out.println("  Puede actuar como Estudiante: " + (usuario.getPerfilEstudiante() != null));
     }

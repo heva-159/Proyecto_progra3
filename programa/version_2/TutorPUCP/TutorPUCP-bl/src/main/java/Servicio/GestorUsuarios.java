@@ -1,6 +1,7 @@
 package Servicio;
 
 import Usuario.Usuario;
+import enums.Rol;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,9 +10,9 @@ public class GestorUsuarios {
     private List<Usuario> usuarios = new ArrayList<>();
 
     public Usuario registrar(String nombres, String apellidos, int codigo, String facultad, String especialidad,
-                             String correoInstitucional, String passwordHash, boolean esTutor, boolean esEstudiante) {
+                             String correoInstitucional, String passwordHash, Rol rol) {
         Usuario usuario = new Usuario(nombres, apellidos, codigo, facultad, especialidad,
-                correoInstitucional, passwordHash, esTutor, esEstudiante);
+                correoInstitucional, passwordHash, rol);
         usuarios.add(usuario);
         return usuario;
     }
