@@ -6,8 +6,8 @@ import enums.Rol;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Usuario implements IAutenticable {
     private static long contador = 0;
@@ -25,19 +25,14 @@ public class Usuario implements IAutenticable {
     private boolean verificado;
     private String codigoVerificacion;
     private LocalDateTime codigoExpiracion;
-    public void setPerfilEstudiante(Estudiante perfilEstudiante) {
-        this.perfilEstudiante = perfilEstudiante;
-    }
-
-    private Tutor perfilTutor;
-    private Estudiante perfilEstudiante;
-    private Set<Rol> roles = new HashSet<>();
+    private List<PersonaPUCP> personas;
+    private Rol rol;
     private boolean consentimientoDatos;
     private boolean consentimientoCalificaciones;
 
     public Usuario(String nombres, String apellidos, int codigo, String facultad, String especialidad,
-                   String correoInstitucional, String passwordHash, boolean esTutor, boolean esEstudiante) {
-        if (!esTutor && !esEstudiante) {
+                   String correoInstitucional, String passwordHash, Rol rol) {
+        if (rol == null) {
             throw new IllegalArgumentException("Debe elegir al menos un rol");
         }
         this.idUsuario = ++contador;
@@ -51,13 +46,17 @@ public class Usuario implements IAutenticable {
         this.fechaRegistro = LocalDate.now();
         this.estado = EstadoCuenta.ACTIVA;
         this.verificado = false;
-        if (esTutor) {
-            this.perfilTutor = new Tutor(this);
-            roles.add(Rol.TUTOR);
+        this.rol = rol;
+        this.personas = new ArrayList<>();
+        if (rol == Rol.TUTOR || rol == Rol.AMBOS) {
+            Tutor tutor = new Tutor();
+            tutor.setUsuario(this);
+            personas.add(tutor);
         }
-        if (esEstudiante) {
-            this.perfilEstudiante = new Estudiante(this);
-            roles.add(Rol.ESTUDIANTE);
+        if (rol == Rol.ESTUDIANTE || rol == Rol.AMBOS) {
+            Estudiante estudiante = new Estudiante();
+            estudiante.setUsuario(this);
+            personas.add(estudiante);
         }
     }
 
@@ -68,8 +67,39 @@ public class Usuario implements IAutenticable {
                 && passwordHash.equals(password); //faltaría implementar el hash de la contraseña
     }
 
+    public Tutor getPerfilTutor() {
+        for (PersonaPUCP persona : personas) {
+            if (persona instanceof Tutor tutor) return tutor;
+        }
+        return null;
+    }
+
+    public Estudiante getPerfilEstudiante() {
+        for (PersonaPUCP persona : personas) {
+            if (persona instanceof Estudiante estudiante) return estudiante;
+        }
+        return null;
+    }
+
+    public List<PersonaPUCP> getPersonas() { return personas; }
+
     public long getIdUsuario() { return idUsuario; }
     public void setIdUsuario(long idUsuario) { this.idUsuario = idUsuario; }
+
+    public String getNombres() { return nombres; }
+    public void setNombres(String nombres) { this.nombres = nombres; }
+
+    public String getApellidos() { return apellidos; }
+    public void setApellidos(String apellidos) { this.apellidos = apellidos; }
+
+    public int getCodigo() { return codigo; }
+    public void setCodigo(int codigo) { this.codigo = codigo; }
+
+    public String getFacultad() { return facultad; }
+    public void setFacultad(String facultad) { this.facultad = facultad; }
+
+    public String getEspecialidad() { return especialidad; }
+    public void setEspecialidad(String especialidad) { this.especialidad = especialidad; }
 
     public String getCorreoInstitucional() { return correoInstitucional; }
     public void setCorreoInstitucional(String correoInstitucional) { this.correoInstitucional = correoInstitucional; }
@@ -98,51 +128,6 @@ public class Usuario implements IAutenticable {
     public LocalDateTime getCodigoExpiracion() { return codigoExpiracion; }
     public void setCodigoExpiracion(LocalDateTime codigoExpiracion) { this.codigoExpiracion = codigoExpiracion; }
 
-    public Set<Rol> getRoles() { return roles; }
-    public void setRoles(Set<Rol> roles) { this.roles = roles; }
-
-    // Getters and Setters
-    public String getNombres() {
-        return nombres;
-    }
-    public void setNombres(String nombres) {
-        this.nombres = nombres;
-    }
-    public String getApellidos() {
-        return apellidos;
-    }
-    public void setApellidos(String apellidos) {
-        this.apellidos = apellidos;
-    }
-    public int getCodigo() {
-        return codigo;
-    }
-    public void setCodigo(int codigo) {
-        this.codigo = codigo;
-    }
-    public String getFacultad() {
-        return facultad;
-    }
-    public void setFacultad(String facultad) {
-        this.facultad = facultad;
-    }
-    public String getEspecialidad() {
-        return especialidad;
-    }
-    public void setEspecialidad(String especialidad) {
-        this.especialidad = especialidad;
-    }
-
-    //
-    public Tutor getPerfilTutor() {
-        return perfilTutor;
-    }
-
-    public void setPerfilTutor(Tutor perfilTutor) {
-        this.perfilTutor = perfilTutor;
-    }
-
-    public Estudiante getPerfilEstudiante() {
-        return perfilEstudiante;
-    }
+    public Rol getRol() { return rol; }
+    public void setRol(Rol rol) { this.rol = rol; }
 }

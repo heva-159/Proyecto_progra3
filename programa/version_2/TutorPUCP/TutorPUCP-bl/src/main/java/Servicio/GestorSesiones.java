@@ -3,9 +3,9 @@ package Servicio;
 import Academico.Curso;
 import Academico.Postulacion;
 import Academico.Tema;
-import Usuario.Usuario;
 import enums.EstadoAprobacion;
 import enums.EstadoSesion;
+import enums.Rol;
 import Tutoria.Sesion;
 import Usuario.Estudiante;
 import Usuario.Tutor;
@@ -39,23 +39,23 @@ public class GestorSesiones {
         return sesion;
     }
 
-    public void confirmarCheckIn(Sesion sesion, Usuario persona) {
-        if (sesion.getEstado() != EstadoSesion.PROGRAMADA) { //todo: error de lógica
+    public void confirmarCheckIn(Sesion sesion, Rol rol) {
+        if (sesion.getEstado() != EstadoSesion.PROGRAMADA) {
             throw new IllegalStateException("Solo se puede hacer check-in de una sesión programada");
         }
-        if (persona == sesion.getTutor().getUsuario()) sesion.setCheckInTutor(true); //si es tutor
-        else if (persona == sesion.getEstudiante().getUsuario()) sesion.setCheckInEstudiante(true); //si es estudiante
+        if (rol == Rol.TUTOR) sesion.setCheckInTutor(true);
+        else if (rol == Rol.ESTUDIANTE) sesion.setCheckInEstudiante(true);
         if (sesion.isCheckInTutor() && sesion.isCheckInEstudiante()) {
             sesion.setEstado(EstadoSesion.EN_CURSO);
         }
     }
 
-    public void confirmarCheckOut(Sesion sesion, Usuario persona) {
+    public void confirmarCheckOut(Sesion sesion, Rol rol) {
         if (sesion.getEstado() != EstadoSesion.EN_CURSO) {
             throw new IllegalStateException("Solo se puede hacer check-out de una sesión en curso");
         }
-        if (persona == sesion.getTutor().getUsuario()) sesion.setCheckOutTutor(true);
-        else if (persona == sesion.getEstudiante().getUsuario()) sesion.setCheckOutEstudiante(true);
+        if (rol == Rol.TUTOR) sesion.setCheckOutTutor(true);
+        else if (rol == Rol.ESTUDIANTE) sesion.setCheckOutEstudiante(true);
         if (sesion.isCheckOutTutor() && sesion.isCheckOutEstudiante()) {
             sesion.setEstado(EstadoSesion.REALIZADA);
             sesion.setFechaHoraFin(LocalDateTime.now());
