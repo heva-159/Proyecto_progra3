@@ -13,7 +13,7 @@
         <module>TutorPUCP-bl</module>
         <module>TutorPUCP-DBManager</module>
         <module>TutorPUCP-DAO</module>
-        <module>TutorPUCP-app</module>
+        <module>TutorPUCP-App</module>
     </modules>
 
     <properties>

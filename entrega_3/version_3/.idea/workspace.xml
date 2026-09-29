@@ -4,7 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e67c2652-e3f3-46a8-9adc-986149588b36" name="Changes" comment="" />
+    <list default="true" id="e67c2652-e3f3-46a8-9adc-986149588b36" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Clases/GestorAcademico.java" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Clases/GestorAcademico.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Clases/GestorUsuarios.java" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Clases/GestorUsuarios.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Implementacion/GestorAcademicoImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Implementacion/GestorAcademicoImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Implementacion/GestorMensajesImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Implementacion/GestorMensajesImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Implementacion/GestorReclamosImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Implementacion/GestorReclamosImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Implementacion/GestorSesionesImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Implementacion/GestorSesionesImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Implementacion/GestorUsuariosImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Implementacion/GestorUsuariosImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/ServicioCorreoConsola.java" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/ServicioCorreoConsola.java" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -27,12 +36,12 @@
     &quot;assignee&quot;: &quot;heva-159&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/heva-159/Proyecto_progra3.git&quot;,
-    &quot;accountId&quot;: &quot;6ea375a8-5ff2-4bec-a0fe-ce6901c2dd69&quot;
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/heva-159/Proyecto_progra3.git",
+    "accountId": "eaa6f6d1-15cf-427a-b08c-d35c1d2bae50"
   }
-}</component>
+}]]></component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 3,
   &quot;fromUser&quot;: false
@@ -45,24 +54,27 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;prueba1&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/Helena Varona/Documents/PUCP/semestres/2026-2/progra3/Proyecto_progra3/entrega_3/version_3/TutorPUCP/TutorPUCP-DAO/src/main/java/Implementacion&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "main",
+    "junie.onboarding.icon.badge.shown": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/sebas/PUCP/C6/Progra3/TA/TutorPUCP/entrega_3/version_3",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "to.speed.mode.migration.done": "true",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\Helena Varona\Documents\PUCP\semestres\2026-2\progra3\Proyecto_progra3\entrega_3\version_3\TutorPUCP\TutorPUCP-DAO\src\main\java\Implementacion" />
@@ -73,8 +85,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-30f59d01ecdd-37e91769500f-intellij.indexing.shared.core-IU-261.25134.95" />
-        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-IU-261.25134.95" />
+        <option value="bundled-jdk-30f59d01ecdd-34e2839f716b-intellij.indexing.shared.core-IU-262.9437.185" />
+        <option value="bundled-js-predefined-d6986cc7102b-4abd2a77f808-JavaScript-IU-262.9437.185" />
       </set>
     </attachedChunks>
   </component>

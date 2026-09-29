@@ -16,6 +16,10 @@ public interface GestorAcademico {
     void desactivarCurso(Curso curso);
     void reactivarCurso(Curso curso);
 
+    // Crea el curso y todos sus temas iniciales en una sola transaccion:
+    // si falla cualquier tema, no queda el curso guardado sin ellos.
+    Curso registrarCursoConTemas(String nombre, String codigo, List<String> nombresTemas);
+
     Tema registrarTema(Curso curso, String nombre);
     List<Tema> listarTemasPorCurso(Curso curso);
 

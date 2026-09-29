@@ -2,10 +2,12 @@ package pe.edu.pucp.tutorPUCP.bl.Implementacion;
 
 import pe.edu.pucp.tutorPUCP.bl.DAOs.PostulacionDAO;
 import pe.edu.pucp.tutorPUCP.bl.DAOs.SesionDAO;
+import pe.edu.pucp.tutorPUCP.bl.DAOs.TemaDAO;
 import pe.edu.pucp.tutorPUCP.bl.Exeptions.BL_exeption;
 import pe.edu.pucp.tutorPUCP.bl.Clases.GestorSesiones;
 import pe.edu.pucp.tutorPUCP.bl.Impl.PostulacionDAOImpl;
 import pe.edu.pucp.tutorPUCP.bl.Impl.SesionDAOImpl;
+import pe.edu.pucp.tutorPUCP.bl.Impl.TemaDAOImpl;
 import pe.edu.pucp.tutorPUCP.modelo.academico.Curso;
 import pe.edu.pucp.tutorPUCP.modelo.academico.Tema;
 import pe.edu.pucp.tutorPUCP.modelo.enums.EstadoAprobacion;
@@ -17,11 +19,14 @@ import pe.edu.pucp.tutorPUCP.modelo.usuario.Tutor;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Usuario;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class GestorSesionesImpl implements GestorSesiones {
     private final SesionDAO sesionDAO = new SesionDAOImpl();
     private final PostulacionDAO postulacionDAO = new PostulacionDAOImpl();
+    private final TemaDAO temaDAO = new TemaDAOImpl();
 
     @Override
     public Sesion registrarSesion(Tutor tutor, Estudiante estudiante, Curso curso,
@@ -29,10 +34,25 @@ public class GestorSesionesImpl implements GestorSesiones {
         if (!curso.isActivo()) {
             throw new BL_exeption("El curso no esta activo");
         }
+        if (tutor.getUsuario().getIdUsuario() == estudiante.getUsuario().getIdUsuario()) {
+            throw new BL_exeption("El tutor y el estudiante no pueden ser el mismo usuario");
+        }
+        if (fechaHoraInicio == null || !fechaHoraInicio.isAfter(LocalDateTime.now())) {
+            throw new BL_exeption("La sesion debe programarse en una fecha y hora futura");
+        }
         boolean tienePostulacionAprobada = postulacionDAO.listarPorTutor(tutor).stream()
                 .anyMatch(p -> p.getCurso().getIdCurso() == curso.getIdCurso() && p.getEstado() == EstadoAprobacion.APROBADA);
         if (!tienePostulacionAprobada) {
             throw new BL_exeption("El tutor no tiene una postulacion aprobada para este curso");
+        }
+        // se valida contra la BD (no contra tema.getCurso() en memoria) para no depender
+        // de que el caller haya poblado esa referencia correctamente.
+        Set<Integer> idsTemasDelCurso = new HashSet<>();
+        for (Tema t : temaDAO.listarPorCurso(curso)) idsTemasDelCurso.add(t.getIdTema());
+        for (Tema tema : temas) {
+            if (!idsTemasDelCurso.contains(tema.getIdTema())) {
+                throw new BL_exeption("El tema '" + tema.getNombre() + "' no pertenece al curso de la sesion");
+            }
         }
         Sesion sesion = new Sesion(tutor, estudiante, curso, fechaHoraInicio);
         for (Tema tema : temas) sesion.agregarTema(tema);

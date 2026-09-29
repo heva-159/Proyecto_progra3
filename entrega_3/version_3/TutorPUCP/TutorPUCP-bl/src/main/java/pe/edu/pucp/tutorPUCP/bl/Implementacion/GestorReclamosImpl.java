@@ -18,6 +18,22 @@ public class GestorReclamosImpl implements GestorReclamos {
 
     @Override
     public Reclamo registrarReclamo(Sesion sesion, Usuario reclamante, Rol rolReclamante, String motivo) {
+        if (rolReclamante == Rol.TUTOR) {
+            if (sesion.getTutor().getUsuario().getIdUsuario() != reclamante.getIdUsuario()) {
+                throw new BL_exeption("El reclamante no es el tutor de esta sesion");
+            }
+        } else if (rolReclamante == Rol.ESTUDIANTE) {
+            if (sesion.getEstudiante().getUsuario().getIdUsuario() != reclamante.getIdUsuario()) {
+                throw new BL_exeption("El reclamante no es el estudiante de esta sesion");
+            }
+        } else {
+            throw new BL_exeption("El rol del reclamante debe ser TUTOR o ESTUDIANTE, nunca AMBOS");
+        }
+        boolean yaReclamo = reclamoDAO.listarPorSesion(sesion).stream()
+                .anyMatch(r -> r.getReclamante().getIdUsuario() == reclamante.getIdUsuario());
+        if (yaReclamo) {
+            throw new BL_exeption("Este usuario ya registro un reclamo para esta sesion");
+        }
         Reclamo reclamo = new Reclamo(reclamante, rolReclamante, motivo);
         sesion.agregarReclamo(reclamo);
         return reclamoDAO.save(reclamo);
@@ -37,6 +53,10 @@ public class GestorReclamosImpl implements GestorReclamos {
     public void resolverReclamo(Reclamo reclamo, Administrador administrador, boolean aprobar, String resolucion) {
         if (reclamo.getEstado() != EstadoAprobacion.PENDIENTE) {
             throw new BL_exeption("Solo se pueden resolver reclamos pendientes");
+        }
+        // a diferencia de postulacion, ck_reclamo_resolucion exige motivo tanto al aprobar como al rechazar.
+        if (resolucion == null || resolucion.isBlank()) {
+            throw new BL_exeption("Debe indicar una resolucion, tanto para aprobar como para rechazar el reclamo");
         }
         if (aprobar) reclamo.aprobar(administrador, resolucion);
         else reclamo.rechazar(administrador, resolucion);
