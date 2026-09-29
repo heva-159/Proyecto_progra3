@@ -8,7 +8,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="TutorPUCP-model" />
         <module name="TutorPUCP-bl" />
-        <module name="TutorPUCP-app" />
+        <module name="TutorPUCP-App" />
         <module name="TutorPUCP-DAO" />
         <module name="TutorPUCP-DBManager" />
       </profile>

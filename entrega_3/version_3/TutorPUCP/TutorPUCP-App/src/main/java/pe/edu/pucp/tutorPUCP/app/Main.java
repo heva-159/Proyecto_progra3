@@ -5,11 +5,11 @@ import pe.edu.pucp.tutorPUCP.bl.Clases.GestorMensajes;
 import pe.edu.pucp.tutorPUCP.bl.Clases.GestorReclamos;
 import pe.edu.pucp.tutorPUCP.bl.Clases.GestorSesiones;
 import pe.edu.pucp.tutorPUCP.bl.Clases.GestorUsuarios;
-import pe.edu.pucp.tutorPUCP.bl.DAOs.AdministradorDAO;
-import pe.edu.pucp.tutorPUCP.bl.DAOs.UsuarioDAO;
+import pe.edu.pucp.tutorPUCP.dao.DAOs.AdministradorDAO;
+import pe.edu.pucp.tutorPUCP.dao.DAOs.UsuarioDAO;
 import pe.edu.pucp.tutorPUCP.bl.Exeptions.BL_exeption;
-import pe.edu.pucp.tutorPUCP.bl.Impl.AdministradorDAOImpl;
-import pe.edu.pucp.tutorPUCP.bl.Impl.UsuarioDAOImpl;
+import pe.edu.pucp.tutorPUCP.dao.Impl.AdministradorDAOImpl;
+import pe.edu.pucp.tutorPUCP.dao.Impl.UsuarioDAOImpl;
 import pe.edu.pucp.tutorPUCP.bl.Implementacion.GestorAcademicoImpl;
 import pe.edu.pucp.tutorPUCP.bl.Implementacion.GestorMensajesImpl;
 import pe.edu.pucp.tutorPUCP.bl.Implementacion.GestorReclamosImpl;
@@ -95,7 +95,7 @@ public class Main {
 
             // 1) Curso + temas nuevos, en una sola transaccion (registrarCursoConTemas)
             System.out.println("\n== 1. Registrando curso con temas (transaccional) ==");
-            String codigoCurso = "PRB-" + (System.currentTimeMillis() % 100000);
+            String codigoCurso = "PRB-" + (System.currentTimeMillis() % 100000); //para que cuando se ejecute varias veces no falle y registre uno nuevo
             Curso curso = gestorAcademico.registrarCursoConTemas(
                     "Curso de prueba Main",
                     codigoCurso,

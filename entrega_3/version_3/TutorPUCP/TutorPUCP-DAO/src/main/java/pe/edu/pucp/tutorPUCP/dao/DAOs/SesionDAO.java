@@ -1,6 +1,6 @@
-package pe.edu.pucp.tutorPUCP.bl.DAOs;
+package pe.edu.pucp.tutorPUCP.dao.DAOs;
 
-import pe.edu.pucp.tutorPUCP.bl.BaseDAO.BaseDAO;
+import pe.edu.pucp.tutorPUCP.dao.BaseDAO.BaseDAO;
 import pe.edu.pucp.tutorPUCP.dbmanager.TransactionContext;
 import pe.edu.pucp.tutorPUCP.modelo.tutoria.Sesion;
 

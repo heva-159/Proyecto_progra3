@@ -1,4 +1,4 @@
-package pe.edu.pucp.tutorPUCP.bl.BaseDAO;
+package pe.edu.pucp.tutorPUCP.dao.BaseDAO;
 
 import java.util.List;
 

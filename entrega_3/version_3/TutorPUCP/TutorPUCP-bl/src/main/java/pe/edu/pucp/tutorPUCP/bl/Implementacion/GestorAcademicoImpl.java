@@ -1,15 +1,15 @@
 package pe.edu.pucp.tutorPUCP.bl.Implementacion;
 
-import pe.edu.pucp.tutorPUCP.bl.DAOs.CursoDAO;
-import pe.edu.pucp.tutorPUCP.bl.DAOs.PostulacionDAO;
-import pe.edu.pucp.tutorPUCP.bl.DAOs.TarifaDAO;
-import pe.edu.pucp.tutorPUCP.bl.DAOs.TemaDAO;
+import pe.edu.pucp.tutorPUCP.dao.DAOs.CursoDAO;
+import pe.edu.pucp.tutorPUCP.dao.DAOs.PostulacionDAO;
+import pe.edu.pucp.tutorPUCP.dao.DAOs.TarifaDAO;
+import pe.edu.pucp.tutorPUCP.dao.DAOs.TemaDAO;
 import pe.edu.pucp.tutorPUCP.bl.Exeptions.BL_exeption;
 import pe.edu.pucp.tutorPUCP.bl.Clases.GestorAcademico;
-import pe.edu.pucp.tutorPUCP.bl.Impl.CursoDAOImpl;
-import pe.edu.pucp.tutorPUCP.bl.Impl.PostulacionDAOImpl;
-import pe.edu.pucp.tutorPUCP.bl.Impl.TarifaDAOImpl;
-import pe.edu.pucp.tutorPUCP.bl.Impl.TemaDAOImpl;
+import pe.edu.pucp.tutorPUCP.dao.Impl.CursoDAOImpl;
+import pe.edu.pucp.tutorPUCP.dao.Impl.PostulacionDAOImpl;
+import pe.edu.pucp.tutorPUCP.dao.Impl.TarifaDAOImpl;
+import pe.edu.pucp.tutorPUCP.dao.Impl.TemaDAOImpl;
 import pe.edu.pucp.tutorPUCP.dbmanager.TransactionContext;
 import pe.edu.pucp.tutorPUCP.modelo.academico.Curso;
 import pe.edu.pucp.tutorPUCP.modelo.academico.Postulacion;

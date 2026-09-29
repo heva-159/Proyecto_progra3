@@ -1,11 +1,11 @@
 package pe.edu.pucp.tutorPUCP.bl.Implementacion;
 
-import pe.edu.pucp.tutorPUCP.bl.DAOs.AdministradorDAO;
-import pe.edu.pucp.tutorPUCP.bl.DAOs.UsuarioDAO;
+import pe.edu.pucp.tutorPUCP.dao.DAOs.AdministradorDAO;
+import pe.edu.pucp.tutorPUCP.dao.DAOs.UsuarioDAO;
 import pe.edu.pucp.tutorPUCP.bl.Exeptions.BL_exeption;
 import pe.edu.pucp.tutorPUCP.bl.Clases.GestorUsuarios;
-import pe.edu.pucp.tutorPUCP.bl.Impl.AdministradorDAOImpl;
-import pe.edu.pucp.tutorPUCP.bl.Impl.UsuarioDAOImpl;
+import pe.edu.pucp.tutorPUCP.dao.Impl.AdministradorDAOImpl;
+import pe.edu.pucp.tutorPUCP.dao.Impl.UsuarioDAOImpl;
 import pe.edu.pucp.tutorPUCP.modelo.enums.Rol;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Administrador;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Usuario;

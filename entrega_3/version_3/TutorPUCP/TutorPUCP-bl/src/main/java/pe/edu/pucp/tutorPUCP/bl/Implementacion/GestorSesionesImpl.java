@@ -1,13 +1,13 @@
 package pe.edu.pucp.tutorPUCP.bl.Implementacion;
 
-import pe.edu.pucp.tutorPUCP.bl.DAOs.PostulacionDAO;
-import pe.edu.pucp.tutorPUCP.bl.DAOs.SesionDAO;
-import pe.edu.pucp.tutorPUCP.bl.DAOs.TemaDAO;
+import pe.edu.pucp.tutorPUCP.dao.DAOs.PostulacionDAO;
+import pe.edu.pucp.tutorPUCP.dao.DAOs.SesionDAO;
+import pe.edu.pucp.tutorPUCP.dao.DAOs.TemaDAO;
 import pe.edu.pucp.tutorPUCP.bl.Exeptions.BL_exeption;
 import pe.edu.pucp.tutorPUCP.bl.Clases.GestorSesiones;
-import pe.edu.pucp.tutorPUCP.bl.Impl.PostulacionDAOImpl;
-import pe.edu.pucp.tutorPUCP.bl.Impl.SesionDAOImpl;
-import pe.edu.pucp.tutorPUCP.bl.Impl.TemaDAOImpl;
+import pe.edu.pucp.tutorPUCP.dao.Impl.PostulacionDAOImpl;
+import pe.edu.pucp.tutorPUCP.dao.Impl.SesionDAOImpl;
+import pe.edu.pucp.tutorPUCP.dao.Impl.TemaDAOImpl;
 import pe.edu.pucp.tutorPUCP.modelo.academico.Curso;
 import pe.edu.pucp.tutorPUCP.modelo.academico.Tema;
 import pe.edu.pucp.tutorPUCP.modelo.enums.EstadoAprobacion;

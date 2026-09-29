@@ -1,9 +1,9 @@
 package pe.edu.pucp.tutorPUCP.bl.Implementacion;
 
-import pe.edu.pucp.tutorPUCP.bl.DAOs.ReclamoDAO;
+import pe.edu.pucp.tutorPUCP.dao.DAOs.ReclamoDAO;
 import pe.edu.pucp.tutorPUCP.bl.Exeptions.BL_exeption;
 import pe.edu.pucp.tutorPUCP.bl.Clases.GestorReclamos;
-import pe.edu.pucp.tutorPUCP.bl.Impl.ReclamoDAOImpl;
+import pe.edu.pucp.tutorPUCP.dao.Impl.ReclamoDAOImpl;
 import pe.edu.pucp.tutorPUCP.modelo.enums.EstadoAprobacion;
 import pe.edu.pucp.tutorPUCP.modelo.enums.Rol;
 import pe.edu.pucp.tutorPUCP.modelo.tutoria.Reclamo;

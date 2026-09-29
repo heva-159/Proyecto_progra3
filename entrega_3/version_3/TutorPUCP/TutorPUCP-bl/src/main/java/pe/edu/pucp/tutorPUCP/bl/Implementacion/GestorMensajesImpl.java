@@ -1,9 +1,9 @@
 package pe.edu.pucp.tutorPUCP.bl.Implementacion;
 
-import pe.edu.pucp.tutorPUCP.bl.DAOs.MensajeDAO;
+import pe.edu.pucp.tutorPUCP.dao.DAOs.MensajeDAO;
 import pe.edu.pucp.tutorPUCP.bl.Exeptions.BL_exeption;
 import pe.edu.pucp.tutorPUCP.bl.Clases.GestorMensajes;
-import pe.edu.pucp.tutorPUCP.bl.Impl.MensajeDAOImpl;
+import pe.edu.pucp.tutorPUCP.dao.Impl.MensajeDAOImpl;
 import pe.edu.pucp.tutorPUCP.modelo.enums.EstadoCuenta;
 import pe.edu.pucp.tutorPUCP.modelo.tutoria.Mensaje;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Usuario;

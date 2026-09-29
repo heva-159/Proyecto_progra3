@@ -1,6 +1,6 @@
-package pe.edu.pucp.tutorPUCP.bl.Impl;
+package pe.edu.pucp.tutorPUCP.dao.Impl;
 
-import pe.edu.pucp.tutorPUCP.bl.DAOs.PostulacionDAO;
+import pe.edu.pucp.tutorPUCP.dao.DAOs.PostulacionDAO;
 import pe.edu.pucp.tutorPUCP.dbmanager.DBManager;
 import pe.edu.pucp.tutorPUCP.dbmanager.TransactionContext;
 import pe.edu.pucp.tutorPUCP.modelo.academico.Postulacion;
