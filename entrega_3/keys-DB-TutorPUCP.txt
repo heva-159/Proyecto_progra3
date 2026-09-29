@@ -1,7 +1,0 @@
-Perfil: admin
-contraseña: tutorpucp1234567
-
-Instancia: TutorPucp
-BD: tutorPucpBD
-
-tutorpucp.c4be20g7rqez.us-east-1.rds.amazonaws.com
