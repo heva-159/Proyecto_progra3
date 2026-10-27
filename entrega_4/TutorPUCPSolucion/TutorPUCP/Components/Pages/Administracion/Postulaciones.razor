@@ -1,8 +1,35 @@
 ﻿@page "/admin/postulaciones"
 
-@* Responsable: Integrante 2 - Administrador: catálogo *@
-@* Enlazar: botón "Revisar" -> /admin/postulaciones/revisar *@
-
 <PageTitle>Postulaciones pendientes</PageTitle>
 
-<h1>Postulaciones pendientes</h1>
+<h1 class="h3 mb-1">Postulaciones pendientes</h1>
+<p class="text-muted mb-4">Revisa el certificado de notas de cada tutor y aprueba o rechaza su postulación al curso.</p>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle mb-0">
+                <thead class="table-primary">
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Tutor</th>
+                        <th>Código PUCP</th>
+                        <th>Curso</th>
+                        <th>Certificado</th>
+                        <th class="text-end">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>20/09/2026</td>
+                        <td>Ana Lucia Quispe Huaman</td>
+                        <td>20201234</td>
+                        <td>1MAT05 - Calculo Diferencial</td>
+                        <td>certificados/20201234_1MAT05.pdf</td>
+                        <td class="text-end"><a class="btn btn-sm btn-primary" href="/admin/postulaciones/revisar">Revisar</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -93,6 +93,26 @@ public class Main {
             List<Tema> temasDelCurso = gestorAcademico.listarTemasPorCurso(curso);
             verificar("Curso con temas: se guardo el curso y sus 2 temas", curso.getIdCurso() > 0 && temasDelCurso.size() == 2);
 
+            // 1b) Gestion del catalogo: modificar curso, registrar/modificar/eliminar un tema (RF006, RF007)
+            System.out.println("\n== 1b. Gestion de cursos y temas ==");
+            gestorAcademico.modificarCurso(curso, codigoCurso, "Curso de prueba Main (modificado)");
+            System.out.println("Curso modificado: " + gestorAcademico.buscarCursoPorCodigo(codigoCurso).getNombre());
+
+            Tema temaExtra = gestorAcademico.registrarTema(curso, "Tema extra");
+            gestorAcademico.modificarTema(temaExtra, "Tema extra (modificado)");
+            System.out.println("Temas tras registrar y modificar: " + gestorAcademico.listarTemasPorCurso(curso).size());
+            gestorAcademico.eliminarTema(temaExtra);
+            System.out.println("Temas tras eliminar el tema extra: " + gestorAcademico.listarTemasPorCurso(curso).size());
+
+            // 2) El tutor postula al curso y el administrador aprueba
+            System.out.println("\n== 2. Postulacion del tutor al curso ==");
+            Postulacion postulacion = gestorAcademico.postular(tutor, curso, "certificado_tutor.pdf");
+            System.out.println("Postulacion registrada, estado=" + postulacion.getEstado());
+
+            // RF005: el administrador consulta las pendientes antes de resolver
+            List<Postulacion> pendientes = gestorAcademico.listarPostulacionesPendientes();
+            System.out.println("Postulaciones pendientes: " + pendientes.size());
+
             // el tutor postula al curso y el administrador aprueba
             Postulacion postulacion = gestorAcademico.postular(tutor, curso, "certificado_tutor.pdf");
             verificar("Postulacion registrada como PENDIENTE", postulacion.getIdPostulacion() > 0);

@@ -1,7 +1,96 @@
 ﻿@page "/admin/cursos"
 
-@* Responsable: Integrante 2 - Administrador: catálogo *@
-
 <PageTitle>Cursos</PageTitle>
 
-<h1>Cursos</h1>
+<h1 class="h3 mb-1">Cursos</h1>
+<p class="text-muted mb-4">Registra, modifica, desactiva o reactiva los cursos del catálogo académico.</p>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h2 class="h5 mb-3">Registrar curso</h2>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label for="codigo" class="form-label">Código</label>
+                <input id="codigo" type="text" class="form-control" />
+            </div>
+            <div class="col-md-8">
+                <label for="nombre" class="form-label">Nombre</label>
+                <input id="nombre" type="text" class="form-control" />
+            </div>
+            <div class="col-12">
+                <label for="temasIniciales" class="form-label">Temas iniciales</label>
+                <textarea id="temasIniciales" class="form-control" rows="3" placeholder="Un tema por línea"></textarea>
+                <div class="form-text">Opcional. Luego puedes agregar más temas desde la pantalla de temas.</div>
+            </div>
+        </div>
+        <div class="d-flex gap-2 mt-3">
+            <button type="button" class="btn btn-primary">Guardar curso</button>
+            <button type="button" class="btn btn-outline-secondary">Limpiar</button>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h2 class="h5 mb-3">Catálogo de cursos</h2>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle mb-0">
+                <thead class="table-primary">
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Temas</th>
+                        <th>Estado</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1INF01</td>
+                        <td>Fundamentos de Programacion</td>
+                        <td>3</td>
+                        <td><span class="badge text-bg-success">Activo</span></td>
+                        <td class="text-end text-nowrap">
+                            <button type="button" class="btn btn-sm btn-outline-primary">Editar</button>
+                            <button type="button" class="btn btn-sm btn-outline-danger">Desactivar</button>
+                            <a class="btn btn-sm btn-outline-secondary" href="/admin/temas">Ver temas</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>1MAT05</td>
+                        <td>Calculo Diferencial</td>
+                        <td>3</td>
+                        <td><span class="badge text-bg-success">Activo</span></td>
+                        <td class="text-end text-nowrap">
+                            <button type="button" class="btn btn-sm btn-outline-primary">Editar</button>
+                            <button type="button" class="btn btn-sm btn-outline-danger">Desactivar</button>
+                            <a class="btn btn-sm btn-outline-secondary" href="/admin/temas">Ver temas</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>1FIS01</td>
+                        <td>Fisica 1</td>
+                        <td>2</td>
+                        <td><span class="badge text-bg-success">Activo</span></td>
+                        <td class="text-end text-nowrap">
+                            <button type="button" class="btn btn-sm btn-outline-primary">Editar</button>
+                            <button type="button" class="btn btn-sm btn-outline-danger">Desactivar</button>
+                            <a class="btn btn-sm btn-outline-secondary" href="/admin/temas">Ver temas</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>1QUI01</td>
+                        <td>Quimica 1</td>
+                        <td>1</td>
+                        <td><span class="badge text-bg-secondary">Inactivo</span></td>
+                        <td class="text-end text-nowrap">
+                            <button type="button" class="btn btn-sm btn-outline-primary">Editar</button>
+                            <button type="button" class="btn btn-sm btn-outline-success">Reactivar</button>
+                            <a class="btn btn-sm btn-outline-secondary" href="/admin/temas">Ver temas</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,7 +1,62 @@
 ﻿@page "/admin/postulaciones/revisar"
 
-@* Responsable: Integrante 2 - Administrador: catálogo *@
-
 <PageTitle>Revisar postulación</PageTitle>
 
-<h1>Revisar postulación</h1>
+<a class="small d-inline-block mb-2" href="/admin/postulaciones">← Volver a postulaciones</a>
+<h1 class="h3 mb-1">Revisar postulación</h1>
+<p class="text-muted mb-4">Verifica el certificado de notas antes de aprobar o rechazar la postulación.</p>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Tutor</h2>
+                <dl class="row mb-0">
+                    <dt class="col-sm-5">Nombre</dt>
+                    <dd class="col-sm-7">Ana Lucia Quispe Huaman</dd>
+                    <dt class="col-sm-5">Código PUCP</dt>
+                    <dd class="col-sm-7">20201234</dd>
+                    <dt class="col-sm-5">Correo</dt>
+                    <dd class="col-sm-7">a20201234@pucp.edu.pe</dd>
+                    <dt class="col-sm-5">Facultad</dt>
+                    <dd class="col-sm-7">Ciencias e Ingenieria</dd>
+                    <dt class="col-sm-5">Especialidad</dt>
+                    <dd class="col-sm-7 mb-0">Ingenieria Informatica</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Postulación</h2>
+                <dl class="row">
+                    <dt class="col-sm-5">Curso</dt>
+                    <dd class="col-sm-7">1MAT05 - Calculo Diferencial</dd>
+                    <dt class="col-sm-5">Fecha</dt>
+                    <dd class="col-sm-7">20/09/2026</dd>
+                    <dt class="col-sm-5">Estado</dt>
+                    <dd class="col-sm-7"><span class="badge text-bg-warning">Pendiente</span></dd>
+                    <dt class="col-sm-5">Certificado</dt>
+                    <dd class="col-sm-7">certificados/20201234_1MAT05.pdf</dd>
+                </dl>
+                <button type="button" class="btn btn-sm btn-outline-primary">Ver certificado (PDF)</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h2 class="h5 mb-3">Resolución</h2>
+        <label for="motivo" class="form-label">Motivo</label>
+        <textarea id="motivo" class="form-control" rows="3"></textarea>
+        <div class="form-text">Obligatorio solo si rechazas la postulación. La fecha de revisión se registra automáticamente.</div>
+
+        <div class="d-flex flex-wrap gap-2 mt-4">
+            <a class="btn btn-primary" href="/admin/postulaciones">Aprobar</a>
+            <a class="btn btn-outline-danger" href="/admin/postulaciones">Rechazar</a>
+            <a class="btn btn-outline-secondary ms-auto" href="/admin/postulaciones">Volver</a>
+        </div>
+    </div>
+</div>

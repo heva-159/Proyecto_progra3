@@ -95,7 +95,7 @@ public class Main {
 
             // 1) Curso + temas nuevos, en una sola transaccion (registrarCursoConTemas)
             System.out.println("\n== 1. Registrando curso con temas (transaccional) ==");
-            String codigoCurso = "PRB-" + (System.currentTimeMillis() % 100000); //para que cuando se ejecute varias veces no falle y registre uno nuevo
+            String codigoCurso = "PRB-" + (System.currentTimeMillis() % 100000);
             Curso curso = gestorAcademico.registrarCursoConTemas(
                     "Curso de prueba Main",
                     codigoCurso,
@@ -109,6 +109,11 @@ public class Main {
             Postulacion postulacion = gestorAcademico.postular(tutor, curso, "certificado_tutor.pdf");
             System.out.println("Postulacion registrada, estado=" + postulacion.getEstado());
 
+            // Se espera un momento antes de resolver la postulacion, porque la BD exige
+            // (ck_postulacion_fechas) que fecha_resolucion sea >= fecha_postulacion, y si
+            // ambas se calculan casi al mismo tiempo, la precision de milisegundos al
+            // guardar cada fecha puede hacer que la resolucion "parezca" anterior.
+            Thread.sleep(1500);
             gestorAcademico.resolverPostulacion(postulacion, administrador, true, "Certificado valido");
             System.out.println("Postulacion resuelta, estado=" + postulacion.getEstado());
 
