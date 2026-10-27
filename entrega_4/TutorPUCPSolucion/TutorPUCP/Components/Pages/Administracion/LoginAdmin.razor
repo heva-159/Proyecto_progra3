@@ -1,0 +1,27 @@
+﻿@page "/admin/login"
+@layout AuthLayout
+
+<PageTitle>Acceso Administrador</PageTitle>
+
+<p class="text-center text-muted small mb-4">Solo personal autorizado</p>
+
+<div class="card shadow-sm mx-auto" style="max-width: 420px;">
+    <div class="card-body p-4">
+        <h1 class="h3 mb-4 text-center">Iniciar sesión</h1>
+
+        <div class="mb-3">
+            <label for="correo" class="form-label">Correo de administrador</label>
+            <input id="correo" type="email" class="form-control" placeholder="admin@gmail.com" />
+        </div>
+        <div class="mb-3">
+            <label for="password" class="form-label">Contraseña</label>
+            <input id="password" type="password" class="form-control" />
+        </div>
+
+        <a class="btn btn-primary w-100" href="/admin">Ingresar</a>
+
+        <div class="d-flex justify-content-between mt-3 small">
+            <a href="/login">Volver al acceso de usuarios</a>
+        </div>
+    </div>
+</div>

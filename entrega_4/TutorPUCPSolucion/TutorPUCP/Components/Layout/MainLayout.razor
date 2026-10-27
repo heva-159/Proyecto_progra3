@@ -1,0 +1,24 @@
+﻿@inherits LayoutComponentBase
+
+<div class="page">
+    <aside class="sidebar bg-primary">
+        <NavMenu />
+    </aside>
+
+    <div class="contenido">
+        <div class="d-flex justify-content-end align-items-center gap-4 bg-white border-bottom px-4 py-3 sticky-top">
+            <a href="/cambiar-rol">Cambiar rol</a>
+            <a href="/login">Cerrar sesión</a>
+        </div>
+
+        <main class="container py-4">
+            @Body
+        </main>
+    </div>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    Ocurrió un error inesperado.
+    <a href="." class="reload">Recargar</a>
+    <span class="dismiss">🗙</span>
+</div>

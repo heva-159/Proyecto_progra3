@@ -1,0 +1,27 @@
+﻿@page "/verificar-cuenta"
+@layout AuthLayout
+
+<PageTitle>Verificar cuenta</PageTitle>
+
+<div class="card shadow-sm mx-auto" style="max-width: 420px;">
+    <div class="card-body p-4">
+        <h1 class="h3 mb-3 text-center">Verificar cuenta</h1>
+        <p class="text-muted text-center">
+            Enviamos un código de 6 dígitos a tu correo institucional. El código es válido por 15 minutos.
+        </p>
+
+        <div class="mb-3">
+            <label for="codigoVerificacion" class="form-label">Código de verificación</label>
+            <input id="codigoVerificacion" type="text" class="form-control form-control-lg text-center fs-3"
+                   style="letter-spacing: .5rem;" maxlength="6" inputmode="numeric"
+                   autocomplete="one-time-code" placeholder="000000" />
+        </div>
+
+        <a class="btn btn-primary w-100" href="/login">Verificar</a>
+        <button type="button" class="btn btn-outline-secondary w-100 mt-2">Reenviar código</button>
+
+        <div class="text-center mt-3 small">
+            <a href="/registro">Volver al registro</a>
+        </div>
+    </div>
+</div>

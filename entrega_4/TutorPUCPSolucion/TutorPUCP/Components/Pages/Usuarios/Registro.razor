@@ -1,0 +1,176 @@
+﻿@page "/registro"
+@layout AuthLayout
+
+<PageTitle>Registro</PageTitle>
+
+<div class="card shadow-sm">
+    <div class="card-body p-4">
+        <h1 class="h3 mb-4 text-center">Registro</h1>
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label for="nombres" class="form-label">Nombres</label>
+                <input id="nombres" type="text" class="form-control" />
+            </div>
+            <div class="col-md-6">
+                <label for="apellidos" class="form-label">Apellidos</label>
+                <input id="apellidos" type="text" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <label for="codigo" class="form-label">Código PUCP</label>
+                <input id="codigo" type="text" class="form-control" maxlength="8" />
+            </div>
+            <div class="col-md-8">
+                <label for="correo" class="form-label">Correo institucional</label>
+                <input id="correo" type="email" class="form-control" placeholder="usuario@pucp.edu.pe" />
+                <div class="form-text">Debe terminar en @@pucp.edu.pe</div>
+            </div>
+
+                        <div class="col-md-6">
+                <label for="facultad" class="form-label">Facultad</label>
+                <select id="facultad" class="form-select" @bind="facultad" @bind:after="LimpiarEspecialidad">
+                    <option value="">Selecciona una facultad</option>
+                    @foreach (var f in carrerasPorFacultad.Keys)
+                    {
+                        <option value="@f">@f</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label for="especialidad" class="form-label">Especialidad</label>
+                <select id="especialidad" class="form-select" @bind="especialidad" disabled="@SinFacultad">
+                    <option value="">Selecciona una especialidad</option>
+                    @foreach (var c in CarrerasDeLaFacultad)
+                    {
+                        <option value="@c">@c</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label for="password" class="form-label">Contraseña</label>
+                <input id="password" type="password" class="form-control" />
+            </div>
+            <div class="col-md-6">
+                <label for="confirmar" class="form-label">Confirmar contraseña</label>
+                <input id="confirmar" type="password" class="form-control" />
+            </div>
+
+            <div class="col-12">
+                <label class="form-label d-block">Quiero registrarme como</label>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="rol" id="rolEstudiante" checked />
+                    <label class="form-check-label" for="rolEstudiante">Estudiante</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="rol" id="rolTutor" />
+                    <label class="form-check-label" for="rolTutor">Tutor</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="rol" id="rolAmbos" />
+                    <label class="form-check-label" for="rolAmbos">Ambos</label>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="consentimientoDatos" />
+                    <label class="form-check-label" for="consentimientoDatos">Acepto el tratamiento de mis datos personales</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="consentimientoCalificaciones" />
+                    <label class="form-check-label" for="consentimientoCalificaciones">Acepto que mis calificaciones sean visibles para administración</label>
+                </div>
+            </div>
+        </div>
+
+        <a class="btn btn-primary w-100 mt-4" href="/verificar-cuenta">Registrarme</a>
+
+        <div class="text-center mt-3 small">
+            ¿Ya tienes cuenta? <a href="/login">Inicia sesión</a>
+        </div>
+    </div>
+</div>
+
+
+                    @code {
+    private string facultad = "";
+    private string especialidad = "";
+
+    private readonly Dictionary<string, string[]> carrerasPorFacultad = new()
+    {
+        ["Arquitectura y Urbanismo"] = new[] { "Arquitectura" },
+        ["Arte y Diseño"] = new[]
+        {
+            "Educación Artística",
+            "Diseño Gráfico",
+            "Diseño Industrial",
+            "Escultura",
+            "Pintura",
+            "Arte, moda y diseño textil",
+            "Grabado"
+        },
+        ["Artes Escénicas"] = new[] { "Danza", "Teatro", "Música", "Creación y Producción Escénica" },
+        ["Ciencias Contables"] = new[] { "Contabilidad" },
+        ["Ciencias e Ingeniería"] = new[]
+        {
+            "Estadística",
+            "Física",
+            "Matemáticas",
+            "Química",
+            "Ingeniería Ambiental y Sostenible",
+            "Ingeniería Biomédica PUCP",
+            "Ingeniería Civil",
+            "Ingeniería de las Telecomunicaciones",
+            "Ingeniería de Minas",
+            "Ingeniería Electrónica",
+            "Ingeniería Geológica",
+            "Ingeniería Industrial",
+            "Ingeniería Informática",
+            "Ingeniería Mecánica",
+            "Ingeniería Mecatrónica",
+            "Ingeniería Química"
+        },
+        ["Ciencias Sociales"] = new[]
+        {
+            "Antropología",
+            "Ciencia Política y Gobierno",
+            "Economía",
+            "Finanzas",
+            "Relaciones Internacionales",
+            "Sociología"
+        },
+        ["Ciencias y Artes de la Comunicación"] = new[]
+        {
+            "Comunicación Audiovisual",
+            "Comunicación para el desarrollo",
+            "Publicidad",
+            "Periodismo"
+        },
+        ["Derecho"] = new[] { "Derecho" },
+        ["Educación"] = new[] { "Educación Primaria", "Educación Inicial", "Educación Secundaria" },
+        ["Estudios Generales Ciencias"] = new[] { "Sin especialidad (Estudios Generales)" },
+        ["Estudios Generales Letras"] = new[] { "Sin especialidad (Estudios Generales)" },
+        ["Gastronomía, Hotelería y Turismo"] = new[] { "Gastronomía", "Hotelería", "Turismo" },
+        ["Gestión y Alta Dirección"] = new[] { "Gestión" },
+        ["Letras y Ciencias Humanas"] = new[]
+        {
+            "Arqueología",
+            "Ciencias de la Información",
+            "Filosofía",
+            "Geografía y Medio Ambiente",
+            "Historia",
+            "Humanidades",
+            "Lingüística y Literatura"
+        },
+        ["Psicología"] = new[] { "Psicología" },
+    };
+
+    private bool SinFacultad => facultad == "";
+
+    private IEnumerable<string> CarrerasDeLaFacultad =>
+        carrerasPorFacultad.TryGetValue(facultad, out var carreras) ? carreras : Array.Empty<string>();
+
+    private void LimpiarEspecialidad() => especialidad = "";
+}
