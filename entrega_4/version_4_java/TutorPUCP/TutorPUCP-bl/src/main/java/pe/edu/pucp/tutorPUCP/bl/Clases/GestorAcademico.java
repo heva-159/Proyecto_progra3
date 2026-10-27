@@ -13,7 +13,8 @@ import java.util.List;
 public interface GestorAcademico {
     // ---- Curso ----
     Curso registrarCurso(String nombre, String codigo);
-    Curso modificarCurso(Curso curso);
+    // Falla si el curso no existe o si otro curso ya usa ese codigo.
+    void modificarCurso(Curso curso, String codigo, String nombre);
     // Eliminacion logica: el curso queda inactivo y conserva sus temas, postulaciones y sesiones.
     void eliminarCurso(Curso curso);
     // Devuelve null si no existe.
@@ -22,7 +23,6 @@ public interface GestorAcademico {
     Curso buscarCursoPorCodigo(String codigo);
     void desactivarCurso(Curso curso);
     void reactivarCurso(Curso curso);
-    void modificarCurso(Curso curso, String codigo, String nombre);
 
     // Crea el curso y todos sus temas iniciales en una sola transaccion:
     // si falla cualquier tema, no queda el curso guardado sin ellos.
@@ -30,13 +30,13 @@ public interface GestorAcademico {
 
     // ---- Tema ----
     Tema registrarTema(Curso curso, String nombre);
-    Tema modificarTema(Tema tema);
+    // El tema debe traer su curso (los de listarTemasPorCurso ya lo traen). Falla si el tema no existe.
+    void modificarTema(Tema tema, String nombre);
+    // Falla si el tema no existe o si ya se uso en una sesion. Tambien lo saca de la coleccion de temas de su curso.
     void eliminarTema(Tema tema);
     Tema obtenerTemaPorId(int idTema);
     List<Tema> listarTemas();
     List<Tema> listarTemasPorCurso(Curso curso);
-    void modificarTema(Tema tema, String nombre);
-    void eliminarTema(Tema tema);
 
     // ---- Postulacion ----
     Postulacion postular(Tutor tutor, Curso curso, String archivoCertificadoUrl);

@@ -46,21 +46,6 @@ public class GestorAcademicoImpl implements GestorAcademico {
         return cursoDAO.save(curso);
     }
 
-    @Override
-    public Curso modificarCurso(Curso curso) {
-        if (cursoDAO.load(curso.getIdCurso()) == null) {
-            throw new BL_exeption("El curso no existe");
-        }
-        if (curso.getNombre() == null || curso.getNombre().isBlank()) {
-            throw new BL_exeption("El nombre del curso es obligatorio");
-        }
-        Curso conMismoCodigo = cursoDAO.buscarPorCodigo(curso.getCodigo());
-        if (conMismoCodigo != null && conMismoCodigo.getIdCurso() != curso.getIdCurso()) {
-            throw new BL_exeption("Ya existe otro curso con ese codigo");
-        }
-        return cursoDAO.update(curso);
-    }
-
     // eliminacion logica (el SP deja el curso inactivo)
     @Override
     public void eliminarCurso(Curso curso) {
@@ -101,6 +86,9 @@ public class GestorAcademicoImpl implements GestorAcademico {
     @Override
     public void modificarCurso(Curso curso, String codigo, String nombre) {
         validarDatosCurso(codigo, nombre);
+        if (cursoDAO.load(curso.getIdCurso()) == null) {
+            throw new BL_exeption("El curso no existe");
+        }
         Curso otro = cursoDAO.buscarPorCodigo(codigo);
         if (otro != null && otro.getIdCurso() != curso.getIdCurso()) {
             throw new BL_exeption("Ya existe otro curso con ese codigo");
@@ -152,42 +140,6 @@ public class GestorAcademicoImpl implements GestorAcademico {
     }
 
     @Override
-    public Tema modificarTema(Tema tema) {
-        Tema guardado = temaDAO.load(tema.getIdTema());
-        if (guardado == null) {
-            throw new BL_exeption("El tema no existe");
-        }
-        if (tema.getNombre() == null || tema.getNombre().isBlank()) {
-            throw new BL_exeption("El nombre del tema es obligatorio");
-        }
-        // el tema no cambia de curso: se valida el nombre dentro del curso que ya tiene guardado
-        if (tema.getCurso() == null) {
-            tema.setCurso(guardado.getCurso());
-        }
-        for (Tema existente : temaDAO.listarPorCurso(guardado.getCurso())) {
-            if (existente.getIdTema() != tema.getIdTema() && existente.getNombre().equalsIgnoreCase(tema.getNombre())) {
-                throw new BL_exeption("El curso ya tiene un tema con ese nombre");
-            }
-        }
-        return temaDAO.update(tema);
-    }
-
-    @Override
-    public void eliminarTema(Tema tema) {
-        if (temaDAO.load(tema.getIdTema()) == null) {
-            throw new BL_exeption("El tema no existe");
-        }
-        try {
-            temaDAO.remove(tema);
-        } catch (RuntimeException e) {
-            throw new BL_exeption("No se puede eliminar el tema: ya se uso en alguna sesion");
-        }
-        if (tema.getCurso() != null) {
-            tema.getCurso().quitarTema(tema);
-        }
-    }
-
-    @Override
     public Tema obtenerTemaPorId(int idTema) {
         return temaDAO.load(idTema);
     }
@@ -208,6 +160,9 @@ public class GestorAcademicoImpl implements GestorAcademico {
         if (nombre == null || nombre.isBlank()) {
             throw new BL_exeption("El nombre del tema es obligatorio");
         }
+        if (temaDAO.load(tema.getIdTema()) == null) {
+            throw new BL_exeption("El tema no existe");
+        }
         for (Tema existente : temaDAO.listarPorCurso(tema.getCurso())) {
             if (existente.getIdTema() != tema.getIdTema()
                     && existente.getNombre().equalsIgnoreCase(nombre)) {
@@ -222,12 +177,20 @@ public class GestorAcademicoImpl implements GestorAcademico {
     // la BD no deja borrarlo (fk_sesion_tema_tema) y se avisa con un mensaje claro.
     @Override
     public void eliminarTema(Tema tema) {
+        if (temaDAO.load(tema.getIdTema()) == null) {
+            throw new BL_exeption("El tema no existe");
+        }
         try {
             temaDAO.remove(tema);
         } catch (RuntimeException e) {
             throw new BL_exeption("No se pudo eliminar el tema (puede estar usado en una sesion): " + e.getMessage());
         }
+        // la relacion es bidireccional: el tema tambien sale de la coleccion de temas de su curso
+        if (tema.getCurso() != null) {
+            tema.getCurso().quitarTema(tema);
+        }
     }
+
     // ---- Postulacion ----
 
     @Override

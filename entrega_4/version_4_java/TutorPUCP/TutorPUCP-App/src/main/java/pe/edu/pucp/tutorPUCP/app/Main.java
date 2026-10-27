@@ -31,7 +31,6 @@ import java.util.List;
 
 /**
  * Main de prueba (tester) del modulo TutorPUCP-app.
- *
  */
 
 public class Main {
@@ -93,8 +92,8 @@ public class Main {
             List<Tema> temasDelCurso = gestorAcademico.listarTemasPorCurso(curso);
             verificar("Curso con temas: se guardo el curso y sus 2 temas", curso.getIdCurso() > 0 && temasDelCurso.size() == 2);
 
-            // 1b) Gestion del catalogo: modificar curso, registrar/modificar/eliminar un tema (RF006, RF007)
-            System.out.println("\n== 1b. Gestion de cursos y temas ==");
+            // gestion del catalogo: modificar curso, registrar/modificar/eliminar un tema (RF006, RF007)
+            System.out.println("\n-- Gestion de cursos y temas --");
             gestorAcademico.modificarCurso(curso, codigoCurso, "Curso de prueba Main (modificado)");
             System.out.println("Curso modificado: " + gestorAcademico.buscarCursoPorCodigo(codigoCurso).getNombre());
 
@@ -103,19 +102,23 @@ public class Main {
             System.out.println("Temas tras registrar y modificar: " + gestorAcademico.listarTemasPorCurso(curso).size());
             gestorAcademico.eliminarTema(temaExtra);
             System.out.println("Temas tras eliminar el tema extra: " + gestorAcademico.listarTemasPorCurso(curso).size());
+            verificar("Catalogo (RF006, RF007): el curso quedo modificado y el tema extra ya no esta",
+                    "Curso de prueba Main (modificado)".equals(gestorAcademico.buscarCursoPorCodigo(codigoCurso).getNombre())
+                            && gestorAcademico.listarTemasPorCurso(curso).size() == 2);
+            verificar("Catalogo: el tema eliminado tambien salio de la coleccion de temas del curso en memoria",
+                    curso.getTemas().size() == 2 && !curso.getTemas().contains(temaExtra));
 
-            // 2) El tutor postula al curso y el administrador aprueba
-            System.out.println("\n== 2. Postulacion del tutor al curso ==");
+            // el tutor postula al curso y el administrador aprueba
+            System.out.println("\n-- Postulacion del tutor al curso --");
             Postulacion postulacion = gestorAcademico.postular(tutor, curso, "certificado_tutor.pdf");
-            System.out.println("Postulacion registrada, estado=" + postulacion.getEstado());
+            verificar("Postulacion registrada como PENDIENTE", postulacion.getIdPostulacion() > 0);
 
             // RF005: el administrador consulta las pendientes antes de resolver
             List<Postulacion> pendientes = gestorAcademico.listarPostulacionesPendientes();
             System.out.println("Postulaciones pendientes: " + pendientes.size());
+            verificar("RF005: la postulacion nueva aparece entre las pendientes",
+                    pendientes.stream().anyMatch(p -> p.getIdPostulacion() == postulacion.getIdPostulacion()));
 
-            // el tutor postula al curso y el administrador aprueba
-            Postulacion postulacion = gestorAcademico.postular(tutor, curso, "certificado_tutor.pdf");
-            verificar("Postulacion registrada como PENDIENTE", postulacion.getIdPostulacion() > 0);
             gestorAcademico.resolverPostulacion(postulacion, administrador, true, "Certificado valido");
             System.out.println("Postulacion resuelta, estado=" + postulacion.getEstado());
 
@@ -187,6 +190,9 @@ public class Main {
             verificar("Postulacion: obtener por id y listar",
                     gestorAcademico.obtenerPostulacionPorId(postulacion.getIdPostulacion()) != null
                             && !gestorAcademico.listarPostulaciones().isEmpty());
+            verificar("RF005: la postulacion ya resuelta no figura entre las pendientes",
+                    gestorAcademico.listarPostulacionesPendientes().stream()
+                            .noneMatch(p -> p.getIdPostulacion() == postulacion.getIdPostulacion()));
             verificar("Sesion: obtener por id y listar",
                     gestorSesiones.obtenerSesionPorId(sesion.getIdSesion()) != null
                             && !gestorSesiones.listarSesiones().isEmpty());
@@ -202,6 +208,12 @@ public class Main {
                     () -> gestorReclamos.eliminarReclamo(reclamo));
             verificarRechazo("No se puede registrar un curso con un codigo repetido",
                     () -> gestorAcademico.registrarCurso("Otro curso", codigoCurso));
+            verificarRechazo("No se puede modificar un curso que no existe",
+                    () -> gestorAcademico.modificarCurso(new Curso("Inexistente", "NOEXISTE"), "NOEXISTE", "Inexistente"));
+            verificarRechazo("No se puede modificar un tema que no existe",
+                    () -> gestorAcademico.modificarTema(new Tema("Inexistente"), "Otro nombre"));
+            verificarRechazo("No se puede eliminar un tema que no existe",
+                    () -> gestorAcademico.eliminarTema(new Tema("Inexistente")));
             verificarRechazo("No se puede registrar un usuario con un correo no institucional",
                     () -> gestorUsuarios.registrar("Pepe", "Gomez", "20250000", "Derecho", "Derecho",
                             "pepe@gmail.com", "clave123", Rol.ESTUDIANTE));
@@ -243,8 +255,7 @@ public class Main {
         Curso curso = gestorAcademico.registrarCurso("Curso CRUD", codigo);
         verificar("Curso insertar: la BD le asigno un id", curso.getIdCurso() > 0);
 
-        curso.setNombre("Curso CRUD (modificado)");
-        gestorAcademico.modificarCurso(curso);
+        gestorAcademico.modificarCurso(curso, codigo, "Curso CRUD (modificado)");
         Curso cursoEnBD = gestorAcademico.obtenerCursoPorId(curso.getIdCurso());
         verificar("Curso obtener por id: lo encuentra", cursoEnBD != null && codigo.equals(cursoEnBD.getCodigo()));
         verificar("Curso modificar: el nombre cambio en la BD",
@@ -256,8 +267,7 @@ public class Main {
         Tema tema = gestorAcademico.registrarTema(curso, "Tema CRUD");
         verificar("Tema insertar: la BD le asigno un id", tema.getIdTema() > 0);
 
-        tema.setNombre("Tema CRUD (modificado)");
-        gestorAcademico.modificarTema(tema);
+        gestorAcademico.modificarTema(tema, "Tema CRUD (modificado)");
         Tema temaEnBD = gestorAcademico.obtenerTemaPorId(tema.getIdTema());
         verificar("Tema obtener por id: lo encuentra", temaEnBD != null);
         verificar("Tema modificar: el nombre cambio en la BD",

@@ -6,28 +6,9 @@
   <component name="ChangeListManager">
     <list default="true" id="e67c2652-e3f3-46a8-9adc-986149588b36" name="Changes" comment="correciones menores">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-App/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-App/pom.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-App/src/main/java/pe/edu/pucp/tutorPUCP/app/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-App/src/main/java/pe/edu/pucp/tutorPUCP/app/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-DAO/src/main/java/pe/edu/pucp/tutorPUCP/dao/Impl/SesionDAOImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-DAO/src/main/java/pe/edu/pucp/tutorPUCP/dao/Impl/SesionDAOImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-DAO/src/main/java/pe/edu/pucp/tutorPUCP/dao/Impl/TarifaDAOImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-DAO/src/main/java/pe/edu/pucp/tutorPUCP/dao/Impl/TarifaDAOImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-DAO/src/main/java/pe/edu/pucp/tutorPUCP/dao/Impl/UsuarioDAOImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-DAO/src/main/java/pe/edu/pucp/tutorPUCP/dao/Impl/UsuarioDAOImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-DBManager/src/main/resources/db.properties" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-DBManager/src/main/resources/db.properties" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Clases/GestorAcademico.java" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Clases/GestorAcademico.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Clases/GestorMensajes.java" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Clases/GestorMensajes.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Clases/GestorReclamos.java" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Clases/GestorReclamos.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Clases/GestorSesiones.java" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Clases/GestorSesiones.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Clases/GestorUsuarios.java" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Clases/GestorUsuarios.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Implementacion/GestorAcademicoImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Implementacion/GestorAcademicoImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Implementacion/GestorMensajesImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Implementacion/GestorMensajesImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Implementacion/GestorReclamosImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Implementacion/GestorReclamosImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Implementacion/GestorSesionesImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Implementacion/GestorSesionesImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Implementacion/GestorUsuariosImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Implementacion/GestorUsuariosImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-model/src/main/java/pe/edu/pucp/tutorPUCP/modelo/interfaces/IAutenticable.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-model/src/main/java/pe/edu/pucp/tutorPUCP/modelo/tutoria/Sesion.java" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-model/src/main/java/pe/edu/pucp/tutorPUCP/modelo/tutoria/Sesion.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-model/src/main/java/pe/edu/pucp/tutorPUCP/modelo/tutoria/Tarifa.java" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-model/src/main/java/pe/edu/pucp/tutorPUCP/modelo/tutoria/Tarifa.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-model/src/main/java/pe/edu/pucp/tutorPUCP/modelo/usuario/Administrador.java" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-model/src/main/java/pe/edu/pucp/tutorPUCP/modelo/usuario/Administrador.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-model/src/main/java/pe/edu/pucp/tutorPUCP/modelo/usuario/PersonaPUCP.java" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-model/src/main/java/pe/edu/pucp/tutorPUCP/modelo/usuario/PersonaPUCP.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-model/src/main/java/pe/edu/pucp/tutorPUCP/modelo/usuario/Usuario.java" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-model/src/main/java/pe/edu/pucp/tutorPUCP/modelo/usuario/Usuario.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -69,32 +50,32 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Application.Main.executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "main",
-    "junie.onboarding.icon.badge.shown": "true",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Users/Helena Varona/Documents/PUCP/semestres/2026-2/progra3/Proyecto_progra3/entrega_4/version_4_java",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "Modules",
-    "project.structure.proportion": "0.0",
-    "project.structure.side.proportion": "0.0",
-    "to.speed.mode.migration.done": "true",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.Main.executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Helena Varona/Documents/PUCP/semestres/2026-2/progra3/Proyecto_progra3/entrega_4/version_4_java&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\Helena Varona\Documents\PUCP\semestres\2026-2\progra3\Proyecto_progra3\entrega_3\version_3\TutorPUCP\TutorPUCP-DAO\src\main\java\Implementacion" />
@@ -133,6 +114,7 @@
       <workItem from="1790698150140" duration="4072000" />
       <workItem from="1790720021391" duration="2641000" />
       <workItem from="1793132554265" duration="1111000" />
+      <workItem from="1793136788655" duration="2249000" />
     </task>
     <task id="LOCAL-00001" summary="correciones menores">
       <option name="closed" value="true" />
