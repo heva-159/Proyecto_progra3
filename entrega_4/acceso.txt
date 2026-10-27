@@ -1,0 +1,4 @@
+hostname : db-2026-01-lab6.czxx5jwwxu0k.us-east-1.rds.amazonaws.com
+username : admin
+password : 71395425Sf
+Nombre de base de datos inicial : db2026lab1
