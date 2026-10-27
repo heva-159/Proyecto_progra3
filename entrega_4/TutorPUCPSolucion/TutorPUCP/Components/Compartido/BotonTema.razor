@@ -1,0 +1,27 @@
+@inject IJSRuntime JS
+
+@* Cambia entre modo claro y oscuro; la elección se recuerda en el navegador *@
+
+<Tooltip Title="@(oscuro ? "Modo claro" : "Modo oscuro")" Placement="TooltipPlacement.Bottom">
+    <button type="button" class="boton-tema @(oscuro ? "oscuro" : "")" @onclick="Cambiar" aria-label="Cambiar entre modo claro y oscuro">
+        <i class="bi bi-sun-fill sol"></i>
+        <i class="bi bi-moon-stars-fill luna"></i>
+    </button>
+</Tooltip>
+
+@code {
+    private bool oscuro;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        oscuro = await JS.InvokeAsync<string>("tp.leerTema") == "dark";
+        StateHasChanged();
+    }
+
+    private async Task Cambiar()
+    {
+        oscuro = !oscuro;
+        await JS.InvokeVoidAsync("tp.ponerTema", oscuro ? "dark" : "light");
+    }
+}

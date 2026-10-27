@@ -1,7 +1,300 @@
 ﻿@page "/mensajes/conversacion"
+@implements IDisposable
+@inject RolActual RolActual
 
-@* Responsable: Integrante 5 - Mensajería, reclamos y reporte admin *@
+@* Responsable: Integrante 5 - Mensajería, reclamos y reporte admin (RF010) *@
 
 <PageTitle>Conversación</PageTitle>
 
-<h1>Conversación</h1>
+<a href="/mensajes" class="small text-decoration-none"><i class="bi bi-arrow-left me-1"></i>Volver a mensajes</a>
+
+<div class="row g-4 mt-0">
+    <div class="col-lg-8">
+        <div class="card overflow-hidden">
+            <div class="card-header py-3">
+                <div class="d-flex justify-content-between align-items-center gap-2">
+                    <div class="d-flex align-items-center gap-3" style="min-width: 0;">
+                        <div class="avatar-envoltura">
+                            <Avatar Nombre="@Otro.Nombre" />
+                            <span class="en-linea" title="En línea"></span>
+                        </div>
+                        <div style="min-width: 0;">
+                            <h1 class="h5 mb-0 text-truncate">@Otro.Nombre</h1>
+                            <div class="small text-muted">@Otro.Rol · Cálculo 1 · <span class="text-success">en línea</span></div>
+                        </div>
+                    </div>
+                    @if (RolActual.Rol == RolActual.Estudiante)
+                    {
+                        <a class="btn btn-outline-primary btn-sm flex-shrink-0" href="/estudiante/tutor"><i class="bi bi-person me-1"></i>Ver perfil</a>
+                    }
+                </div>
+            </div>
+
+            @* column-reverse mantiene la vista pegada al último mensaje *@
+            <div class="chat-zona">
+                <div>
+                    @foreach (var grupo in mensajes.GroupBy(m => Dia(m.Enviado)))
+                    {
+                        <div class="chat-dia"><span>@grupo.Key</span></div>
+                        @foreach (var m in grupo)
+                        {
+                            var mio = m.Autor == RolActual.Rol;
+                            <div class="d-flex mb-2 @(mio ? "justify-content-end" : "justify-content-start")" @key="m">
+                                <div class="burbuja @(mio ? "mia" : "suya") @(m.Imagen is null ? "" : "con-imagen")">
+                                    @if (m.Imagen is not null)
+                                    {
+                                        <button type="button" class="chat-imagen" title="Ver imagen" @onclick="() => imagenGrande = m.Imagen">
+                                            <img src="@m.Imagen" alt="@(m.NombreImagen ?? "Imagen adjunta")" loading="lazy" />
+                                        </button>
+                                    }
+                                    @if (!string.IsNullOrEmpty(m.Texto))
+                                    {
+                                        <div class="chat-texto">@m.Texto</div>
+                                    }
+                                    <div class="meta" title="@Detalle(m)">
+                                        @Hora(m.Enviado)
+                                        @if (mio)
+                                        {
+                                            <i class="bi @(m.LeidoEn is null ? "bi-check2" : "bi-check2-all leido")"></i>
+                                            <span class="visually-hidden">@(m.LeidoEn is null ? "Enviado" : "Leído")</span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+
+                    @if (escribiendo)
+                    {
+                        <div class="d-flex mb-2">
+                            <div class="burbuja suya escribiendo" title="@Otro.Nombre está escribiendo">
+                                <span></span><span></span><span></span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="card-footer py-3">
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                    @foreach (var s in RespuestasRapidas)
+                    {
+                        <button type="button" class="chip" @onclick="() => texto = s">@s</button>
+                    }
+                </div>
+
+                @if (avisoContacto)
+                {
+                    <div class="alert alert-danger d-flex gap-2 py-2 small alerta-sacudir" @key="intentos">
+                        <i class="bi bi-shield-exclamation"></i>
+                        <div>No se puede enviar: el mensaje tiene un <b>teléfono o correo</b>. Quítalo y coordina por aquí.</div>
+                    </div>
+                }
+
+                @if (errorImagen is not null)
+                {
+                    <div class="alert alert-warning d-flex gap-2 py-2 small alerta-sacudir"><i class="bi bi-image"></i><div>@errorImagen</div></div>
+                }
+
+                @if (adjunto is not null)
+                {
+                    <div class="chat-adjunto">
+                        <img src="@adjunto" alt="Vista previa" />
+                        <div class="small lh-sm" style="min-width: 0;">
+                            <div class="fw-semibold text-truncate">@nombreAdjunto</div>
+                            <span class="text-muted">@pesoAdjunto · se enviará con tu mensaje</span>
+                        </div>
+                        <button type="button" class="chat-cabecera-accion ms-auto" title="Quitar imagen" @onclick="QuitarAdjunto"><i class="bi bi-x-lg"></i></button>
+                    </div>
+                }
+
+                <form class="chat-redactor" @onsubmit="Enviar">
+                    <div class="chat-caja">
+                        <SelectorEmoji AlElegir="e => texto += e" />
+                        <label class="chat-cabecera-accion mb-0" title="Adjuntar imagen" role="button">
+                            <i class="bi bi-paperclip"></i>
+                            <InputFile class="d-none" accept="image/png,image/jpeg,image/webp,image/gif" OnChange="Adjuntar" />
+                        </label>
+                        <input maxlength="500" placeholder="Escribe un mensaje" autocomplete="off" aria-label="Mensaje"
+                               @bind="texto" @bind:event="oninput" />
+                        @if (texto.Length > 400)
+                        {
+                            <small class="text-muted me-2">@texto.Length/500</small>
+                        }
+                    </div>
+                    <button type="submit" class="chat-enviar" disabled="@(string.IsNullOrWhiteSpace(texto) && adjunto is null)" title="Enviar" aria-label="Enviar">
+                        <i class="bi bi-send-fill"></i>
+                    </button>
+                </form>
+                <div class="form-text"><i class="bi bi-lock me-1"></i>No compartas teléfono ni correo personal: toda la coordinación se hace por aquí.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-4 entrar" style="--i: 1;">
+            <div class="card-body">
+                <div class="small text-uppercase text-muted fw-bold mb-2">Sesión relacionada</div>
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <span class="kpi-icono" style="background:#dbeafe;color:#2563eb;"><i class="bi bi-calendar-event"></i></span>
+                    <div class="lh-sm">
+                        <div class="fw-bold">Cálculo 1</div>
+                        <small class="text-muted">Jueves 30/10/2026 · 4:00 p. m.</small>
+                    </div>
+                </div>
+                <span class="badge text-bg-info mb-3">Programada</span>
+                <div class="d-grid gap-2">
+                    <a class="btn btn-outline-primary btn-sm" href="/sesiones/detalle"><i class="bi bi-eye me-1"></i>Ver detalle de la sesión</a>
+                    <a class="btn btn-light btn-sm" href="/reclamos/nuevo"><i class="bi bi-flag me-1"></i>Registrar un reclamo</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card entrar" style="--i: 2;">
+            <div class="card-body">
+                <div class="d-flex gap-3">
+                    <span class="kpi-icono" style="background:#dcfce7;color:#16a34a;"><i class="bi bi-shield-lock"></i></span>
+                    <div class="small">
+                        <div class="fw-bold mb-1">Tu privacidad está protegida</div>
+                        <span class="text-muted">TutorPUCP no muestra teléfonos ni correos. Cada mensaje guarda su fecha de envío y si ya fue leído: pasa el cursor sobre la hora para verlo.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (imagenGrande is not null)
+{
+    <div class="chat-visor" @onclick="() => imagenGrande = null">
+        <button type="button" class="btn btn-light rounded-circle chat-visor-cerrar" aria-label="Cerrar"><i class="bi bi-x-lg"></i></button>
+        <img src="@imagenGrande" alt="Imagen ampliada" @onclick:stopPropagation />
+    </div>
+}
+
+@code {
+    private class Mensaje
+    {
+        public required string Autor { get; init; }  // "Estudiante" o "Tutor"
+        public string Texto { get; init; } = "";
+        public required DateTime Enviado { get; init; } // Fecha y hora de envío (Lima)
+        public DateTime? LeidoEn { get; set; }          // null = aún no leído
+        public string? Imagen { get; init; }            // Vista previa (solo visual, sin servidor)
+        public string? NombreImagen { get; init; }
+    }
+
+    // ---------- Fechas en hora de Lima y formato DD/MM/AAAA (RNF006) ----------
+    private static readonly System.Globalization.CultureInfo Peru = new("es-PE");
+    private static DateTime Ahora => TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, "America/Lima");
+    private static string Hora(DateTime d) => d.ToString("h:mm tt", Peru);
+    private static string Fecha(DateTime d) => d.ToString("dd/MM/yyyy h:mm tt", Peru);
+    private static string Detalle(Mensaje m) =>
+        "Enviado el " + Fecha(m.Enviado) + (m.LeidoEn is { } l ? " · Leído el " + Fecha(l) : " · Aún no leído");
+    private static string Dia(DateTime d) =>
+        d.Date == Ahora.Date ? "Hoy" : d.Date == Ahora.Date.AddDays(-1) ? "Ayer" : d.ToString("dd/MM/yyyy", Peru);
+
+    // ---------- Imagen adjunta ----------
+    private const long MaxImagen = 2 * 1024 * 1024;
+    private string? adjunto, nombreAdjunto, pesoAdjunto, errorImagen, imagenGrande;
+
+    private async Task Adjuntar(InputFileChangeEventArgs e)
+    {
+        errorImagen = null;
+        var archivo = e.File;
+        if (!archivo.ContentType.StartsWith("image/"))
+        {
+            errorImagen = "Solo puedes adjuntar imágenes (PNG, JPG, WEBP o GIF).";
+            return;
+        }
+        if (archivo.Size > MaxImagen)
+        {
+            errorImagen = $"La imagen pesa {archivo.Size / 1024.0 / 1024.0:0.0} MB. El máximo es 2 MB.";
+            return;
+        }
+        using var ms = new MemoryStream();
+        await archivo.OpenReadStream(MaxImagen).CopyToAsync(ms);
+        adjunto = $"data:{archivo.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";
+        nombreAdjunto = archivo.Name;
+        pesoAdjunto = archivo.Size < 1024 * 1024 ? $"{archivo.Size / 1024.0:0} KB" : $"{archivo.Size / 1024.0 / 1024.0:0.0} MB";
+    }
+
+    private void QuitarAdjunto()
+    {
+        adjunto = nombreAdjunto = pesoAdjunto = null;
+        errorImagen = null;
+    }
+
+    private record Persona(string Nombre, string Rol);
+
+    private string texto = "";
+    private bool escribiendo;
+    private bool avisoContacto;
+    private int intentos;
+
+    // La misma conversación se ve desde los dos lados: mis mensajes a la derecha.
+    private readonly List<Mensaje> mensajes = Ejemplo();
+
+    private static List<Mensaje> Ejemplo()
+    {
+        var hoy = Ahora.Date;
+        var ayer = hoy.AddDays(-1);
+        return
+        [
+            new() { Autor = "Estudiante", Texto = "Hola, quisiera una tutoría de Cálculo 1 para repasar límites antes del parcial.", Enviado = ayer.AddHours(18).AddMinutes(5), LeidoEn = ayer.AddHours(18).AddMinutes(19) },
+            new() { Autor = "Tutor", Texto = "¡Hola! Claro. ¿Qué días tienes disponibles esta semana? 📅", Enviado = ayer.AddHours(18).AddMinutes(20), LeidoEn = ayer.AddHours(18).AddMinutes(21) },
+            new() { Autor = "Estudiante", Texto = "Martes o jueves por la tarde.", Enviado = ayer.AddHours(18).AddMinutes(22), LeidoEn = hoy.AddHours(10).AddMinutes(38) },
+            new() { Autor = "Tutor", Texto = "¿Te parece bien el jueves a las 4 p. m.?", Enviado = hoy.AddHours(10).AddMinutes(40), LeidoEn = hoy.AddHours(10).AddMinutes(45) },
+            new() { Autor = "Tutor", Texto = "Si puedes, trae los ejercicios de la práctica para revisarlos juntos. 📝", Enviado = hoy.AddHours(10).AddMinutes(42), LeidoEn = hoy.AddHours(10).AddMinutes(45) },
+        ];
+    }
+
+    private Persona Otro => RolActual.Rol == RolActual.Tutor
+        ? new("Lucía Ramos", "Estudiante")
+        : new("Andrés Villanueva", "Tutor");
+
+    private string[] RespuestasRapidas => RolActual.Rol == RolActual.Tutor
+        ? ["Te confirmo la sesión del jueves.", "Revisa los ejercicios 3 y 4.", "¡Buen trabajo hoy!"]
+        : ["¡Perfecto, ahí estaré!", "¿Podemos empezar 15 minutos antes?", "Gracias por la ayuda."];
+
+    protected override void OnInitialized() => RolActual.Cambio += AlCambiarRol;
+
+    private void AlCambiarRol() => InvokeAsync(StateHasChanged);
+
+    private async Task Enviar()
+    {
+        if (string.IsNullOrWhiteSpace(texto) && adjunto is null) return;
+
+        // RNF005: no se envían datos de contacto personales.
+        if (DatosContacto.Contiene(texto))
+        {
+            avisoContacto = true;
+            intentos++;
+            return;
+        }
+
+        avisoContacto = false;
+        var nuevo = new Mensaje { Autor = RolActual.Rol, Texto = texto.Trim(), Enviado = Ahora, Imagen = adjunto, NombreImagen = nombreAdjunto };
+        mensajes.Add(nuevo);
+        texto = "";
+        QuitarAdjunto();
+
+        // Simulación visual: el otro lo lee y responde.
+        await Task.Delay(1200);
+        nuevo.LeidoEn = Ahora;
+        escribiendo = true;
+        StateHasChanged();
+
+        await Task.Delay(1600);
+        escribiendo = false;
+        mensajes.Add(new Mensaje
+        {
+            Autor = RolActual.Rol == RolActual.Tutor ? RolActual.Estudiante : RolActual.Tutor,
+            Texto = RolActual.Rol == RolActual.Tutor ? "¡Gracias! Lo tengo en cuenta." : "¡Perfecto! Nos vemos en la sesión.",
+            Enviado = Ahora,
+            LeidoEn = Ahora,
+        });
+        StateHasChanged();
+    }
+
+    public void Dispose() => RolActual.Cambio -= AlCambiarRol;
+}

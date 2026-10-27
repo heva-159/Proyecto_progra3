@@ -1,0 +1,72 @@
+@using PhoneNumbers
+
+@* Teléfono con país (bandera + prefijo) y número. Usa libphonenumber (la librería de Google)
+   para dar formato mientras se escribe y para saber si el número es válido en ese país. *@
+
+<div class="telefono">
+    <Selector Opciones="Paises" Valor="@Pais" ValorChanged="CambiarPais" MostrarDetalleEnBoton="true" Placeholder="País" />
+    <div class="campo">
+        <i class="bi bi-phone"></i>
+        <input id="@Id" type="tel" inputmode="tel" autocomplete="tel-national" class="form-control @EstadoClase"
+               placeholder="@Ejemplo" value="@Numero" @oninput="Escribir" />
+    </div>
+</div>
+
+@code {
+    private static readonly PhoneNumberUtil Util = PhoneNumberUtil.GetInstance();
+
+    private static readonly (string Region, string Nombre)[] Lista =
+    [
+        ("PE", "Perú"), ("AR", "Argentina"), ("BO", "Bolivia"), ("BR", "Brasil"), ("CL", "Chile"),
+        ("CO", "Colombia"), ("EC", "Ecuador"), ("ES", "España"), ("US", "Estados Unidos"), ("MX", "México"),
+        ("PY", "Paraguay"), ("UY", "Uruguay"), ("VE", "Venezuela"), ("CN", "China"), ("IT", "Italia"),
+    ];
+
+    private static readonly Selector.Opcion[] Paises = Lista
+        .Select(p => new Selector.Opcion(p.Region, p.Nombre, Detalle: "+" + Util.GetCountryCodeForRegion(p.Region), Clase: "fi fi-" + p.Region.ToLowerInvariant()))
+        .ToArray();
+
+    [Parameter] public string Pais { get; set; } = "PE";
+    [Parameter] public EventCallback<string> PaisChanged { get; set; }
+    [Parameter] public string Numero { get; set; } = "";
+    [Parameter] public EventCallback<string> NumeroChanged { get; set; }
+    [Parameter] public string? Id { get; set; }
+    [Parameter] public bool MostrarEstado { get; set; }
+
+    private string Ejemplo
+    {
+        get
+        {
+            var ej = Util.GetExampleNumberForType(Pais, PhoneNumberType.MOBILE);
+            return ej is null ? "" : Util.Format(ej, PhoneNumberFormat.NATIONAL);
+        }
+    }
+
+    private string EstadoClase => !MostrarEstado || string.IsNullOrWhiteSpace(Numero) ? "" : EsValido(Pais, Numero) ? "is-valid" : "is-invalid";
+
+    /// <summary>True si el número es válido para ese país (lo usa el formulario al enviar).</summary>
+    public static bool EsValido(string pais, string numero)
+    {
+        try { return Util.IsValidNumberForRegion(Util.Parse(numero, pais), pais); }
+        catch (NumberParseException) { return false; }
+    }
+
+    /// <summary>Número en formato internacional (+51 987 654 321) o vacío si no es válido.</summary>
+    public static string Internacional(string pais, string numero) =>
+        EsValido(pais, numero) ? Util.Format(Util.Parse(numero, pais), PhoneNumberFormat.INTERNATIONAL) : "";
+
+    private async Task Escribir(ChangeEventArgs e)
+    {
+        var digitos = new string((e.Value?.ToString() ?? "").Where(char.IsDigit).Take(15).ToArray());
+        var formato = Util.GetAsYouTypeFormatter(Pais);
+        var texto = "";
+        foreach (var d in digitos) texto = formato.InputDigit(d);
+        await NumeroChanged.InvokeAsync(texto);
+    }
+
+    private async Task CambiarPais(string region)
+    {
+        await PaisChanged.InvokeAsync(region);
+        await NumeroChanged.InvokeAsync("");
+    }
+}

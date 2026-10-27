@@ -1,0 +1,39 @@
+@* Campo de contraseña con el ojo para mostrar u ocultar lo escrito
+   y un aviso cuando las mayúsculas están activadas. *@
+
+<div class="campo con-ojo">
+    <i class="bi bi-lock"></i>
+    <input id="@Id" type="@(visible ? "text" : "password")" class="form-control @Clase" placeholder="@Placeholder"
+           autocomplete="@Autocompletar" value="@Valor" @oninput="Cambiar" @onkeyup="RevisarMayusculas" />
+    <button type="button" class="campo-ojo" @onclick="() => visible = !visible"
+            title="@(visible ? "Ocultar contraseña" : "Mostrar contraseña")" aria-label="@(visible ? "Ocultar contraseña" : "Mostrar contraseña")">
+        <i class="bi @(visible ? "bi-eye-slash" : "bi-eye")"></i>
+    </button>
+</div>
+@if (mayusculas)
+{
+    <div class="campo-aviso"><i class="bi bi-capslock-fill me-1"></i>Tienes las mayúsculas activadas.</div>
+}
+
+@code {
+    [Parameter] public string Valor { get; set; } = "";
+    [Parameter] public EventCallback<string> ValorChanged { get; set; }
+    [Parameter] public string? Id { get; set; }
+    [Parameter] public string Placeholder { get; set; } = "••••••••";
+    [Parameter] public string Autocompletar { get; set; } = "current-password";
+    [Parameter] public string? Clase { get; set; }
+
+    private bool visible;
+    private bool mayusculas;
+
+    private Task Cambiar(ChangeEventArgs e) => ValorChanged.InvokeAsync(e.Value?.ToString() ?? "");
+
+    // Blazor no informa el estado de Bloq Mayús; se deduce de la letra escrita y de la tecla Shift.
+    private void RevisarMayusculas(KeyboardEventArgs e)
+    {
+        if (e.Key is { Length: 1 } k && char.IsLetter(k[0]) && char.ToUpperInvariant(k[0]) != char.ToLowerInvariant(k[0]))
+            mayusculas = char.IsUpper(k[0]) != e.ShiftKey;
+        else if (e.Key == "CapsLock")
+            mayusculas = !mayusculas;
+    }
+}

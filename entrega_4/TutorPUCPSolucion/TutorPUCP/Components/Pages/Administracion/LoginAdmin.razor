@@ -1,27 +1,70 @@
-﻿@page "/admin/login"
+﻿@page "/login/administrador"
 @layout AuthLayout
+@inject NavigationManager Navigation
 
-<PageTitle>Acceso Administrador</PageTitle>
+@* Acceso exclusivo del administrador, separado del de estudiantes y tutores.
+   No enlaza al acceso de usuarios ni el acceso de usuarios enlaza aquí. *@
 
-<p class="text-center text-muted small mb-4">Solo personal autorizado</p>
+<PageTitle>Acceso administrador · TutorPUCP</PageTitle>
 
-<div class="card shadow-sm mx-auto" style="max-width: 420px;">
-    <div class="card-body p-4">
-        <h1 class="h3 mb-4 text-center">Iniciar sesión</h1>
+<span class="badge rounded-pill mb-3" style="background: rgba(225, 29, 72, .12); color: #e11d48;"><i class="bi bi-shield-lock me-1"></i>Solo personal autorizado</span>
+<h1 class="acc-titulo">Acceso administrador</h1>
+<p class="acc-sub">Ingresa con tu cuenta de administración.</p>
 
-        <div class="mb-3">
-            <label for="correo" class="form-label">Correo de administrador</label>
-            <input id="correo" type="email" class="form-control" placeholder="admin@gmail.com" />
-        </div>
-        <div class="mb-3">
-            <label for="password" class="form-label">Contraseña</label>
-            <input id="password" type="password" class="form-control" />
-        </div>
+<form class="mt-4" @onsubmit="Ingresar" novalidate>
+    @if (error is not null)
+    {
+        <div class="acc-alerta mb-3"><i class="bi bi-exclamation-circle"></i><span>@error</span></div>
+    }
 
-        <a class="btn btn-primary w-100" href="/admin">Ingresar</a>
-
-        <div class="d-flex justify-content-between mt-3 small">
-            <a href="/login">Volver al acceso de usuarios</a>
+    <div class="mb-3">
+        <label for="correo" class="acc-etiqueta">Correo de administrador</label>
+        <div class="campo">
+            <i class="bi bi-person-badge"></i>
+            <input id="correo" type="email" class="form-control" placeholder="admin@pucp.edu.pe" autocomplete="username" @bind="correo" @bind:event="oninput" />
         </div>
     </div>
+
+    <div class="mb-4">
+        <label for="clave" class="acc-etiqueta">Contraseña</label>
+        <CampoClave Id="clave" @bind-Valor="clave" />
+    </div>
+
+    <button type="submit" class="acc-boton" disabled="@ingresando">
+        @if (ingresando)
+        {
+            <span class="spinner-border spinner-border-sm"></span><span>Verificando…</span>
+        }
+        else
+        {
+            <span>Ingresar al panel</span><i class="bi bi-arrow-right"></i>
+        }
+    </button>
+</form>
+
+<div class="acc-ayuda">
+    <i class="bi bi-info-circle fs-5" style="color: #e11d48;"></i>
+    <span>Cada acción queda registrada. La sesión se cierra tras 30 minutos sin actividad.</span>
 </div>
+
+@code {
+    private string correo = "";
+    private string clave = "";
+    private bool ingresando;
+    private string? error;
+
+    private async Task Ingresar()
+    {
+        error = null;
+        var c = correo.Trim().ToLowerInvariant();
+        if (c.Length == 0 || clave.Length == 0)
+            error = "Escribe tu correo y tu contraseña.";
+        else if (!c.EndsWith("@pucp.edu.pe") || c.Length <= "@pucp.edu.pe".Length)
+            error = "El correo debe terminar en @pucp.edu.pe.";
+        if (error is not null) return;
+
+        ingresando = true;
+        await Task.Delay(500); // Pantalla visual: aún no hay base de datos.
+        Navigation.NavigateTo("/admin");
+    }
+}
