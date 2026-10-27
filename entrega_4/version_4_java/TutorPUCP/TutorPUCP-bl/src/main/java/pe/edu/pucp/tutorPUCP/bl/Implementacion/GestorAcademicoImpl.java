@@ -31,6 +31,7 @@ public class GestorAcademicoImpl implements GestorAcademico {
 
     @Override
     public Curso registrarCurso(String nombre, String codigo) {
+        validarDatosCurso(codigo, nombre);
         if (cursoDAO.buscarPorCodigo(codigo) != null) {
             throw new BL_exeption("Ya existe un curso con ese codigo");
         }
@@ -61,7 +62,20 @@ public class GestorAcademicoImpl implements GestorAcademico {
     }
 
     @Override
+    public void modificarCurso(Curso curso, String codigo, String nombre) {
+        validarDatosCurso(codigo, nombre);
+        Curso otro = cursoDAO.buscarPorCodigo(codigo);
+        if (otro != null && otro.getIdCurso() != curso.getIdCurso()) {
+            throw new BL_exeption("Ya existe otro curso con ese codigo");
+        }
+        curso.setCodigo(codigo);
+        curso.setNombre(nombre);
+        cursoDAO.update(curso);
+    }
+
+    @Override
     public Curso registrarCursoConTemas(String nombre, String codigo, List<String> nombresTemas) {
+        validarDatosCurso(codigo, nombre);
         if (cursoDAO.buscarPorCodigo(codigo) != null) {
             throw new BL_exeption("Ya existe un curso con ese codigo");
         }
@@ -82,6 +96,9 @@ public class GestorAcademicoImpl implements GestorAcademico {
 
     @Override
     public Tema registrarTema(Curso curso, String nombre) {
+        if (nombre == null || nombre.isBlank()) {
+            throw new BL_exeption("El nombre del tema es obligatorio");
+        }
         if (!curso.isActivo()) {
             throw new BL_exeption("No se pueden agregar temas a un curso inactivo");
         }
@@ -98,6 +115,33 @@ public class GestorAcademicoImpl implements GestorAcademico {
     @Override
     public List<Tema> listarTemasPorCurso(Curso curso) {
         return temaDAO.listarPorCurso(curso);
+    }
+
+    // el tema debe traer su curso (los de listarTemasPorCurso ya lo traen)
+    @Override
+    public void modificarTema(Tema tema, String nombre) {
+        if (nombre == null || nombre.isBlank()) {
+            throw new BL_exeption("El nombre del tema es obligatorio");
+        }
+        for (Tema existente : temaDAO.listarPorCurso(tema.getCurso())) {
+            if (existente.getIdTema() != tema.getIdTema()
+                    && existente.getNombre().equalsIgnoreCase(nombre)) {
+                throw new BL_exeption("El curso ya tiene un tema con ese nombre");
+            }
+        }
+        tema.setNombre(nombre);
+        temaDAO.update(tema);
+    }
+
+    // un solo DELETE: no necesita transaccion. Si el tema ya se uso en una sesion,
+    // la BD no deja borrarlo (fk_sesion_tema_tema) y se avisa con un mensaje claro.
+    @Override
+    public void eliminarTema(Tema tema) {
+        try {
+            temaDAO.remove(tema);
+        } catch (RuntimeException e) {
+            throw new BL_exeption("No se pudo eliminar el tema (puede estar usado en una sesion): " + e.getMessage());
+        }
     }
 
     @Override
@@ -122,6 +166,18 @@ public class GestorAcademicoImpl implements GestorAcademico {
     @Override
     public List<Postulacion> listarPostulacionesPorTutor(Tutor tutor) {
         return postulacionDAO.listarPorTutor(tutor);
+    }
+
+    // PostulacionDAO no tiene listarPendientes: se filtra en memoria con listAll().
+    @Override
+    public List<Postulacion> listarPostulacionesPendientes() {
+        List<Postulacion> pendientes = new ArrayList<>();
+        for (Postulacion postulacion : postulacionDAO.listAll()) {
+            if (postulacion.getEstado() == EstadoAprobacion.PENDIENTE) {
+                pendientes.add(postulacion);
+            }
+        }
+        return pendientes;
     }
 
     @Override
@@ -177,5 +233,11 @@ public class GestorAcademicoImpl implements GestorAcademico {
             }
         }
         return tutores;
+    }
+
+    private void validarDatosCurso(String codigo, String nombre) {
+        if (codigo == null || codigo.isBlank() || nombre == null || nombre.isBlank()) {
+            throw new BL_exeption("El codigo y el nombre del curso son obligatorios");
+        }
     }
 }

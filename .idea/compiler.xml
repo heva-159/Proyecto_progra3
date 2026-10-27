@@ -7,13 +7,18 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="TutorPUCP-model" />
+        <module name="TutorPUCP-main" />
+        <module name="TutorPUCP-DBManager" />
+        <module name="TutorPUCP-bl (2) (pe.edu.pucp.tutorPUCP)" />
+        <module name="TutorPUCP-DAO" />
+        <module name="TutorPUCP-DBManager (1)" />
         <module name="TutorPUCP-bl (1) (pe.edu.pucp.tutorPUCP)" />
         <module name="TutorPUCP-bl" />
-        <module name="TutorPUCP-main" />
         <module name="TutorPUCP-model (1) (pe.edu.pucp.tutorPUCP)" />
-        <module name="TutorPUCP-DBManager" />
+        <module name="TutorPUCP-DAO (1)" />
+        <module name="TutorPUCP-App (1)" />
         <module name="TutorPUCP-App" />
-        <module name="TutorPUCP-DAO" />
+        <module name="TutorPUCP-model (2) (pe.edu.pucp.tutorPUCP)" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>

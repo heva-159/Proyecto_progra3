@@ -14,8 +14,6 @@ import java.util.List;
 
 public class GestorUsuariosImpl implements GestorUsuarios {
     private final UsuarioDAO usuarioDAO = new UsuarioDAOImpl();
-    // NOTA: asumo que AdministradorDAO tiene buscarPorCorreo(String) y save(Administrador),
-    // igual que UsuarioDAO. Si el nombre real es distinto, avisame y lo ajusto.
     private final AdministradorDAO administradorDAO = new AdministradorDAOImpl();
 
     @Override

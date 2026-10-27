@@ -15,6 +15,7 @@ public interface GestorAcademico {
     Curso buscarCursoPorCodigo(String codigo);
     void desactivarCurso(Curso curso);
     void reactivarCurso(Curso curso);
+    void modificarCurso(Curso curso, String codigo, String nombre);
 
     // Crea el curso y todos sus temas iniciales en una sola transaccion:
     // si falla cualquier tema, no queda el curso guardado sin ellos.
@@ -22,9 +23,12 @@ public interface GestorAcademico {
 
     Tema registrarTema(Curso curso, String nombre);
     List<Tema> listarTemasPorCurso(Curso curso);
+    void modificarTema(Tema tema, String nombre);
+    void eliminarTema(Tema tema);
 
     Postulacion postular(Tutor tutor, Curso curso, String archivoCertificadoUrl);
     List<Postulacion> listarPostulacionesPorTutor(Tutor tutor);
+    List<Postulacion> listarPostulacionesPendientes();
     void resolverPostulacion(Postulacion postulacion, Administrador administrador, boolean aprobar, String resolucion);
 
     Tarifa registrarTarifa(Tutor tutor, Curso curso, double montoPorHora);
