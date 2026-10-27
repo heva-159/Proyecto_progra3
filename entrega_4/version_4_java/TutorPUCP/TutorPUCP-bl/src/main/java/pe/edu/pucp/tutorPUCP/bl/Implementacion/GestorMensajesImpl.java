@@ -29,6 +29,35 @@ public class GestorMensajesImpl implements GestorMensajes {
     }
 
     @Override
+    public Mensaje modificarMensaje(Mensaje mensaje) {
+        if (mensajeDAO.load(mensaje.getIdMensaje()) == null) {
+            throw new BL_exeption("El mensaje no existe");
+        }
+        if (mensaje.getContenido() == null || mensaje.getContenido().isBlank()) {
+            throw new BL_exeption("El mensaje no puede estar vacio");
+        }
+        return mensajeDAO.update(mensaje);
+    }
+
+    @Override
+    public void eliminarMensaje(Mensaje mensaje) {
+        if (mensajeDAO.load(mensaje.getIdMensaje()) == null) {
+            throw new BL_exeption("El mensaje no existe");
+        }
+        mensajeDAO.remove(mensaje);
+    }
+
+    @Override
+    public Mensaje obtenerMensajePorId(int idMensaje) {
+        return mensajeDAO.load(idMensaje);
+    }
+
+    @Override
+    public List<Mensaje> listarMensajes() {
+        return mensajeDAO.listAll();
+    }
+
+    @Override
     public List<Mensaje> obtenerConversacion(Usuario usuario1, Usuario usuario2) {
         // el filtro "entre ambos usuarios" lo hace el DAO por SQL, no hace falta comparar en memoria.
         return mensajeDAO.listarEntreUsuarios(usuario1, usuario2);

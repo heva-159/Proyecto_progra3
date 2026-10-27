@@ -10,8 +10,9 @@ public abstract class PersonaPUCP {
     private Usuario usuario;
     private List<Sesion> sesiones = new ArrayList<>();
 
+    // no repite la sesion si ya estaba: Sesion se agrega sola al crearse o al asignarle participantes
     public void agregarSesion(Sesion sesion) {
-        sesiones.add(sesion);
+        if (!sesiones.contains(sesion)) sesiones.add(sesion);
     }
 
     public Usuario getUsuario() { return usuario; }

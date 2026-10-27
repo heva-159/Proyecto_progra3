@@ -88,13 +88,10 @@ public class UsuarioDAOImpl implements UsuarioDAO {
         return usuarios;
     }
 
-    // son varias llamadas (usuario + perfiles): si una falla, el close hace rollback
     @Override
     public Usuario save(Usuario usuario) {
-        try (TransactionContext transactionContext = new TransactionContext()) {
-            saveConConnection(usuario, transactionContext.getConnection());
-            transactionContext.commit();
-            return usuario;
+        try (Connection connection = DBManager.getInstance().getConnection()) {
+            return saveConConnection(usuario, connection);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -106,7 +103,8 @@ public class UsuarioDAOImpl implements UsuarioDAO {
         return saveConConnection(usuario, connection);
     }
 
-    // inserta el usuario y luego sus perfiles de tutor y/o estudiante
+    // solo inserta la fila de usuario: sus perfiles (tutor / estudiante) los guardan TutorDAO y
+    // EstudianteDAO dentro de la transaccion que abre la capa de negocio
     private Usuario saveConConnection(Usuario usuario, Connection connection) {
         String sql = "{CALL insertar_usuario(?,?,?,?,?,?,?,?,?,?,?,?)}";
         try {
@@ -125,13 +123,6 @@ public class UsuarioDAOImpl implements UsuarioDAO {
             stmt.registerOutParameter(12, Types.INTEGER);
             stmt.execute();
             usuario.setIdUsuario(stmt.getInt(12));
-
-            if (usuario.getPerfilTutor() != null) {
-                ejecutarPerfil("{CALL insertar_tutor(?)}", usuario.getIdUsuario(), connection);
-            }
-            if (usuario.getPerfilEstudiante() != null) {
-                ejecutarPerfil("{CALL insertar_estudiante(?)}", usuario.getIdUsuario(), connection);
-            }
         } catch (SQLException e) {
             System.out.println("Error al insertar usuario: " + e.getMessage());
             throw new RuntimeException(e);
@@ -141,10 +132,8 @@ public class UsuarioDAOImpl implements UsuarioDAO {
 
     @Override
     public Usuario update(Usuario usuario) {
-        try (TransactionContext transactionContext = new TransactionContext()) {
-            updateConConnection(usuario, transactionContext.getConnection());
-            transactionContext.commit();
-            return usuario;
+        try (Connection connection = DBManager.getInstance().getConnection()) {
+            return updateConConnection(usuario, connection);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -156,7 +145,7 @@ public class UsuarioDAOImpl implements UsuarioDAO {
         return updateConConnection(usuario, connection);
     }
 
-    // modifica el usuario y deja sus perfiles en la base igual que en el objeto
+    // solo modifica la fila de usuario: agregar o quitar perfiles lo coordina la capa de negocio
     private Usuario updateConConnection(Usuario usuario, Connection connection) {
         String sql = "{CALL modificar_usuario(?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
         try {
@@ -176,25 +165,6 @@ public class UsuarioDAOImpl implements UsuarioDAO {
             stmt.setBoolean(13, usuario.isConsentimientoDatos());
             stmt.setBoolean(14, usuario.isConsentimientoCalificaciones());
             stmt.execute();
-
-            // perfiles que hoy tiene en la base
-            boolean eraTutor = false;
-            boolean eraEstudiante = false;
-            CallableStatement stmtPerfiles = connection.prepareCall("{CALL buscar_usuario_por_id(?)}");
-            stmtPerfiles.setInt(1, usuario.getIdUsuario());
-            ResultSet rs = stmtPerfiles.executeQuery();
-            if (rs.next()) {
-                eraTutor = rs.getBoolean("es_tutor");
-                eraEstudiante = rs.getBoolean("es_estudiante");
-            }
-            rs.close();
-
-            boolean esTutor = usuario.getPerfilTutor() != null;
-            boolean esEstudiante = usuario.getPerfilEstudiante() != null;
-            if (esTutor && !eraTutor) ejecutarPerfil("{CALL insertar_tutor(?)}", usuario.getIdUsuario(), connection);
-            if (!esTutor && eraTutor) ejecutarPerfil("{CALL eliminar_tutor(?)}", usuario.getIdUsuario(), connection);
-            if (esEstudiante && !eraEstudiante) ejecutarPerfil("{CALL insertar_estudiante(?)}", usuario.getIdUsuario(), connection);
-            if (!esEstudiante && eraEstudiante) ejecutarPerfil("{CALL eliminar_estudiante(?)}", usuario.getIdUsuario(), connection);
         } catch (SQLException e) {
             System.out.println("Error al modificar usuario: " + e.getMessage());
             throw new RuntimeException(e);
@@ -229,13 +199,6 @@ public class UsuarioDAOImpl implements UsuarioDAO {
             System.out.println("Error al eliminar usuario: " + e.getMessage());
             throw new RuntimeException(e);
         }
-    }
-
-    // insertar_tutor, eliminar_tutor, insertar_estudiante, eliminar_estudiante
-    private void ejecutarPerfil(String sql, int idUsuario, Connection connection) throws SQLException {
-        CallableStatement stmt = connection.prepareCall(sql);
-        stmt.setInt(1, idUsuario);
-        stmt.execute();
     }
 
     private Usuario leerUsuario(ResultSet rs) throws SQLException {

@@ -41,6 +41,9 @@ public class Sesion {
         this.curso = curso;
         this.fechaHoraInicio = fechaHoraInicio;
         this.estado = EstadoSesion.PROGRAMADA;
+        // la relacion es bidireccional: la sesion queda en las colecciones de ambos participantes
+        if (tutor != null) tutor.agregarSesion(this);
+        if (estudiante != null) estudiante.agregarSesion(this);
     }
 
     public void agregarTema(Tema tema) {
@@ -56,10 +59,16 @@ public class Sesion {
     public void setIdSesion(int idSesion) { this.idSesion = idSesion; }
 
     public Tutor getTutor() { return tutor; }
-    public void setTutor(Tutor tutor) { this.tutor = tutor; }
+    public void setTutor(Tutor tutor) {
+        this.tutor = tutor;
+        if (tutor != null) tutor.agregarSesion(this);
+    }
 
     public Estudiante getEstudiante() { return estudiante; }
-    public void setEstudiante(Estudiante estudiante) { this.estudiante = estudiante; }
+    public void setEstudiante(Estudiante estudiante) {
+        this.estudiante = estudiante;
+        if (estudiante != null) estudiante.agregarSesion(this);
+    }
 
     public Curso getCurso() { return curso; }
     public void setCurso(Curso curso) { this.curso = curso; }

@@ -1,4 +1,5 @@
-hostname : db-2026-01-lab6.czxx5jwwxu0k.us-east-1.rds.amazonaws.com
-username : admin
-password : 71395425Sf
-Nombre de base de datos inicial : db2026lab1
+instancia: prog3-labs-1inf30
+usuario: admin
+contraseña: labs1inf3020262
+nombre DB: db2026lab1
+punto de enlace: prog3-labs-1inf30.cd8cw0cmqg2o.us-east-1.rds.amazonaws.com
