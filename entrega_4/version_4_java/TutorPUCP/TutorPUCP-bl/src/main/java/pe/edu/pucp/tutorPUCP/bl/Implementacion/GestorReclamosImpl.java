@@ -40,6 +40,43 @@ public class GestorReclamosImpl implements GestorReclamos {
     }
 
     @Override
+    public Reclamo modificarReclamo(Reclamo reclamo) {
+        Reclamo guardado = reclamoDAO.load(reclamo.getIdReclamo());
+        if (guardado == null) {
+            throw new BL_exeption("El reclamo no existe");
+        }
+        if (guardado.getEstado() != EstadoAprobacion.PENDIENTE) {
+            throw new BL_exeption("Solo se puede modificar un reclamo pendiente");
+        }
+        if (reclamo.getMotivo() == null || reclamo.getMotivo().isBlank()) {
+            throw new BL_exeption("El motivo del reclamo es obligatorio");
+        }
+        return reclamoDAO.update(reclamo);
+    }
+
+    @Override
+    public void eliminarReclamo(Reclamo reclamo) {
+        Reclamo guardado = reclamoDAO.load(reclamo.getIdReclamo());
+        if (guardado == null) {
+            throw new BL_exeption("El reclamo no existe");
+        }
+        if (guardado.getEstado() != EstadoAprobacion.PENDIENTE) {
+            throw new BL_exeption("Solo se puede eliminar un reclamo pendiente");
+        }
+        reclamoDAO.remove(reclamo);
+    }
+
+    @Override
+    public Reclamo obtenerReclamoPorId(int idReclamo) {
+        return reclamoDAO.load(idReclamo);
+    }
+
+    @Override
+    public List<Reclamo> listarReclamos() {
+        return reclamoDAO.listAll();
+    }
+
+    @Override
     public List<Reclamo> listarPendientes() {
         return reclamoDAO.listarPendientes();
     }

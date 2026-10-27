@@ -3,7 +3,6 @@ package pe.edu.pucp.tutorPUCP.dao.Impl;
 import pe.edu.pucp.tutorPUCP.dao.DAOs.SesionDAO;
 import pe.edu.pucp.tutorPUCP.dbmanager.DBManager;
 import pe.edu.pucp.tutorPUCP.dbmanager.TransactionContext;
-import pe.edu.pucp.tutorPUCP.modelo.academico.Tema;
 import pe.edu.pucp.tutorPUCP.modelo.enums.EstadoSesion;
 import pe.edu.pucp.tutorPUCP.modelo.tutoria.Sesion;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Usuario;
@@ -52,13 +51,10 @@ public class SesionDAOImpl implements SesionDAO {
         return sesiones;
     }
 
-    // son varias llamadas (sesion + temas): si una falla, el close hace rollback
     @Override
     public Sesion save(Sesion sesion) {
-        try (TransactionContext transactionContext = new TransactionContext()) {
-            saveConConnection(sesion, transactionContext.getConnection());
-            transactionContext.commit();
-            return sesion;
+        try (Connection connection = DBManager.getInstance().getConnection()) {
+            return saveConConnection(sesion, connection);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -70,7 +66,8 @@ public class SesionDAOImpl implements SesionDAO {
         return saveConConnection(sesion, connection);
     }
 
-    // inserta la sesion (queda PROGRAMADA) y luego sus temas en sesion_tema
+    // solo inserta la sesion (queda PROGRAMADA): sus temas los guarda SesionTemaDAO dentro
+    // de la transaccion que abre la capa de negocio
     private Sesion saveConConnection(Sesion sesion, Connection connection) {
         String sql = "{CALL insertar_sesion(?,?,?,?,?)}";
         try {
@@ -82,7 +79,6 @@ public class SesionDAOImpl implements SesionDAO {
             stmt.registerOutParameter(5, Types.INTEGER);
             stmt.execute();
             sesion.setIdSesion(stmt.getInt(5));
-            insertarTemas(sesion, connection);
         } catch (SQLException e) {
             System.out.println("Error al insertar sesion: " + e.getMessage());
             throw new RuntimeException(e);
@@ -92,10 +88,8 @@ public class SesionDAOImpl implements SesionDAO {
 
     @Override
     public Sesion update(Sesion sesion) {
-        try (TransactionContext transactionContext = new TransactionContext()) {
-            updateConConnection(sesion, transactionContext.getConnection());
-            transactionContext.commit();
-            return sesion;
+        try (Connection connection = DBManager.getInstance().getConnection()) {
+            return updateConConnection(sesion, connection);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -108,7 +102,7 @@ public class SesionDAOImpl implements SesionDAO {
     }
 
     // tambien sirve para check-in, check-out, cancelar y calificar;
-    // los temas se borran y se vuelven a insertar
+    // no toca los temas: cambiarlos lo coordina la capa de negocio con SesionTemaDAO
     private Sesion updateConConnection(Sesion sesion, Connection connection) {
         String sql = "{CALL modificar_sesion(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
         try {
@@ -133,11 +127,6 @@ public class SesionDAOImpl implements SesionDAO {
                 stmt.setNull(15, Types.INTEGER);
             }
             stmt.execute();
-
-            CallableStatement stmtTemas = connection.prepareCall("{CALL eliminar_temas_por_sesion(?)}");
-            stmtTemas.setInt(1, sesion.getIdSesion());
-            stmtTemas.execute();
-            insertarTemas(sesion, connection);
         } catch (SQLException e) {
             System.out.println("Error al modificar sesion: " + e.getMessage());
             throw new RuntimeException(e);
@@ -173,36 +162,6 @@ public class SesionDAOImpl implements SesionDAO {
         }
     }
 
-    private void insertarTemas(Sesion sesion, Connection connection) throws SQLException {
-        for (Tema tema : sesion.getTemas()) {
-            CallableStatement stmt = connection.prepareCall("{CALL insertar_sesion_tema(?,?,?)}");
-            stmt.setInt(1, sesion.getIdSesion());
-            stmt.setInt(2, tema.getIdTema());
-            stmt.registerOutParameter(3, Types.INTEGER);
-            stmt.execute();
-        }
-    }
-
-    private List<Tema> listarTemas(Sesion sesion) {
-        List<Tema> temas = new ArrayList<>();
-        String sql = "{CALL listar_temas_por_sesion(?)}";
-        try (Connection connection = DBManager.getInstance().getConnection()) {
-            CallableStatement stmt = connection.prepareCall(sql);
-            stmt.setInt(1, sesion.getIdSesion());
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                Tema tema = new Tema();
-                tema.setIdTema(rs.getInt("id"));
-                tema.setNombre(rs.getString("nombre"));
-                tema.setCurso(sesion.getCurso());
-                temas.add(tema);
-            }
-        } catch (SQLException e) {
-            System.out.println("Error al listar temas de la sesion: " + e.getMessage());
-        }
-        return temas;
-    }
-
     private Sesion leerSesion(ResultSet rs) throws SQLException {
         UsuarioDAOImpl usuarioDAO = new UsuarioDAOImpl();
         Sesion sesion = new Sesion();
@@ -232,7 +191,7 @@ public class SesionDAOImpl implements SesionDAO {
             sesion.setUsuarioCancelo(canceloTutor ? usuarioTutor : usuarioEstudiante);
         }
 
-        sesion.setTemas(listarTemas(sesion));
+        sesion.setTemas(new SesionTemaDAOImpl().listarPorSesion(sesion));
         return sesion;
     }
 }

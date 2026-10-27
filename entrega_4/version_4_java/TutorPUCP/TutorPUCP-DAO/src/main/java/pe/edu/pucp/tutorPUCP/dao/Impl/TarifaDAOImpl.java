@@ -89,7 +89,7 @@ public class TarifaDAOImpl implements TarifaDAO {
             CallableStatement stmt = connection.prepareCall(sql);
             stmt.setInt(1, tarifa.getTutor().getUsuario().getIdUsuario());
             stmt.setInt(2, tarifa.getCurso().getIdCurso());
-            stmt.setDouble(3, tarifa.getMontoPorHora());
+            stmt.setBigDecimal(3, tarifa.getMontoPorHora());
             stmt.registerOutParameter(4, Types.INTEGER);
             stmt.execute();
             tarifa.setIdTarifa(stmt.getInt(4));
@@ -122,7 +122,7 @@ public class TarifaDAOImpl implements TarifaDAO {
             stmt.setInt(1, tarifa.getIdTarifa());
             stmt.setInt(2, tarifa.getTutor().getUsuario().getIdUsuario());
             stmt.setInt(3, tarifa.getCurso().getIdCurso());
-            stmt.setDouble(4, tarifa.getMontoPorHora());
+            stmt.setBigDecimal(4, tarifa.getMontoPorHora());
             stmt.execute();
         } catch (SQLException e) {
             System.out.println("Error al modificar tarifa: " + e.getMessage());
@@ -162,7 +162,7 @@ public class TarifaDAOImpl implements TarifaDAO {
     private Tarifa leerTarifa(ResultSet rs, Tutor tutor) throws SQLException {
         Tarifa tarifa = new Tarifa();
         tarifa.setIdTarifa(rs.getInt("id"));
-        tarifa.setMontoPorHora(rs.getDouble("monto_por_hora"));
+        tarifa.setMontoPorHora(rs.getBigDecimal("monto_por_hora"));
         if (tutor == null) {
             Usuario usuario = new UsuarioDAOImpl().load(rs.getInt("id_tutor"));
             tutor = usuario != null ? usuario.getPerfilTutor() : null;

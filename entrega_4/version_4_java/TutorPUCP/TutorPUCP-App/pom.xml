@@ -25,18 +25,6 @@
         </dependency>
         <dependency>
             <groupId>pe.edu.pucp.tutorPUCP</groupId>
-            <artifactId>TutorPUCP-model</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>pe.edu.pucp.tutorPUCP</groupId>
-            <artifactId>TutorPUCP-model</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>pe.edu.pucp.tutorPUCP</groupId>
             <artifactId>TutorPUCP-bl</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>

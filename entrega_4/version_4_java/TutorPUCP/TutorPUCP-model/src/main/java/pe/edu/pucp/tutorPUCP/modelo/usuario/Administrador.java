@@ -1,10 +1,8 @@
 package pe.edu.pucp.tutorPUCP.modelo.usuario;
 
-import pe.edu.pucp.tutorPUCP.modelo.interfaces.IAutenticable;
-
 import java.time.LocalDate;
 
-public class Administrador implements IAutenticable {
+public class Administrador {
     private int idAdministrador;
     private String nombre;
     private String correo;
@@ -21,11 +19,6 @@ public class Administrador implements IAutenticable {
         this.passwordHash = passwordHash;
         this.nivelPermiso = nivelPermiso;
         this.fechaCreacion = LocalDate.now();
-    }
-
-    @Override
-    public boolean iniciarSesion(String correo, String password) {
-        return this.correo.equalsIgnoreCase(correo) && passwordHash.equals(password); //faltaría implementar el hash de la contraseña
     }
 
     public int getIdAdministrador() { return idAdministrador; }

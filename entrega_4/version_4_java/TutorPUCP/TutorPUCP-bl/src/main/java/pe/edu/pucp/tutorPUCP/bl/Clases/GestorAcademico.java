@@ -7,10 +7,17 @@ import pe.edu.pucp.tutorPUCP.modelo.tutoria.Tarifa;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Administrador;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Tutor;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface GestorAcademico {
+    // ---- Curso ----
     Curso registrarCurso(String nombre, String codigo);
+    Curso modificarCurso(Curso curso);
+    // Eliminacion logica: el curso queda inactivo y conserva sus temas, postulaciones y sesiones.
+    void eliminarCurso(Curso curso);
+    // Devuelve null si no existe.
+    Curso obtenerCursoPorId(int idCurso);
     List<Curso> listarCursos();
     Curso buscarCursoPorCodigo(String codigo);
     void desactivarCurso(Curso curso);
@@ -21,17 +28,34 @@ public interface GestorAcademico {
     // si falla cualquier tema, no queda el curso guardado sin ellos.
     Curso registrarCursoConTemas(String nombre, String codigo, List<String> nombresTemas);
 
+    // ---- Tema ----
     Tema registrarTema(Curso curso, String nombre);
+    Tema modificarTema(Tema tema);
+    void eliminarTema(Tema tema);
+    Tema obtenerTemaPorId(int idTema);
+    List<Tema> listarTemas();
     List<Tema> listarTemasPorCurso(Curso curso);
     void modificarTema(Tema tema, String nombre);
     void eliminarTema(Tema tema);
 
+    // ---- Postulacion ----
     Postulacion postular(Tutor tutor, Curso curso, String archivoCertificadoUrl);
+    // Solo se puede modificar una postulacion pendiente.
+    Postulacion modificarPostulacion(Postulacion postulacion);
+    // No se puede eliminar una postulacion aprobada.
+    void eliminarPostulacion(Postulacion postulacion);
+    Postulacion obtenerPostulacionPorId(int idPostulacion);
+    List<Postulacion> listarPostulaciones();
     List<Postulacion> listarPostulacionesPorTutor(Tutor tutor);
     List<Postulacion> listarPostulacionesPendientes();
     void resolverPostulacion(Postulacion postulacion, Administrador administrador, boolean aprobar, String resolucion);
 
-    Tarifa registrarTarifa(Tutor tutor, Curso curso, double montoPorHora);
+    // ---- Tarifa ----
+    Tarifa registrarTarifa(Tutor tutor, Curso curso, BigDecimal montoPorHora);
+    Tarifa modificarTarifa(Tarifa tarifa);
+    void eliminarTarifa(Tarifa tarifa);
+    Tarifa obtenerTarifaPorId(int idTarifa);
+    List<Tarifa> listarTarifas();
     List<Tarifa> listarTarifasPorTutor(Tutor tutor);
 
     List<Tutor> buscarTutoresPorCurso(Curso curso);

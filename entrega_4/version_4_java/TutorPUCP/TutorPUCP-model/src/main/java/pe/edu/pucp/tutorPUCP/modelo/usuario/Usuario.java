@@ -1,6 +1,5 @@
 package pe.edu.pucp.tutorPUCP.modelo.usuario;
 
-import pe.edu.pucp.tutorPUCP.modelo.interfaces.IAutenticable;
 import pe.edu.pucp.tutorPUCP.modelo.enums.EstadoCuenta;
 import pe.edu.pucp.tutorPUCP.modelo.enums.Rol;
 
@@ -10,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class Usuario implements IAutenticable {
+public class Usuario {
     private int idUsuario;
     private String nombres;
     private String apellidos;
@@ -49,13 +48,6 @@ public class Usuario implements IAutenticable {
         this.correoVerificado = false;
         if (rol == Rol.TUTOR || rol == Rol.AMBOS) agregarPerfil(new Tutor());
         if (rol == Rol.ESTUDIANTE || rol == Rol.AMBOS) agregarPerfil(new Estudiante());
-    }
-
-    @Override
-    public boolean iniciarSesion(String correo, String password) {
-        return estado == EstadoCuenta.ACTIVA
-                && correoInstitucional.equalsIgnoreCase(correo)
-                && passwordHash.equals(password); //faltaría implementar el hash de la contraseña
     }
 
     public void agregarPerfil(PersonaPUCP persona) {
