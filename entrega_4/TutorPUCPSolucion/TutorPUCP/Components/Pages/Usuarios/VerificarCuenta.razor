@@ -1,27 +1,147 @@
 ﻿@page "/verificar-cuenta"
 @layout AuthLayout
+@implements IDisposable
+@inject NavigationManager Navigation
 
-<PageTitle>Verificar cuenta</PageTitle>
+@* Verificación de la cuenta (RF001): código de 6 dígitos enviado al correo, válido por 15 minutos,
+   con opción de reenviarlo. Pantalla visual: cualquier código de 6 dígitos se acepta. *@
 
-<div class="card shadow-sm mx-auto" style="max-width: 420px;">
-    <div class="card-body p-4">
-        <h1 class="h3 mb-3 text-center">Verificar cuenta</h1>
-        <p class="text-muted text-center">
-            Enviamos un código de 6 dígitos a tu correo institucional. El código es válido por 15 minutos.
-        </p>
+<PageTitle>Verificar cuenta · TutorPUCP</PageTitle>
 
-        <div class="mb-3">
-            <label for="codigoVerificacion" class="form-label">Código de verificación</label>
-            <input id="codigoVerificacion" type="text" class="form-control form-control-lg text-center fs-3"
-                   style="letter-spacing: .5rem;" maxlength="6" inputmode="numeric"
-                   autocomplete="one-time-code" placeholder="000000" />
-        </div>
+<span class="acc-logo mb-3" style="width:56px;height:56px;background:rgba(37,99,235,.12);color:var(--tp-azul);box-shadow:none;"><i class="bi bi-envelope-check"></i></span>
+<h1 class="acc-titulo">Revisa tu correo</h1>
+<p class="acc-sub">Enviamos un código de 6 dígitos a <b style="color: var(--tp-texto);">@Correo</b>.</p>
 
-        <a class="btn btn-primary w-100" href="/login">Verificar</a>
-        <button type="button" class="btn btn-outline-secondary w-100 mt-2">Reenviar código</button>
+@if (error is not null)
+{
+    <div class="acc-alerta mt-3"><i class="bi bi-exclamation-circle"></i><span>@error</span></div>
+}
+@if (aviso is not null)
+{
+    <div class="nota nota-ok small mt-3"><i class="bi bi-send-check me-1"></i>@aviso</div>
+}
 
-        <div class="text-center mt-3 small">
-            <a href="/registro">Volver al registro</a>
-        </div>
-    </div>
+<div class="codigo mt-4" role="group" aria-label="Código de verificación">
+    @for (var i = 0; i < 6; i++)
+    {
+        var n = i;
+        <input @ref="casillas[n]" inputmode="numeric" maxlength="6" autocomplete="@(n == 0 ? "one-time-code" : "off")"
+               aria-label="@($"Dígito {n + 1}")" value="@digitos[n]" @oninput="e => Escribir(n, e)" @onkeydown="e => Tecla(n, e)" />
+    }
 </div>
+
+<div class="campo-ayuda mt-2 d-flex justify-content-between">
+    <span><i class="bi bi-clock me-1"></i>@(Vencido ? "El código venció." : $"Vence en {restante:mm\\:ss}")</span>
+    @if (esperaReenvio > 0)
+    {
+        <span>Reenviar en @esperaReenvio s</span>
+    }
+    else
+    {
+        <a href="/verificar-cuenta" class="fw-semibold text-decoration-none" @onclick:preventDefault @onclick="Reenviar">Reenviar código</a>
+    }
+</div>
+
+<button type="button" class="acc-boton mt-4" disabled="@(!Completo || verificando)" @onclick="Verificar">
+    @if (verificando)
+    {
+        <span class="spinner-border spinner-border-sm"></span><span>Verificando…</span>
+    }
+    else
+    {
+        <span>Verificar cuenta</span><i class="bi bi-arrow-right"></i>
+    }
+</button>
+
+<p class="text-center small mt-4 mb-0" style="color: var(--tp-tenue);">
+    ¿Correo equivocado? <a href="/registro" class="fw-semibold text-decoration-none">Volver al registro</a>
+</p>
+
+@code {
+    private readonly string[] digitos = new string[6];
+    private readonly ElementReference[] casillas = new ElementReference[6];
+    private TimeSpan restante = TimeSpan.FromMinutes(15);
+    private int esperaReenvio = 30;
+    private string? error, aviso;
+    private bool verificando;
+    private System.Threading.Timer? reloj;
+
+    private string Correo
+    {
+        get
+        {
+            var q = new Uri(Navigation.Uri).Query.TrimStart('?').Split('&')
+                .Select(p => p.Split('=', 2)).FirstOrDefault(p => p[0] == "correo" && p.Length == 2);
+            return q is null ? "tu correo PUCP" : Uri.UnescapeDataString(q[1]);
+        }
+    }
+
+    private bool Completo => digitos.All(d => d is { Length: 1 });
+    private bool Vencido => restante <= TimeSpan.Zero;
+
+    protected override void OnInitialized()
+    {
+        for (var i = 0; i < 6; i++) digitos[i] = "";
+        reloj = new System.Threading.Timer(_ => InvokeAsync(() =>
+        {
+            if (restante > TimeSpan.Zero) restante -= TimeSpan.FromSeconds(1);
+            if (esperaReenvio > 0) esperaReenvio--;
+            StateHasChanged();
+        }), null, 1000, 1000);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool primera)
+    {
+        if (primera) await casillas[0].FocusAsync();
+    }
+
+    // Acepta un dígito por casilla; si se pega el código completo, lo reparte en las seis.
+    private async Task Escribir(int i, ChangeEventArgs e)
+    {
+        error = null;
+        var solo = new string((e.Value?.ToString() ?? "").Where(char.IsDigit).ToArray());
+        if (solo.Length >= 6)
+        {
+            for (var k = 0; k < 6; k++) digitos[k] = solo[k].ToString();
+            await casillas[5].FocusAsync();
+            return;
+        }
+        if (solo.Length > 1) solo = solo[^1].ToString(); // Escribió sobre una casilla llena: queda el último dígito.
+        digitos[i] = solo;
+        if (solo.Length == 1 && i < 5) await casillas[i + 1].FocusAsync();
+    }
+
+    private async Task Tecla(int i, KeyboardEventArgs e)
+    {
+        if (e.Key == "Backspace" && digitos[i] == "" && i > 0)
+        {
+            digitos[i - 1] = "";
+            await casillas[i - 1].FocusAsync();
+        }
+    }
+
+    private async Task Reenviar()
+    {
+        for (var i = 0; i < 6; i++) digitos[i] = "";
+        restante = TimeSpan.FromMinutes(15);
+        esperaReenvio = 30;
+        error = null;
+        aviso = "Te enviamos un código nuevo. El anterior ya no sirve.";
+        await casillas[0].FocusAsync();
+    }
+
+    private async Task Verificar()
+    {
+        aviso = null;
+        if (Vencido)
+        {
+            error = "El código venció. Pide uno nuevo con «Reenviar código».";
+            return;
+        }
+        verificando = true;
+        await Task.Delay(500); // Pantalla visual: aún no hay base de datos.
+        Navigation.NavigateTo("/login/usuario");
+    }
+
+    public void Dispose() => reloj?.Dispose();
+}

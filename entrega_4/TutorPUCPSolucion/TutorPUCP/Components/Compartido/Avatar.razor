@@ -1,0 +1,16 @@
+@* Círculo con las iniciales de una persona (no se muestran fotos ni datos de contacto) *@
+
+<span class="avatar avatar-@Tamano" style="background: @Color;">@Iniciales</span>
+
+@code {
+    [Parameter, EditorRequired] public string Nombre { get; set; } = "";
+    [Parameter] public string Tamano { get; set; } = "md";
+
+    private static readonly string[] Colores =
+        ["#2563eb", "#0d9488", "#d97706", "#7c3aed", "#db2777", "#0891b2", "#16a34a"];
+
+    private string Iniciales => string.Concat(Nombre.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+        .Take(2).Select(p => char.ToUpper(p[0])));
+
+    private string Color => Colores[Math.Abs(Nombre.Sum(c => c)) % Colores.Length];
+}

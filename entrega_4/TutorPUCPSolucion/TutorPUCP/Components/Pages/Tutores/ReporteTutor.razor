@@ -10,11 +10,11 @@
         <div class="row g-3 align-items-end">
             <div class="col-md-4">
                 <label for="desde" class="form-label">Desde</label>
-                <input id="desde" type="date" class="form-control" value="2026-09-01" />
+                <RadzenDatePicker TValue="DateOnly" @bind-Value="desde" Name="desde" DateFormat="dd/MM/yyyy" Max="@hasta.ToDateTime(TimeOnly.MinValue)" Culture="@Peru" class="tp-fecha" />
             </div>
             <div class="col-md-4">
                 <label for="hasta" class="form-label">Hasta</label>
-                <input id="hasta" type="date" class="form-control" value="2026-09-30" />
+                <RadzenDatePicker TValue="DateOnly" @bind-Value="hasta" Name="hasta" DateFormat="dd/MM/yyyy" Min="@desde.ToDateTime(TimeOnly.MinValue)" Culture="@Peru" class="tp-fecha" />
             </div>
             <div class="col-md-4">
                 <button type="button" class="btn btn-primary w-100">Generar reporte</button>
@@ -97,3 +97,9 @@
         </div>
     </div>
 </div>
+
+@code {
+    private static readonly System.Globalization.CultureInfo Peru = new("es-PE");
+    private DateOnly desde = new(2026, 9, 1);
+    private DateOnly hasta = new(2026, 9, 30);
+}
