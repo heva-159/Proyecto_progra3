@@ -1,7 +1,138 @@
 ﻿@page "/estudiante"
-
-@* Responsable: Integrante 4 - Sesiones *@
+@implements IDisposable
+@inject RolActual RolActual
 
 <PageTitle>Inicio estudiante</PageTitle>
 
-<h1>Inicio estudiante</h1>
+<div class="titulo-pagina">
+    <div class="d-flex align-items-center gap-3">
+        <span class="icono-titulo"><i class="bi bi-house-door-fill"></i></span>
+        <div>
+            <h1 class="h3">Hola, @PrimerNombre</h1>
+            <p>Busca un tutor, coordina tu sesión y revisa tus tutorías.</p>
+        </div>
+    </div>
+    <a class="btn btn-primary" href="/estudiante/buscar-tutores"><i class="bi bi-compass me-1"></i>Buscar tutores</a>
+</div>
+
+@* Sesión realizada que todavía no se calificó (RF014) *@
+<div class="nota d-flex flex-wrap align-items-center gap-3 mb-4">
+    <i class="bi bi-star fs-4 text-primary"></i>
+    <div class="flex-grow-1 lh-sm">
+        <div class="fw-semibold">Ya puedes calificar tu sesión con @porCalificar.Tutor</div>
+        <small class="text-muted">@porCalificar.Curso · @porCalificar.Tema · @porCalificar.Fecha</small>
+    </div>
+    <a class="btn btn-primary btn-sm" href="/sesiones/calificar?sesion=@porCalificar.Numero">Calificar</a>
+</div>
+
+<div class="row g-3 mb-4">
+    @{ var k = 0; }
+    @foreach (var (href, titulo, valor, icono) in Resumen)
+    {
+        <div class="col-6 col-lg-3 entrar" style="--i: @(k++);">
+            <a class="card kpi tarjeta-hover h-100 text-decoration-none" href="@href">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <span class="kpi-icono"><i class="bi @icono"></i></span>
+                    <div><div class="kpi-valor">@valor</div><div class="small text-muted">@titulo</div></div>
+                </div>
+            </a>
+        </div>
+    }
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card h-100 entrar" style="--i: 4;">
+            <div class="card-header py-3 d-flex align-items-center justify-content-between">
+                <h2 class="h5 mb-0"><i class="bi bi-calendar-event me-2 text-primary"></i>Próximas sesiones</h2>
+                <a class="small text-decoration-none" href="/sesiones">Ver todas <i class="bi bi-arrow-right"></i></a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-primary">
+                        <tr>
+                            <th class="ps-3">Tutor</th>
+                            <th>Curso</th>
+                            <th>Fecha y hora</th>
+                            <th class="pe-3"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var s in proximas)
+                        {
+                            <tr>
+                                <td class="ps-3">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <Avatar Nombre="@s.Tutor" Tamano="sm" />
+                                        <span class="fw-semibold">@s.Tutor</span>
+                                    </div>
+                                </td>
+                                <td class="lh-sm"><div>@s.Curso</div><small class="text-muted">@s.Tema</small></td>
+                                <td class="text-nowrap">@s.Fecha<br /><small class="text-muted">@s.Hora</small></td>
+                                <td class="pe-3 text-end"><a class="btn btn-sm btn-outline-primary" href="/sesiones/detalle">Ver detalle</a></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card h-100 entrar" style="--i: 5;">
+            <div class="card-body">
+                <h2 class="h5 mb-3"><i class="bi bi-lightning-charge me-2 text-primary"></i>Accesos rápidos</h2>
+                <div class="d-grid gap-2">
+                    @foreach (var (href, icono, texto, detalle) in accesos)
+                    {
+                        <a class="d-flex align-items-center gap-3 p-3 rounded-4 caja-suave tarjeta-hover text-decoration-none text-body" href="@href">
+                            <i class="bi @icono fs-5 text-primary"></i>
+                            <span class="lh-sm">
+                                <span class="d-block fw-semibold">@texto</span>
+                                <small class="text-muted">@detalle</small>
+                            </span>
+                            <i class="bi bi-chevron-right ms-auto text-muted"></i>
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private record Sesion(int Numero, string Curso, string Tema, string Tutor, string Fecha, string Hora);
+
+    // Mismas sesiones de Lucía Ramos que en "Mis sesiones"
+    private static readonly Sesion porCalificar = new(29, "Cálculo 1", "Derivadas", "Andrés Villanueva", "23/10/2026", "4:00 p. m.");
+
+    private static readonly Sesion[] proximas =
+    [
+        new(31, "Cálculo 1", "Límites y continuidad", "Andrés Villanueva", "27/10/2026", "4:00 p. m."),
+        new(33, "Química General", "Estequiometría", "Rosa Huamán", "29/10/2026", "2:00 p. m."),
+    ];
+
+    private static readonly (string, string, string, string)[] accesos =
+    [
+        ("/estudiante/buscar-tutores", "bi-compass", "Buscar tutores", "Por curso, tarifa y calificación"),
+        ("/sesiones", "bi-calendar-week", "Mis sesiones", "Check-in, calificación y reclamos"),
+        ("/mensajes", "bi-chat-dots", "Mensajes", "Coordina con tus tutores"),
+        ("/reclamos/nuevo", "bi-flag", "Reclamos", "Si algo salió mal en una sesión"),
+    ];
+
+    private string PrimerNombre => RolActual.NombreUsuario.Split(' ')[0];
+
+    private (string, string, string, string)[] Resumen =>
+    [
+        ("/sesiones", "Próximas sesiones", proximas.Length.ToString(), "bi-calendar-event"),
+        ("/sesiones", "Sesiones realizadas", "4", "bi-check-circle"),
+        ("/sesiones/calificar?sesion=" + porCalificar.Numero, "Por calificar", "1", "bi-star"),
+        ("/mensajes", "Mensajes sin leer", "2", "bi-chat-dots"),
+    ];
+
+    protected override void OnInitialized() => RolActual.Cambio += AlCambiarRol;
+
+    private void AlCambiarRol() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => RolActual.Cambio -= AlCambiarRol;
+}

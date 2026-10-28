@@ -1,6 +1,6 @@
 ﻿@page "/admin/reportes"
 
-@* Responsable: Integrante 5 - Mensajería, reclamos y reporte admin (RF018) *@
+@* Requisito: RF018 *@
 
 <PageTitle>Reportes</PageTitle>
 
@@ -184,11 +184,11 @@
         {
             <div class="paso-panel" @key="paso">
                 <div class="row g-2">
-                    @foreach (var (f, icono, color) in Formatos)
+                    @foreach (var (f, icono, _) in Formatos)
                     {
                         <div class="col-6">
                             <button type="button" class="opcion-tarjeta w-100 flex-column text-center @(formato == f ? "elegida" : "")" @onclick="() => formato = f">
-                                <i class="bi @icono fs-1" style="color:@color;"></i>
+                                <i class="bi @icono fs-1 text-primary"></i>
                                 <b>@f</b>
                             </button>
                         </div>

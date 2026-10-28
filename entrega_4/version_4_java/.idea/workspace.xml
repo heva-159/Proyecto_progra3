@@ -4,12 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e67c2652-e3f3-46a8-9adc-986149588b36" name="Changes" comment="correciones menores">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-App/src/main/java/pe/edu/pucp/tutorPUCP/app/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-App/src/main/java/pe/edu/pucp/tutorPUCP/app/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Clases/GestorAcademico.java" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Clases/GestorAcademico.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Implementacion/GestorAcademicoImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/TutorPUCP/TutorPUCP-bl/src/main/java/pe/edu/pucp/tutorPUCP/bl/Implementacion/GestorAcademicoImpl.java" afterDir="false" />
-    </list>
+    <list default="true" id="e67c2652-e3f3-46a8-9adc-986149588b36" name="Changes" comment="correciones menores" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -114,7 +109,7 @@
       <workItem from="1790698150140" duration="4072000" />
       <workItem from="1790720021391" duration="2641000" />
       <workItem from="1793132554265" duration="1111000" />
-      <workItem from="1793136788655" duration="2249000" />
+      <workItem from="1793136788655" duration="3101000" />
     </task>
     <task id="LOCAL-00001" summary="correciones menores">
       <option name="closed" value="true" />

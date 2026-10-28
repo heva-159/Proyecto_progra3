@@ -19,18 +19,23 @@
             </span>
         </a>
 
-        <div class="acc-mensaje">
-            <h2>@Titular</h2>
-            <p>@Bajada</p>
-            <ul>
-                @foreach (var (icono, texto) in Puntos)
-                {
-                    <li><span><i class="bi @icono"></i></span>@texto</li>
-                }
-            </ul>
-        </div>
+        @* El eslogan y la lista de beneficios son para estudiantes y tutores, a quienes hay que convencer;
+           el administrador entra a trabajar y su panel queda sin mensaje. *@
+        @if (!EsAdmin)
+        {
+            <div class="acc-mensaje">
+                <h2>@Titular</h2>
+                <p>@Bajada</p>
+                <ul>
+                    @foreach (var (icono, texto) in Puntos)
+                    {
+                        <li><span><i class="bi @icono"></i></span>@texto</li>
+                    }
+                </ul>
+            </div>
 
-        <div class="acc-pie"><i class="bi bi-shield-check me-1"></i>Tus datos de contacto nunca se muestran a otros usuarios.</div>
+            <div class="acc-pie"><i class="bi bi-shield-check me-1"></i>Tus datos de contacto nunca se muestran a otros usuarios.</div>
+        }
     </aside>
 
     <main class="acc-lado">
@@ -57,28 +62,18 @@
     private bool EsRegistro => Ruta.StartsWith("registro");
 
     private string Titular =>
-        EsAdmin ? "Todo el control, en un solo panel."
-        : EsRegistro ? "Únete a la comunidad de tutorías PUCP."
+        EsRegistro ? "Únete a la comunidad de tutorías PUCP."
         : "Aprende y enseña entre compañeros.";
 
     private string Bajada =>
-        EsAdmin ? "Acceso exclusivo para administradores. Revisa postulaciones, cursos y reclamos."
-        : EsRegistro ? "Una sola cuenta te sirve como Estudiante, como Tutor o como ambos."
+        EsRegistro ? "Una sola cuenta te sirve como Estudiante, como Tutor o como ambos."
         : "Entra con tu correo PUCP. Si eres estudiante y tutor, cambias de rol dentro sin cerrar sesión.";
 
     private (string, string)[] Puntos =>
-        EsAdmin ?
-        [
-            ("bi-person-check", "Aprobar o rechazar postulaciones de tutores"),
-            ("bi-book", "Cursos y temas del catálogo"),
-            ("bi-flag", "Resolver reclamos de sesiones"),
-            ("bi-graph-up-arrow", "Reportes por rango de fechas"),
-        ]
-        :
-        [
-            ("bi-search", "Busca tutores por curso y tarifa"),
-            ("bi-chat-dots", "Coordina por la mensajería interna"),
-            ("bi-calendar-check", "Check-in y check-out de cada sesión"),
-            ("bi-star", "Califica y reclama si algo sale mal"),
-        ];
+    [
+        ("bi-search", "Busca tutores por curso y tarifa"),
+        ("bi-chat-dots", "Coordina por la mensajería interna"),
+        ("bi-calendar-check", "Check-in y check-out de cada sesión"),
+        ("bi-star", "Califica y reclama si algo sale mal"),
+    ];
 }

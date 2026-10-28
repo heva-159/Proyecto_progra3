@@ -1,0 +1,43 @@
+/* =====================================================================
+   Ajustes para un aspecto más sobrio. Se carga al final (App.razor).
+   Para volver al diseño anterior basta con quitar su <link>.
+   ===================================================================== */
+
+:root {
+    --bs-body-font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+    --tp-sombra: 0 1px 2px rgba(15, 23, 42, .08);
+    --tp-sombra-alta: 0 2px 8px rgba(15, 23, 42, .14);
+}
+
+/* Botones sin brillo de color y encabezados de tabla sin mayúsculas */
+.btn-primary { box-shadow: none; }
+.table > thead th { text-transform: none; letter-spacing: 0; font-size: .85rem; }
+
+/* Íconos decorativos de un solo color. Los estados (pendiente, aprobado, rechazado)
+   se siguen distinguiendo por su etiqueta; aquí solo se unifica el recuadro del ícono. */
+.icono-titulo, .kpi-icono, .campana-icono, .reg-rol-icono, .pt-curso-icono, .pt-paso-icono {
+    background: #dbeafe !important;
+    color: #2563eb !important;
+}
+[data-bs-theme="dark"] .icono-titulo, [data-bs-theme="dark"] .kpi-icono, [data-bs-theme="dark"] .campana-icono {
+    color: #93c5fd !important;
+}
+[data-bs-theme="dark"] .reg-rol-icono, [data-bs-theme="dark"] .pt-curso-icono, [data-bs-theme="dark"] .pt-paso-icono {
+    background: #172554 !important;
+    color: #93c5fd !important;
+}
+
+/* Animaciones decorativas sin efecto. Se conservan las que avisan estados (error, éxito, "escribiendo"…) */
+@keyframes tpSubir     { from, to { opacity: 1; transform: none; } }
+@keyframes tpAparecer  { from, to { opacity: 1; transform: none; } }
+@keyframes tpEntrarIzq { from, to { opacity: 1; transform: none; } }
+@keyframes tpCampana   { from, to { transform: none; } }
+@keyframes ptLatido    { from, to { opacity: 1; transform: none; } }
+@keyframes regEntrar   { from, to { opacity: 1; transform: none; } }
+
+/* Portada: titulares más simples y cabecera sin transparencia */
+.pt-titulo { font-weight: 700; letter-spacing: 0; line-height: 1.2; font-size: clamp(1.9rem, 4vw, 2.7rem); }
+.pt-franja h2 { font-weight: 700; letter-spacing: 0; }
+.pt-insignia, .pt-etiqueta { text-transform: none; letter-spacing: 0; font-size: .85rem; font-weight: 600; }
+.pt-cabecera { backdrop-filter: none; background: var(--tp-superficie); }
+.pt-hero .pt-bajada, .pt-hero .pt-buscador { margin-left: auto; margin-right: auto; }

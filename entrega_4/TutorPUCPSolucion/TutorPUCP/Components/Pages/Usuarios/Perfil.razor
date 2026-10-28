@@ -13,7 +13,7 @@
 
 <div class="titulo-pagina">
     <div class="d-flex align-items-center gap-3">
-        <span class="icono-titulo" style="background:linear-gradient(135deg,#dbeafe,#eff6ff);color:#2563eb;"><i class="bi bi-person-circle"></i></span>
+        <span class="icono-titulo" style="background:#dbeafe;color:#2563eb;"><i class="bi bi-person-circle"></i></span>
         <div>
             <h1 class="h3">Mi perfil</h1>
             <p>Revisa tus datos y cambia lo que los demás ven de ti.</p>
@@ -293,7 +293,7 @@
     private string Nombre => EsAdmin ? "Administrador" : RolActual.NombreUsuario;
     private string Correo => EsAdmin ? "admin@pucp.edu.pe" : RolActual.CorreoUsuario;
     private string RolTexto => EsAdmin ? "Administrador" : RolActual.Rol;
-    private string Acento => EsAdmin ? "#f43f5e" : EsTutor ? "#f59e0b" : "#14b8a6";
+    private string Acento => "#2563eb";
     private string IconoRol => EsAdmin ? "bi-shield-lock-fill" : EsTutor ? "bi-person-workspace" : "bi-backpack2-fill";
 
     private bool BioConContacto => DatosContacto.Contiene(bio);

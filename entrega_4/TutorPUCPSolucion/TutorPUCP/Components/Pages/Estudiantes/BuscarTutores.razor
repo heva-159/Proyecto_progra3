@@ -1,8 +1,5 @@
 ﻿@page "/estudiante/buscar-tutores"
 
-@* Responsable: Integrante 3 - Tutor y búsqueda *@
-@* Enlazar: botón "Ver perfil" -> /estudiante/tutor *@
-
 <PageTitle>Buscar tutores</PageTitle>
 
 @* =============================================================================
@@ -84,8 +81,8 @@
                 <div class="card h-100 shadow-sm border-0">
                     <div class="card-body text-center p-4 d-flex flex-column justify-content-between">
                         <div>
-                            @* Avatar con ícono *@
-                            <div class="fs-1 mb-2">@tutor.Avatar</div>
+                            @* Avatar con las iniciales del tutor *@
+                            <div class="mb-2"><Avatar Nombre="@tutor.Nombre" Tamano="lg" /></div>
 
                             @* Nombre del Tutor *@
                             <h5 class="card-title fw-bold text-dark mb-1">@tutor.Nombre</h5>
@@ -94,7 +91,7 @@
                             <p class="text-muted small mb-2">@tutor.Especialidad</p>
                             @* Calificación en estrellas y total de sesiones *@
                             <div class="mb-3 text-warning">
-                                 <strong>@tutor.Calificacion.ToString("0.0")</strong>
+                                 <i class="bi bi-star-fill"></i> <strong>@tutor.Calificacion.ToString("0.0")</strong>
                                 <span class="text-muted small">(@tutor.SesionesDictadas tutorías)</span>
                             </div>
                             @* Cursos que dicta (Badges) *@
@@ -151,7 +148,6 @@
     {
         new TutorCardItem
         {
-            Avatar = "👨‍🏫",
             Nombre = "Carlos Mendoza R.",
             Especialidad = "Ing. Informática - 8vo ciclo",
             Calificacion = 4.9,
@@ -161,7 +157,6 @@
         },
         new TutorCardItem
         {
-            Avatar = "👩‍🏫",
             Nombre = "Valeria Quispe G.",
             Especialidad = "Ing. de Software - Egresada",
             Calificacion = 4.8,
@@ -171,7 +166,6 @@
         },
         new TutorCardItem
         {
-            Avatar = "👨‍🏫",
             Nombre = "Jorge Ramos T.",
             Especialidad = "Ciencias de la Computación - 9no ciclo",
             Calificacion = 4.7,
@@ -187,7 +181,6 @@
     }
     public class TutorCardItem
     {
-        public string Avatar { get; set; } = "👨‍🏫";
         public string Nombre { get; set; } = "";
         public string Especialidad { get; set; } = "";
         public double Calificacion { get; set; }

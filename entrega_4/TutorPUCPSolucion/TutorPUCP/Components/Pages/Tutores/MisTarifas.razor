@@ -1,7 +1,5 @@
 ﻿@page "/tutor/tarifas"
 
-@* Responsable: Integrante 3 - Tutor y búsqueda *@
-
 <PageTitle>Mis tarifas</PageTitle>
 
 @* =============================================================================
@@ -21,7 +19,7 @@
    Aclara que solo los cursos aprobados pueden tener tarifa
    ============================================================================= *@
 <div class="alert alert-info shadow-sm border-0 d-flex align-items-center mb-4" role="alert">
-    <span class="fs-4 me-3">ℹ️</span>
+    <i class="bi bi-info-circle-fill fs-4 me-3"></i>
     <div>
         <strong>Regla del sistema:</strong><br />
         Solo puedes registrar y modificar tarifas en aquellos cursos donde tu postulación figure con estado
@@ -36,7 +34,7 @@
 @if (tarifaActualizada)
 {
     <div class="alert alert-success alert-dismissible fade show shadow-sm border-0" role="alert">
-        ✅ <strong>¡Tarifa actualizada!</strong> Se guardó un precio de
+        <strong>¡Tarifa actualizada!</strong> Se guardó un precio de
         <strong>S/ @montoGuardado.ToString("0.00") por hora</strong> para el curso <strong>@cursoGuardado</strong>.
         <button type="button" class="btn-close" @onclick="() => tarifaActualizada = false"></button>
     </div>
@@ -109,7 +107,7 @@
    TARJETA DE CONSEJOS Y POLÍTICAS 
    ============================================================================= *@
 <div class="card border-0 bg-light p-3 shadow-sm mb-4">
-    <h6 class="fw-bold text-secondary mb-2">💡 Recomendaciones sobre las Tarifas:</h6>
+    <h6 class="fw-bold text-secondary mb-2">Recomendaciones sobre las Tarifas:</h6>
     <ul class="mb-0 small text-muted">
         <li>El rango de precio sugerido por la facultad está entre <strong>S/ 25.00</strong> y <strong>S/ 45.00</strong> por hora.</li>
         <li>Los estudiantes verán este precio publicado cuando utilicen el buscador de tutores.</li>

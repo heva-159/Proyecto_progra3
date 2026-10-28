@@ -1,6 +1,5 @@
 @page "/"
 @layout PortadaLayout
-@implements IDisposable
 @inject NavigationManager Navigation
 
 @* Portada pública de TutorPUCP. Para entrar se usa /login/usuario (estudiantes y tutores). *@
@@ -29,11 +28,9 @@
 
 @* Portada principal *@
 <section class="pt-hero">
-    <div class="pt-mancha uno"></div>
-    <div class="pt-mancha dos"></div>
     <div class="container-xl position-relative">
-        <div class="row align-items-center g-5">
-            <div class="col-lg-6 text-center text-lg-start">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
                 <span class="pt-insignia"><span class="pt-punto"></span> Tutorías entre estudiantes PUCP</span>
                 <h1 class="pt-titulo">
                     Aprende con quien
@@ -46,67 +43,13 @@
                     <input placeholder="¿Qué curso necesitas? Ej. Cálculo 1" @bind="busqueda" @bind:event="oninput" aria-label="Buscar curso" />
                     <button type="submit" class="btn pt-btn">Buscar tutor</button>
                 </form>
-                <div class="d-flex flex-wrap gap-2 mt-3 justify-content-center justify-content-lg-start">
+                <div class="d-flex flex-wrap gap-2 mt-3 justify-content-center">
                     @foreach (var c in Sugerencias)
                     {
                         <button type="button" class="pt-sugerencia @(c == busqueda ? "activa" : "")" @onclick="() => busqueda = c">@c</button>
                     }
                 </div>
             </div>
-
-            @* Tarjetas flotantes que muestran cómo se ve la plataforma por dentro *@
-            <div class="col-lg-6 d-none d-md-block">
-                <div class="pt-escena">
-                    <div class="pt-flota tutor">
-                        <div class="d-flex align-items-center gap-3">
-                            <Avatar Nombre="Andrés Villanueva" />
-                            <div>
-                                <div class="fw-bold">Andrés Villanueva</div>
-                                <div class="small text-muted">Cálculo 1 · S/ 35 por hora</div>
-                            </div>
-                        </div>
-                        <div class="d-flex align-items-center justify-content-between mt-3">
-                            <span class="estrellas"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-half"></i></span>
-                            <span class="badge text-bg-success">Postulación aprobada</span>
-                        </div>
-                    </div>
-
-                    <div class="pt-flota sesion">
-                        <div class="small text-muted mb-1">Sesión de hoy · 4:00 p. m.</div>
-                        <div class="fw-bold mb-2">Límites y continuidad</div>
-                        <div class="d-flex gap-2">
-                            <span class="pt-mini ok"><i class="bi bi-box-arrow-in-right"></i> Check-in</span>
-                            <span class="pt-mini"><i class="bi bi-box-arrow-right"></i> Check-out</span>
-                        </div>
-                    </div>
-
-                    <div class="pt-flota mensaje">
-                        <div class="burbuja suya mb-2">¿Te parece el martes a las 4?</div>
-                        <div class="burbuja mia ms-auto">¡Perfecto! <i class="bi bi-check2-all check leido"></i></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-@* Cifras con contador animado *@
-<section class="pt-cifras">
-    <div class="container-xl">
-        <div class="row g-3">
-            @{ var k = 0; }
-            @foreach (var c in Cifras)
-            {
-                <div class="col-6 col-lg-3">
-                    <div class="pt-cifra entrar" style="--i: @(k++);">
-                        <span class="pt-cifra-icono" style="background:@c.Fondo;color:@c.Color;"><i class="bi @c.Icono"></i></span>
-                        <div>
-                            <div class="pt-cifra-valor">@Mostrar(c)</div>
-                            <div class="small text-muted">@c.Texto</div>
-                        </div>
-                    </div>
-                </div>
-            }
         </div>
     </div>
 </section>
@@ -220,23 +163,12 @@
 </footer>
 
 @code {
-    private record Cifra(string Icono, double Valor, string Texto, string Fondo, string Color, bool Decimal = false);
     private record Curso(string Nombre, string Icono, int Tutores, int Desde, string Fondo, string Color);
 
     private string busqueda = "";
     private string rolPasos = "Estudiante";
-    private double avance; // de 0 a 1, para animar los contadores
-    private readonly CancellationTokenSource corte = new();
 
     private static readonly string[] Sugerencias = ["Cálculo 1", "Física 1", "Programación 3", "Química General"];
-
-    private static readonly Cifra[] Cifras =
-    [
-        new("bi-people-fill", 128, "Tutores aprobados", "#dbeafe", "#2563eb"),
-        new("bi-book-fill", 36, "Cursos con tutor", "#dcfce7", "#16a34a"),
-        new("bi-calendar-check-fill", 1540, "Sesiones realizadas", "#fef3c7", "#b45309"),
-        new("bi-star-fill", 4.8, "Calificación promedio", "#fce7f3", "#db2777", Decimal: true),
-    ];
 
     private static readonly Curso[] Cursos =
     [
@@ -278,38 +210,9 @@
     private static string Normalizar(string s) => new string(s.ToLowerInvariant().Normalize(System.Text.NormalizationForm.FormD)
         .Where(ch => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(ch) != System.Globalization.UnicodeCategory.NonSpacingMark).ToArray()).Trim();
 
-    private string Mostrar(Cifra c)
-    {
-        var v = c.Valor * avance;
-        return c.Decimal ? v.ToString("0.0") : ((int)Math.Round(v)).ToString("N0");
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (!firstRender) return;
-        try
-        {
-            // Sube los contadores en poco más de un segundo, con frenado al final
-            for (var i = 1; i <= 30; i++)
-            {
-                await Task.Delay(40, corte.Token);
-                var t = i / 30.0;
-                avance = 1 - Math.Pow(1 - t, 3);
-                StateHasChanged();
-            }
-        }
-        catch (TaskCanceledException) { }
-    }
-
     private void Buscar()
     {
         // Sin cuenta solo se filtra la lista de abajo; para ver tutores y tarifas hay que iniciar sesión
         Navigation.NavigateTo("/login/usuario");
-    }
-
-    public void Dispose()
-    {
-        corte.Cancel();
-        corte.Dispose();
     }
 }

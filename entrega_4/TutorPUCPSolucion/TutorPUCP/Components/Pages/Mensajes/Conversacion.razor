@@ -2,7 +2,7 @@
 @implements IDisposable
 @inject RolActual RolActual
 
-@* Responsable: Integrante 5 - Mensajería, reclamos y reporte admin (RF010) *@
+@* Requisito: RF010 *@
 
 <PageTitle>Conversación</PageTitle>
 
@@ -241,10 +241,10 @@
         return
         [
             new() { Autor = "Estudiante", Texto = "Hola, quisiera una tutoría de Cálculo 1 para repasar límites antes del parcial.", Enviado = ayer.AddHours(18).AddMinutes(5), LeidoEn = ayer.AddHours(18).AddMinutes(19) },
-            new() { Autor = "Tutor", Texto = "¡Hola! Claro. ¿Qué días tienes disponibles esta semana? 📅", Enviado = ayer.AddHours(18).AddMinutes(20), LeidoEn = ayer.AddHours(18).AddMinutes(21) },
+            new() { Autor = "Tutor", Texto = "¡Hola! Claro. ¿Qué días tienes disponibles esta semana?", Enviado = ayer.AddHours(18).AddMinutes(20), LeidoEn = ayer.AddHours(18).AddMinutes(21) },
             new() { Autor = "Estudiante", Texto = "Martes o jueves por la tarde.", Enviado = ayer.AddHours(18).AddMinutes(22), LeidoEn = hoy.AddHours(10).AddMinutes(38) },
             new() { Autor = "Tutor", Texto = "¿Te parece bien el jueves a las 4 p. m.?", Enviado = hoy.AddHours(10).AddMinutes(40), LeidoEn = hoy.AddHours(10).AddMinutes(45) },
-            new() { Autor = "Tutor", Texto = "Si puedes, trae los ejercicios de la práctica para revisarlos juntos. 📝", Enviado = hoy.AddHours(10).AddMinutes(42), LeidoEn = hoy.AddHours(10).AddMinutes(45) },
+            new() { Autor = "Tutor", Texto = "Si puedes, trae los ejercicios de la práctica para revisarlos juntos.", Enviado = hoy.AddHours(10).AddMinutes(42), LeidoEn = hoy.AddHours(10).AddMinutes(45) },
         ];
     }
 

@@ -140,7 +140,7 @@
 
     private string CorreoPerfil => EsAdmin ? "admin@pucp.edu.pe" : RolActual.CorreoUsuario;
 
-    private string Acento => EsAdmin ? "#f43f5e" : RolActual.Rol == RolActual.Tutor ? "#f59e0b" : "#14b8a6";
+    private string Acento => "#2563eb"; // un solo color de acento para todos los roles
 
     private static string IconoRol(string rol) => rol == RolActual.Tutor ? "bi-person-workspace" : "bi-backpack2-fill";
 
