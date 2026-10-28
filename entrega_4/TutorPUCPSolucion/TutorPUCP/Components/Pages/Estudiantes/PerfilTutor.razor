@@ -5,4 +5,190 @@
 
 <PageTitle>Perfil del tutor</PageTitle>
 
-<h1>Perfil del tutor</h1>
+@* Botón de navegación para volver al catálogo de búsqueda *@
+<div class="mb-3">
+    <a href="/estudiante/buscar-tutores" class="btn btn-outline-secondary btn-sm">
+        ← Volver a la Búsqueda de Tutores
+    </a>
+</div>
+@* =============================================================================
+   TARJETA PRINCIPAL DEL PERFIL DEL TUTOR
+   Cabecera con avatar grande, datos de la facultad, estrellas y botones de acción.
+   ============================================================================= *@
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+
+            @* Avatar y Datos del Tutor *@
+            <div class="d-flex align-items-center gap-3">
+                <div class="fs-1 p-3 bg-light rounded-circle shadow-sm text-center" style="width: 80px; height: 80px; line-height: 50px;">
+                    👨‍🏫
+                </div>
+                <div>
+                    <h3 class="fw-bold text-dark mb-1">Carlos Mendoza R.</h3>
+                    <p class="text-muted mb-1">
+                        Facultad de Ciencias e Ingeniería | <strong>Ingeniería Informática</strong> (8vo ciclo)
+                    </p>
+                    <p class="small text-muted mb-2">
+                        Código PUCP: <strong>20211712</strong> &bull; Correo: <code>c.mendoza@pucp.edu.pe</code>
+                    </p>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-warning text-dark px-2 py-1">⭐ 4.9 de promedio</span>
+                        <span class="badge bg-info text-dark px-2 py-1"> 16 tutorías dictadas</span>
+                        <span class="badge bg-success px-2 py-1">✓ Cuenta Verificada PUCP</span>
+                    </div>
+                </div>
+            </div>
+            @* Botones de Acción para el Estudiante *@
+            <div class="d-flex flex-column gap-2 text-md-end">
+                @* Botón principal para agendar tutoría *@
+                <button type="button" class="btn btn-success btn-lg shadow-sm" @onclick="SolicitarTutoriaSimulada">
+                    📅 Solicitar Tutoría
+                </button>
+                @* =============================================================
+                   ENLACE
+                   Lleva a la pantalla de chat
+                   ============================================================= *@
+                <a href="/mensajes/conversacion" class="btn btn-outline-primary btn-sm shadow-sm">
+                    💬 Enviar Mensaje al Tutor
+                </a>
+            </div>
+        </div>
+        @* Alerta que aparece al hacer clic en "Solicitar Tutoría" *@
+        @if (mostrarMensajeSolicitud)
+        {
+            <div class="alert alert-success alert-dismissible fade show mt-3 mb-0" role="alert">
+                🎉 <strong>¡Solicitud de contacto enviada!</strong> El tutor ha recibido tu interés. También puedes coordinar con él directamente haciendo clic en <strong>"Enviar Mensaje"</strong>.
+                <button type="button" class="btn-close" @onclick="() => mostrarMensajeSolicitud = false"></button>
+            </div>
+        }
+    </div>
+</div>
+@* =============================================================================
+   CURSOS HABILITADOS Y TARIFAS POR HORA
+   Muestra qué asignaturas domina y cuánto cobra en cada una.
+   ============================================================================= *@
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white py-3 border-0">
+        <h5 class="fw-bold mb-0 text-dark">📚 Cursos Acreditados y Tarifas</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">Código</th>
+                        <th>Nombre del Curso</th>
+                        <th>Temas Principales de Asesoría</th>
+                        <th>Tarifa por Hora</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (listaCursosTutor != null && listaCursosTutor.Count > 0)
+                    {
+                        @foreach (var curso in listaCursosTutor)
+                        {
+                            <tr>
+                                <td class="ps-3 fw-bold text-muted">@curso.Codigo</td>
+                                <td class="fw-semibold text-dark">@curso.Nombre</td>
+                                <td class="text-muted small">@curso.Temas</td>
+                                <td>
+                                    <span class="text-success fw-bold fs-6">
+                                        S/ @curso.Tarifa.ToString("0.00")
+                                    </span>
+                                    <small class="text-muted">/ hora</small>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+@* =============================================================================
+   RESEÑAS Y COMENTARIOS DE ALUMNOS
+   Prueba social y opiniones de estudiantes que ya llevaron asesorías con él
+   ============================================================================= *@
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0 text-dark">💬 Reseñas de Alumnos (@listaReseñas.Count)</h5>
+        <span class="text-warning fw-bold">⭐ 4.9 sobre 5.0</span>
+    </div>
+    <div class="card-body p-4 pt-2">
+        @if (listaReseñas != null && listaReseñas.Count > 0)
+        {
+            @foreach (var r in listaReseñas)
+            {
+                <div class="border-bottom py-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-bold text-dark">@r.EstudianteNombre</span>
+                        <span class="text-warning small">@r.Estrellas</span>
+                    </div>
+                    <span class="badge bg-light text-muted border mb-2">Curso: @r.Curso</span>
+                    <p class="text-muted mb-0 small fst-italic">"@r.Comentario"</p>
+                </div>
+            }
+        }
+    </div>
+</div>
+@* =============================================================================
+   LÓGICA EN C# 
+   ============================================================================= *@
+@code {
+    private bool mostrarMensajeSolicitud = false;
+    private void SolicitarTutoriaSimulada()
+    {
+        mostrarMensajeSolicitud = true;
+    }
+    // Lista de cursos acreditados que dicta este tutor
+    private List<CursoTutorItem> listaCursosTutor = new()
+    {
+        new CursoTutorItem
+        {
+            Codigo = "1INF30",
+            Nombre = "Programación 3",
+            Temas = "Arquitectura por Capas, Transacciones JDBC, Desarrollo Web",
+            Tarifa = 35.00
+        },
+        new CursoTutorItem
+        {
+            Codigo = "1INF01",
+            Nombre = "Algoritmia",
+            Temas = "Divide y Vencerás, Programación Dinámica, Backtracking",
+            Tarifa = 30.00
+        }
+    };
+    // Lista simulada de opiniones de alumnos
+    private List<ReseñaItem> listaReseñas = new()
+    {
+        new ReseñaItem
+        {
+            EstudianteNombre = "Lucía F. (Estudiante)",
+            Curso = "1INF30 - Programación 3",
+            Estrellas = "⭐⭐⭐⭐⭐",
+            Comentario = "Excelente tutor"
+        },
+        new ReseñaItem
+        {
+            EstudianteNombre = "Marco P. (Estudiante)",
+            Curso = "1INF01 - Algoritmia",
+            Estrellas = "⭐⭐⭐⭐⭐",
+            Comentario = "Muy paciente resolviendo ejercicios"
+        }
+    };
+    public class CursoTutorItem
+    {
+        public string Codigo { get; set; } = "";
+        public string Nombre { get; set; } = "";
+        public string Temas { get; set; } = "";
+        public double Tarifa { get; set; }
+    }
+    public class ReseñaItem
+    {
+        public string EstudianteNombre { get; set; } = "";
+        public string Curso { get; set; } = "";
+        public string Estrellas { get; set; } = "";
+        public string Comentario { get; set; } = "";
+    }
+}
