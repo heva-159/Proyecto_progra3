@@ -1,62 +1,188 @@
 ﻿@page "/admin/postulaciones/revisar"
 
+@* Responsable: Integrante 2 - Administrador: catálogo (RF005). Datos de prueba de script_tutorPUCP.sql (postulación 5) *@
+
 <PageTitle>Revisar postulación</PageTitle>
 
-<a class="small d-inline-block mb-2" href="/admin/postulaciones">← Volver a postulaciones</a>
-<h1 class="h3 mb-1">Revisar postulación</h1>
-<p class="text-muted mb-4">Verifica el certificado de notas antes de aprobar o rechazar la postulación.</p>
+<Toasts class="p-3" Messages="avisos" AutoHide="true" Delay="4500" Placement="ToastsPlacement.TopRight" />
 
-<div class="row g-3 mb-4">
-    <div class="col-md-6">
-        <div class="card shadow-sm h-100">
+<a href="/admin/postulaciones" class="small text-decoration-none"><i class="bi bi-arrow-left me-1"></i>Volver a postulaciones</a>
+
+<div class="titulo-pagina mt-2">
+    <div class="d-flex align-items-center gap-3">
+        <span class="icono-titulo" style="background:linear-gradient(135deg,#fef3c7,#fffbeb);color:#b45309;"><i class="bi bi-clipboard-check-fill"></i></span>
+        <div>
+            <div class="d-flex align-items-center gap-2">
+                <h1 class="h3 mb-0">Revisar postulación N.º 5</h1>
+                <span class="badge @ClaseEstado" @key="estado" style="animation: tpAparecer .4s ease both;">@estado</span>
+            </div>
+            <p>Enviada el 20/09/2026 por Ana Lucia Quispe Huaman</p>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card mb-4 entrar" style="--i: 0;">
             <div class="card-body">
-                <h2 class="h5 mb-3">Tutor</h2>
-                <dl class="row mb-0">
-                    <dt class="col-sm-5">Nombre</dt>
-                    <dd class="col-sm-7">Ana Lucia Quispe Huaman</dd>
-                    <dt class="col-sm-5">Código PUCP</dt>
-                    <dd class="col-sm-7">20201234</dd>
-                    <dt class="col-sm-5">Correo</dt>
-                    <dd class="col-sm-7">a20201234@pucp.edu.pe</dd>
-                    <dt class="col-sm-5">Facultad</dt>
-                    <dd class="col-sm-7">Ciencias e Ingenieria</dd>
-                    <dt class="col-sm-5">Especialidad</dt>
-                    <dd class="col-sm-7 mb-0">Ingenieria Informatica</dd>
+                <h2 class="h5 mb-3"><i class="bi bi-person-badge me-2 text-primary"></i>Tutor</h2>
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <Avatar Nombre="Ana Lucia Quispe Huaman" />
+                    <div class="lh-sm">
+                        <div class="fw-bold">Ana Lucia Quispe Huaman</div>
+                        <small class="text-muted">Código PUCP 20201234</small>
+                    </div>
+                </div>
+                <dl class="row datos mb-3">
+                    <dt class="col-5">Correo</dt>
+                    <dd class="col-7">a20201234@pucp.edu.pe</dd>
+                    <dt class="col-5">Facultad</dt>
+                    <dd class="col-7">Ciencias e Ingenieria</dd>
+                    <dt class="col-5">Especialidad</dt>
+                    <dd class="col-7 mb-0">Ingenieria Informatica</dd>
                 </dl>
+
+                <div class="small text-uppercase text-muted fw-bold mb-2">Otras postulaciones del tutor</div>
+                <div class="d-flex align-items-center gap-2 p-2 rounded-4 caja-suave small">
+                    <i class="bi bi-book text-primary"></i>
+                    <span>1INF01 · Fundamentos de Programacion</span>
+                    <span class="badge text-bg-success ms-auto">Aprobada</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card entrar" style="--i: 1;">
+            <div class="card-body">
+                <h2 class="h5 mb-3"><i class="bi bi-file-earmark-text me-2 text-primary"></i>Postulación</h2>
+                <dl class="row datos mb-3">
+                    <dt class="col-5">Curso</dt>
+                    <dd class="col-7">1MAT05 · Calculo Diferencial</dd>
+                    <dt class="col-5">Fecha de postulación</dt>
+                    <dd class="col-7">20/09/2026</dd>
+                    <dt class="col-5">Certificado</dt>
+                    <dd class="col-7 mb-0">certificados/20201234_1MAT05.pdf</dd>
+                </dl>
+                <div class="d-flex align-items-center gap-3 p-3 rounded-4 caja-suave">
+                    <i class="bi bi-file-earmark-pdf-fill text-danger fs-2"></i>
+                    <div class="lh-sm">
+                        <div class="fw-semibold">Certificado de notas</div>
+                        <small class="text-muted">PDF · máximo 5 MB</small>
+                    </div>
+                    <button type="button" class="btn btn-outline-primary btn-sm ms-auto"><i class="bi bi-eye me-1"></i>Ver certificado</button>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-6">
-        <div class="card shadow-sm h-100">
+
+    <div class="col-lg-6">
+        <div class="card h-100 entrar" style="--i: 2;">
             <div class="card-body">
-                <h2 class="h5 mb-3">Postulación</h2>
-                <dl class="row">
-                    <dt class="col-sm-5">Curso</dt>
-                    <dd class="col-sm-7">1MAT05 - Calculo Diferencial</dd>
-                    <dt class="col-sm-5">Fecha</dt>
-                    <dd class="col-sm-7">20/09/2026</dd>
-                    <dt class="col-sm-5">Estado</dt>
-                    <dd class="col-sm-7"><span class="badge text-bg-warning">Pendiente</span></dd>
-                    <dt class="col-sm-5">Certificado</dt>
-                    <dd class="col-sm-7">certificados/20201234_1MAT05.pdf</dd>
-                </dl>
-                <button type="button" class="btn btn-sm btn-outline-primary">Ver certificado (PDF)</button>
+                @if (estado == "Pendiente")
+                {
+                    <Pasos Etapas="Etapas" Actual="@(decision == "" ? 1 : 2)" />
+
+                    <h2 class="h5 mb-3">Resolución</h2>
+
+                    <label class="form-label fw-semibold">Decisión</label>
+                    <div class="d-grid gap-2 mb-3">
+                        <button type="button" class="opcion-tarjeta aprobar @(decision == "Aprobada" ? "elegida" : "")" @onclick="@(() => decision = "Aprobada")">
+                            <span class="opcion-marca"><i class="bi bi-check"></i></span>
+                            <span class="lh-sm"><b class="text-success"><i class="bi bi-hand-thumbs-up me-1"></i>Aprobar postulación</b><br /><small class="text-muted">El tutor podrá dictar Calculo Diferencial</small></span>
+                        </button>
+                        <button type="button" class="opcion-tarjeta rechazar @(decision == "Rechazada" ? "elegida" : "")" @onclick="@(() => decision = "Rechazada")">
+                            <span class="opcion-marca"><i class="bi bi-check"></i></span>
+                            <span class="lh-sm"><b class="text-danger"><i class="bi bi-hand-thumbs-down me-1"></i>Rechazar postulación</b><br /><small class="text-muted">Se le informará el motivo al tutor</small></span>
+                        </button>
+                    </div>
+
+                    <label for="motivo" class="form-label fw-semibold">Motivo</label>
+                    <textarea id="motivo" class="form-control" rows="5" maxlength="255"
+                              placeholder="@(decision == "Rechazada" ? "Explica por qué se rechaza la postulación." : "Comentario opcional (por ejemplo, la nota del curso).")"
+                              @bind="motivo" @bind:event="oninput"></textarea>
+                    <div class="d-flex justify-content-between mt-1 mb-3">
+                        <small class="text-muted">@(decision == "Rechazada" ? "Obligatorio al rechazar." : "Opcional al aprobar.")</small>
+                        <small class="contador-caracteres @(motivo.Length > 220 ? "cerca" : "")">@motivo.Length / 255</small>
+                    </div>
+
+                    <p class="small text-muted"><i class="bi bi-info-circle me-1"></i>La fecha de revisión se registra automáticamente.</p>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a class="btn btn-outline-secondary" href="/admin/postulaciones">Cancelar</a>
+                        <button type="button" class="btn btn-primary" disabled="@(!PuedeGuardar)" @onclick="() => confirmar.ShowAsync()">
+                            <i class="bi bi-save me-1"></i>Guardar resolución
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-4 paso-panel">
+                        <div class="exito-icono @(estado == "Rechazada" ? "rechazo" : "")">
+                            <i class="bi @(estado == "Aprobada" ? "bi-check-lg" : "bi-x-lg")"></i>
+                        </div>
+                        <h2 class="h4">Postulación @estado.ToLower()</h2>
+                        <p class="text-muted">Revisada por Carla Mendoza Rios el @DateTime.Today.ToString("dd/MM/yyyy").</p>
+                        @if (!string.IsNullOrWhiteSpace(motivo))
+                        {
+                            <div class="text-start p-3 rounded-4 mb-4 caja-suave">
+                                <div class="small text-uppercase text-muted fw-bold mb-1">Motivo</div>
+                                @motivo
+                            </div>
+                        }
+                        <a class="btn btn-primary" href="/admin/postulaciones"><i class="bi bi-arrow-left me-1"></i>Volver a postulaciones</a>
+                    </div>
+                }
             </div>
         </div>
     </div>
 </div>
 
-<div class="card shadow-sm">
-    <div class="card-body">
-        <h2 class="h5 mb-3">Resolución</h2>
-        <label for="motivo" class="form-label">Motivo</label>
-        <textarea id="motivo" class="form-control" rows="3"></textarea>
-        <div class="form-text">Obligatorio solo si rechazas la postulación. La fecha de revisión se registra automáticamente.</div>
+<Modal @ref="confirmar" Title="Confirmar resolución" IsVerticallyCentered="true">
+    <BodyTemplate>
+        <Pasos Etapas="Etapas" Actual="2" />
+        <p class="mb-2">
+            Vas a <b class="@(decision == "Aprobada" ? "text-success" : "text-danger")">@(decision == "Aprobada" ? "aprobar" : "rechazar")</b>
+            la postulación de Ana Lucia Quispe Huaman a Calculo Diferencial.
+        </p>
+        @if (!string.IsNullOrWhiteSpace(motivo))
+        {
+            <div class="p-3 rounded-4 small caja-suave">@motivo</div>
+        }
+    </BodyTemplate>
+    <FooterTemplate>
+        <button type="button" class="btn btn-outline-secondary" @onclick="() => confirmar.HideAsync()">Revisar otra vez</button>
+        <button type="button" class="btn @(decision == "Aprobada" ? "btn-success" : "btn-danger")" @onclick="Guardar">Sí, guardar</button>
+    </FooterTemplate>
+</Modal>
 
-        <div class="d-flex flex-wrap gap-2 mt-4">
-            <a class="btn btn-primary" href="/admin/postulaciones">Aprobar</a>
-            <a class="btn btn-outline-danger" href="/admin/postulaciones">Rechazar</a>
-            <a class="btn btn-outline-secondary ms-auto" href="/admin/postulaciones">Volver</a>
-        </div>
-    </div>
-</div>
+@code {
+    private static readonly string[] Etapas = ["Revisar", "Decidir", "Confirmar"];
+
+    private Modal confirmar = default!;
+    private readonly List<ToastMessage> avisos = [];
+
+    private string estado = "Pendiente";
+    private string decision = "";
+    private string motivo = "";
+
+    // Igual que la regla del backend: el motivo solo es obligatorio al rechazar.
+    private bool PuedeGuardar => decision == "Aprobada" || (decision == "Rechazada" && !string.IsNullOrWhiteSpace(motivo));
+
+    private string ClaseEstado => estado switch
+    {
+        "Aprobada" => "text-bg-success",
+        "Rechazada" => "text-bg-danger",
+        _ => "text-bg-warning",
+    };
+
+    private async Task Guardar()
+    {
+        await confirmar.HideAsync();
+        estado = decision;
+        avisos.Add(new ToastMessage
+        {
+            Type = estado == "Aprobada" ? ToastType.Success : ToastType.Danger,
+            Title = $"Postulación {estado.ToLower()}",
+            Message = "Se notificará la resolución a Ana Lucia Quispe Huaman.",
+        });
+    }
+}
