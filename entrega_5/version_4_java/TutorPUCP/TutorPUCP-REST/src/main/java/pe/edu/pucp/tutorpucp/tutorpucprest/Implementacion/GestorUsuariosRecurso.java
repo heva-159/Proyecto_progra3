@@ -146,6 +146,42 @@ public class GestorUsuariosRecurso{
         return Response.ok(new EstudianteDTO(estudiante)).build(); //todo
     }
 
+    @POST
+    @Path("/{id}/tutor")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response resgistarTutor(@PathParam("id") Integer id) {
+        Usuario usuario = gestorUsuariosBL.obtenerUsuarioPorId(id);
+        if (usuario == null) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(Map.of("error", "No existe el usuario " + id)).build();
+        }
+        try {
+            Tutor tutor = gestorUsuariosBL.registrarTutor(usuario);
+            return Response.status(Response.Status.CREATED).entity(new TutorDTO(tutor)).build();
+        } catch (BL_exeption e) {
+            // por ejemplo: "El usuario ya tiene perfil de tutor"
+            return Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", e.getMessage())).build();
+        }
+    }
+
+    @POST
+    @Path("/{id}/estudiante")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response resgistrarEstudiante(@PathParam("id") Integer id) {
+        Usuario usuario = gestorUsuariosBL.obtenerUsuarioPorId(id);
+        if (usuario == null) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(Map.of("error", "No existe el usuario " + id)).build();
+        }
+        try {
+            Estudiante estudiante = gestorUsuariosBL.registrarEstudiante(usuario);
+            return Response.status(Response.Status.CREATED).entity(new EstudianteDTO(estudiante)).build();
+        } catch (BL_exeption e) {
+            // por ejemplo: "El usuario ya tiene perfil de estudiante"
+            return Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", e.getMessage())).build();
+        }
+    }
+
     @PUT
     @Path("/{id}/tutor")
     @Produces(MediaType.APPLICATION_JSON)
