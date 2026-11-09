@@ -1,0 +1,61 @@
+﻿@inherits LayoutComponentBase
+@implements IDisposable
+@inject NavigationManager Navigation
+@inject RolActual RolActual
+
+<div class="page">
+    <aside class="sidebar">
+        <NavMenu />
+    </aside>
+
+    <div class="contenido">
+        @* Barra superior blanca y sin línea inferior. El perfil y "Cerrar sesión" están abajo en el menú lateral. *@
+        <header class="topbar sticky-top">
+            <div class="topbar-acciones">
+                <BotonTema />
+                <Campana />
+                @if (!EsAdmin)
+                {
+                    <Tooltip Title="Mensajes" Placement="TooltipPlacement.Bottom">
+                        <a class="topbar-icono" href="/mensajes" aria-label="Mensajes, 2 sin leer">
+                            <i class="bi bi-chat-dots-fill"></i>
+                            <span class="topbar-contador">2</span>
+                        </a>
+                    </Tooltip>
+                }
+            </div>
+        </header>
+
+        <main class="container-xl px-3 px-lg-4 pb-4">
+            <div class="pagina-anim" @key="Navigation.Uri">
+                @Body
+            </div>
+        </main>
+    </div>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    Ocurrió un error inesperado.
+    <a href="." class="reload">Recargar</a>
+    <span class="dismiss">&times;</span>
+</div>
+
+@code {
+    private bool EsAdmin => Navigation.ToBaseRelativePath(Navigation.Uri).StartsWith("admin", StringComparison.OrdinalIgnoreCase);
+
+    protected override void OnInitialized()
+    {
+        RolActual.Cambio += Refrescar;
+        Navigation.LocationChanged += AlNavegar;
+    }
+
+    private void Refrescar() => InvokeAsync(StateHasChanged);
+
+    private void AlNavegar(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e) => Refrescar();
+
+    public void Dispose()
+    {
+        RolActual.Cambio -= Refrescar;
+        Navigation.LocationChanged -= AlNavegar;
+    }
+}

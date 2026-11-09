@@ -1,0 +1,301 @@
+﻿@page "/admin/reclamos"
+
+@* Requisito: RF016 *@
+
+<PageTitle>Reclamos pendientes</PageTitle>
+
+<Toasts class="p-3" Messages="avisos" AutoHide="true" Delay="4500" Placement="ToastsPlacement.TopRight" />
+
+<div class="titulo-pagina">
+    <div class="d-flex align-items-center gap-3">
+        <span class="icono-titulo" style="background:#fef3c7;color:#b45309;"><i class="bi bi-inboxes-fill"></i></span>
+        <div>
+            <h1 class="h3">Reclamos pendientes</h1>
+            <p>Revisa los reclamos registrados sobre las sesiones y apruébalos o recházalos.</p>
+        </div>
+    </div>
+    <a class="btn btn-outline-primary" href="/admin/reportes"><i class="bi bi-graph-up-arrow me-1"></i>Ver reportes</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3 entrar" style="--i: 0;">
+        <div class="card kpi h-100"><div class="card-body d-flex align-items-center gap-3">
+            <span class="kpi-icono" style="background:#fef3c7;color:#b45309;"><i class="bi bi-hourglass-split"></i></span>
+            <div><div class="kpi-valor">@pendientes.Count</div><div class="small text-muted">Por resolver</div></div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3 entrar" style="--i: 1;">
+        <div class="card kpi h-100"><div class="card-body d-flex align-items-center gap-3">
+            <span class="kpi-icono" style="background:#ccfbf1;color:#0f766e;"><i class="bi bi-backpack2"></i></span>
+            <div><div class="kpi-valor">@pendientes.Count(r => r.Rol == "Estudiante")</div><div class="small text-muted">De estudiantes</div></div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3 entrar" style="--i: 2;">
+        <div class="card kpi h-100"><div class="card-body d-flex align-items-center gap-3">
+            <span class="kpi-icono" style="background:#fef3c7;color:#d97706;"><i class="bi bi-person-workspace"></i></span>
+            <div><div class="kpi-valor">@pendientes.Count(r => r.Rol == "Tutor")</div><div class="small text-muted">De tutores</div></div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3 entrar" style="--i: 3;">
+        <div class="card kpi h-100"><div class="card-body d-flex align-items-center gap-3">
+            <span class="kpi-icono" style="background:#dcfce7;color:#16a34a;"><i class="bi bi-check2-circle"></i></span>
+            <div><div class="kpi-valor">@resueltosHoy</div><div class="small text-muted">Resueltos hoy</div></div>
+        </div></div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header py-3">
+        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+            <div class="position-relative flex-grow-1" style="max-width: 340px;">
+                <i class="bi bi-search position-absolute text-muted" style="left: .8rem; top: 50%; transform: translateY(-50%);"></i>
+                <input type="text" class="form-control ps-5" placeholder="Reclamante o curso" aria-label="Buscar"
+                       @bind="busqueda" @bind:event="oninput" />
+            </div>
+            <div class="segmento" role="group" aria-label="Rol del reclamante">
+                @foreach (var r in new[] { "Todos", "Estudiante", "Tutor" })
+                {
+                    <button type="button" class="@(filtroRol == r ? "activo" : "")" @onclick="() => filtroRol = r">@r</button>
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (Filtrados.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-primary">
+                    <tr>
+                        <th class="ps-3">N.º</th>
+                        <th>Reclamante</th>
+                        <th>Sesión</th>
+                        <th>Motivo</th>
+                        <th>Espera</th>
+                        <th class="text-end pe-3">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ var i = 0; }
+                    @foreach (var r in Filtrados)
+                    {
+                        <tr class="entrar @(saliendo == r ? "fila-saliendo" : "")" style="--i: @(i++);" @key="r.Numero">
+                            <td class="ps-3 fw-bold">@r.Numero</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <Avatar Nombre="@r.Reclamante" Tamano="sm" />
+                                    <div class="lh-sm">
+                                        <div class="fw-semibold">@r.Reclamante</div>
+                                        <small class="text-muted">@r.Rol · @r.Fecha</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><div class="fw-semibold">@r.Curso</div><small class="text-muted">@r.FechaSesion</small></td>
+                            <td style="max-width: 240px;">
+                                <Tooltip Title="@r.Motivo" Placement="TooltipPlacement.Top">
+                                    <span class="d-inline-block text-truncate" style="max-width: 230px;">@r.Motivo</span>
+                                </Tooltip>
+                            </td>
+                            <td><span class="badge @(r.DiasEspera >= 7 ? "text-bg-danger" : r.DiasEspera >= 4 ? "text-bg-warning" : "etiqueta")">@r.DiasEspera días</span></td>
+                            <td class="text-end pe-3 text-nowrap">
+                                <a class="btn btn-light btn-sm" href="/admin/reclamos/resolver" title="Abrir ficha completa"><i class="bi bi-box-arrow-up-right"></i></a>
+                                <button type="button" class="btn btn-primary btn-sm" @onclick="() => AbrirResolver(r)">
+                                    <i class="bi bi-check2-square me-1"></i>Resolver
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="estado-vacio">
+            @if (pendientes.Count == 0)
+            {
+                <div class="exito-icono"><i class="bi bi-emoji-smile"></i></div>
+                <div class="fw-bold fs-5">¡Todo al día!</div>
+                <div class="small">No quedan reclamos por resolver.</div>
+            }
+            else
+            {
+                <i class="bi bi-search"></i>
+                <div class="fw-semibold">Ningún reclamo coincide con el filtro</div>
+            }
+        </div>
+    }
+</div>
+
+@* Modal por pasos: 1 revisar, 2 decidir, 3 confirmar *@
+<Modal @ref="modal" Title="@($"Resolver reclamo N.º {actual?.Numero}")" Size="ModalSize.Large" IsVerticallyCentered="true" UseStaticBackdrop="true">
+    <BodyTemplate>
+        @if (actual is not null)
+        {
+            <Pasos Etapas="Etapas" Actual="paso" />
+
+            @if (paso == 0)
+            {
+                <div class="paso-panel row g-3" @key="0">
+                    <div class="col-md-6">
+                        <div class="rounded-4 p-3 h-100 caja-suave">
+                            <div class="small text-uppercase text-muted fw-bold mb-2">Reclamo</div>
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <Avatar Nombre="@actual.Reclamante" Tamano="sm" />
+                                <div class="lh-sm"><b>@actual.Reclamante</b><br /><small class="text-muted">@actual.Rol · @actual.Fecha</small></div>
+                            </div>
+                            <p class="mb-0">«@actual.Motivo»</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="rounded-4 p-3 h-100 caja-suave">
+                            <div class="small text-uppercase text-muted fw-bold mb-2">Sesión</div>
+                            <dl class="row datos mb-0 small">
+                                <dt class="col-5">Curso</dt><dd class="col-7">@actual.Curso</dd>
+                                <dt class="col-5">Tutor</dt><dd class="col-7">@actual.Tutor</dd>
+                                <dt class="col-5">Estudiante</dt><dd class="col-7">@actual.Estudiante</dd>
+                                <dt class="col-5">Fecha</dt><dd class="col-7">@actual.FechaSesion</dd>
+                                <dt class="col-5">Check-in</dt><dd class="col-7 mb-0">@actual.CheckIn</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            }
+            else if (paso == 1)
+            {
+                <div class="paso-panel" @key="1">
+                    <label class="form-label fw-semibold">Decisión</label>
+                    <div class="row g-2 mb-3">
+                        <div class="col-sm-6">
+                            <button type="button" class="opcion-tarjeta aprobar @(decision == "Aprobado" ? "elegida" : "")" @onclick="@(() => decision = "Aprobado")">
+                                <span class="opcion-marca"><i class="bi bi-check"></i></span>
+                                <span class="lh-sm"><b class="text-success"><i class="bi bi-hand-thumbs-up me-1"></i>Aprobar</b><br /><small class="text-muted">El reclamo procede</small></span>
+                            </button>
+                        </div>
+                        <div class="col-sm-6">
+                            <button type="button" class="opcion-tarjeta rechazar @(decision == "Rechazado" ? "elegida" : "")" @onclick="@(() => decision = "Rechazado")">
+                                <span class="opcion-marca"><i class="bi bi-check"></i></span>
+                                <span class="lh-sm"><b class="text-danger"><i class="bi bi-hand-thumbs-down me-1"></i>Rechazar</b><br /><small class="text-muted">El reclamo no procede</small></span>
+                            </button>
+                        </div>
+                    </div>
+                    <label class="form-label fw-semibold">Resolución</label>
+                    <textarea class="form-control" rows="4" maxlength="255" placeholder="Explica la decisión que se comunicará al reclamante."
+                              @bind="resolucion" @bind:event="oninput"></textarea>
+                    <div class="d-flex justify-content-between mt-1">
+                        <small class="text-muted">Obligatoria.</small>
+                        <small class="contador-caracteres @(resolucion.Length > 220 ? "cerca" : "")">@resolucion.Length / 255</small>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="paso-panel" @key="2">
+                    <div class="nota mb-3 @(decision == "Aprobado" ? "nota-ok" : "nota-error")">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="badge @(decision == "Aprobado" ? "text-bg-success" : "text-bg-danger")">@decision</span>
+                            <b>Reclamo N.º @actual.Numero · @actual.Reclamante</b>
+                        </div>
+                        <div>@resolucion</div>
+                    </div>
+                    <p class="small text-muted mb-0"><i class="bi bi-info-circle me-1"></i>Se guardará quién resolvió y la fecha de hoy. El reclamante verá la resolución.</p>
+                </div>
+            }
+        }
+    </BodyTemplate>
+    <FooterTemplate>
+        @if (paso > 0)
+        {
+            <button type="button" class="btn btn-light me-auto" @onclick="() => paso--"><i class="bi bi-arrow-left me-1"></i>Atrás</button>
+        }
+        <button type="button" class="btn btn-outline-secondary" @onclick="Cerrar">Cancelar</button>
+        @if (paso < 2)
+        {
+            <button type="button" class="btn btn-primary" disabled="@(!PuedeAvanzar)" @onclick="() => paso++">
+                Siguiente <i class="bi bi-arrow-right ms-1"></i>
+            </button>
+        }
+        else
+        {
+            <button type="button" class="btn @(decision == "Aprobado" ? "btn-success" : "btn-danger")" @onclick="Guardar">
+                <i class="bi bi-save me-1"></i>Guardar resolución
+            </button>
+        }
+    </FooterTemplate>
+</Modal>
+
+@code {
+    private record Pendiente(int Numero, string Fecha, string Reclamante, string Rol, string Curso, string FechaSesion,
+        string Tutor, string Estudiante, string CheckIn, string Motivo, int DiasEspera);
+
+    private static readonly string[] Etapas = ["Revisar", "Decidir", "Confirmar"];
+
+    private Modal modal = default!;
+    private readonly List<ToastMessage> avisos = [];
+
+    private string busqueda = "";
+    private string filtroRol = "Todos";
+    private int paso;
+    private Pendiente? actual;
+    private Pendiente? saliendo;
+    private string decision = "";
+    private string resolucion = "";
+    private int resueltosHoy;
+
+    private readonly List<Pendiente> pendientes =
+    [
+        new(12, "24/10/2026", "Lucía Ramos", "Estudiante", "Cálculo 1", "23/10/2026, 4:00 p. m.", "Andrés Villanueva", "Lucía Ramos",
+            "Tutor 4:30 p. m. · Estudiante 4:00 p. m.", "El tutor llegó 30 minutos tarde y la sesión se acortó.", 3),
+        new(11, "22/10/2026", "Rosa Huamán", "Tutor", "Química General", "21/10/2026, 2:00 p. m.", "Rosa Huamán", "Camila Torres",
+            "Tutor: sí · Estudiante: sí (sin check-out)", "El estudiante no hizo check-out al terminar la sesión.", 5),
+        new(10, "20/10/2026", "Mateo Quispe", "Estudiante", "Física 1", "19/10/2026, 6:00 p. m.", "Jorge Salazar", "Mateo Quispe",
+            "Tutor: sí · Estudiante: no", "La sesión se marcó como inasistencia, pero sí me conecté.", 7),
+        new(9, "18/10/2026", "Andrés Villanueva", "Tutor", "Cálculo 1", "17/10/2026, 5:00 p. m.", "Andrés Villanueva", "Diego Paredes",
+            "Sin check-in (cancelada)", "El estudiante canceló minutos antes de empezar.", 9),
+    ];
+
+    private IEnumerable<Pendiente> Filtrados => pendientes
+        .Where(r => filtroRol == "Todos" || r.Rol == filtroRol)
+        .Where(r => string.IsNullOrWhiteSpace(busqueda)
+                    || r.Reclamante.Contains(busqueda, StringComparison.OrdinalIgnoreCase)
+                    || r.Curso.Contains(busqueda, StringComparison.OrdinalIgnoreCase));
+
+    private bool PuedeAvanzar => paso switch
+    {
+        1 => decision != "" && !string.IsNullOrWhiteSpace(resolucion),
+        _ => true,
+    };
+
+    private async Task AbrirResolver(Pendiente r)
+    {
+        actual = r;
+        paso = 0;
+        decision = "";
+        resolucion = "";
+        await modal.ShowAsync();
+    }
+
+    private async Task Cerrar() => await modal.HideAsync();
+
+    private async Task Guardar()
+    {
+        var resuelto = actual!;
+        var resultado = decision;
+        await modal.HideAsync();
+
+        // La fila se desliza hacia afuera y luego se quita de la lista.
+        saliendo = resuelto;
+        StateHasChanged();
+        await Task.Delay(450);
+        pendientes.Remove(resuelto);
+        saliendo = null;
+        resueltosHoy++;
+
+        avisos.Add(new ToastMessage
+        {
+            Type = resultado == "Aprobado" ? ToastType.Success : ToastType.Danger,
+            Title = $"Reclamo N.º {resuelto.Numero} {resultado.ToLower()}",
+            Message = $"Se notificará la resolución a {resuelto.Reclamante}.",
+        });
+    }
+}

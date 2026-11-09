@@ -1,0 +1,89 @@
+﻿@page "/login/usuario"
+@page "/login/usuarios"
+@layout AuthLayout
+@inject RolActual RolActual
+@inject NavigationManager Navigation
+
+@* Acceso de usuarios (RF002): solo correo y contraseña. La cuenta es una sola; si la persona es
+   Estudiante y Tutor, cambia de rol dentro del sistema sin cerrar sesión (RF003).
+   El administrador tiene su propio acceso en /login/administrador y aquí no se enlaza. *@
+
+<PageTitle>Iniciar sesión · TutorPUCP</PageTitle>
+
+<h1 class="acc-titulo">Bienvenido de nuevo</h1>
+<p class="acc-sub">Ingresa con tu correo PUCP para continuar.</p>
+
+<form class="mt-4" @onsubmit="Ingresar" novalidate>
+    @if (error is not null)
+    {
+        <div class="acc-alerta mb-3"><i class="bi bi-exclamation-circle"></i><span>@error</span></div>
+    }
+
+    <div class="mb-3">
+        <label for="correo" class="acc-etiqueta">Correo institucional</label>
+        <div class="campo">
+            <i class="bi bi-envelope"></i>
+            <input id="correo" type="email" class="form-control" placeholder="usuario@pucp.edu.pe" autocomplete="username" @bind="correo" @bind:event="oninput" />
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <div class="acc-etiqueta">
+            <label for="clave">Contraseña</label>
+            <a href="/login/usuario" @onclick:preventDefault @onclick="AvisarRecuperar">¿La olvidaste?</a>
+        </div>
+        <CampoClave Id="clave" @bind-Valor="clave" />
+    </div>
+
+    <div class="form-check mb-4">
+        <input class="form-check-input" type="checkbox" id="recordar" @bind="recordar" />
+        <label class="form-check-label small" for="recordar">Mantener la sesión iniciada</label>
+    </div>
+
+    <button type="submit" class="acc-boton" disabled="@ingresando">
+        @if (ingresando)
+        {
+            <span class="spinner-border spinner-border-sm"></span><span>Ingresando…</span>
+        }
+        else
+        {
+            <span>Iniciar sesión</span><i class="bi bi-arrow-right"></i>
+        }
+    </button>
+</form>
+
+<p class="text-center small mt-4 mb-0" style="color: var(--tp-tenue);">
+    ¿Aún no tienes cuenta? <a href="/registro" class="fw-semibold text-decoration-none">Crear cuenta</a>
+</p>
+
+<div class="acc-ayuda">
+    <i class="bi bi-shield-check fs-5" style="color: var(--tp-azul);"></i>
+    <span>Una sola cuenta sirve como Estudiante y como Tutor. Por seguridad la sesión se cierra tras 30 minutos sin actividad.</span>
+</div>
+
+@code {
+    private string correo = "";
+    private string clave = "";
+    private bool recordar;
+    private bool ingresando;
+    private string? error;
+
+    private async Task Ingresar()
+    {
+        error = null;
+        var c = correo.Trim().ToLowerInvariant();
+        if (c.Length == 0 || clave.Length == 0)
+            error = "Escribe tu correo y tu contraseña.";
+        else if (!c.EndsWith("@pucp.edu.pe") || c.Length <= "@pucp.edu.pe".Length)
+            error = "Usa tu correo institucional que termina en @pucp.edu.pe.";
+        if (error is not null) return;
+
+        ingresando = true;
+        await Task.Delay(500); // Pantalla visual: aún no hay base de datos.
+        RolActual.Cambiar(RolActual.Estudiante);
+        Navigation.NavigateTo("/estudiante");
+    }
+
+    private void AvisarRecuperar() =>
+        error = "La recuperación de contraseña aún no está disponible. Pide ayuda al administrador.";
+}

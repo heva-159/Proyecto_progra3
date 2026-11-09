@@ -1,0 +1,369 @@
+@page "/perfil"
+@page "/admin/perfil"
+@implements IDisposable
+@inject RolActual RolActual
+@inject NavigationManager Navigation
+
+@* Mi perfil: se abre desde el menú del perfil en el sidebar. Lo de la PUCP (nombre, código, correo)
+   no se edita; lo demás sí. Por RNF005 la presentación no puede llevar correos ni teléfonos. *@
+
+<PageTitle>Mi perfil</PageTitle>
+
+<Toasts class="p-3" Messages="avisos" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
+
+<div class="titulo-pagina">
+    <div class="d-flex align-items-center gap-3">
+        <span class="icono-titulo" style="background:#dbeafe;color:#2563eb;"><i class="bi bi-person-circle"></i></span>
+        <div>
+            <h1 class="h3">Mi perfil</h1>
+            <p>Revisa tus datos y cambia lo que los demás ven de ti.</p>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    @* Tarjeta de la izquierda: resumen de la cuenta *@
+    <div class="col-lg-4">
+        <div class="card shadow-sm entrar">
+            <div class="card-body p-4 text-center">
+                <div class="d-flex justify-content-center mb-3"><Avatar Nombre="@Nombre" Tamano="lg" /></div>
+                <h2 class="h5 mb-1">@Nombre</h2>
+                <span class="badge rounded-pill px-3 py-2" style="background:@Acento;">
+                    <i class="bi @IconoRol me-1"></i>@RolTexto
+                </span>
+
+                <ul class="list-unstyled text-start small mt-4 mb-0 d-grid gap-2">
+                    <li class="d-flex align-items-center gap-2"><i class="bi bi-envelope text-primary"></i><span class="text-truncate">@Correo</span></li>
+                    @if (!EsAdmin)
+                    {
+                        <li class="d-flex align-items-center gap-2"><i class="bi bi-person-vcard text-primary"></i>Código PUCP: @RolActual.CodigoUsuario</li>
+                    }
+                    <li class="d-flex align-items-center gap-2"><i class="bi bi-shield-check text-success"></i>Cuenta verificada</li>
+                </ul>
+                <p class="text-muted small mt-3 mb-0">
+                    <i class="bi bi-info-circle me-1"></i>Tu correo y teléfono nunca se muestran a otros usuarios.
+                </p>
+            </div>
+        </div>
+
+        @if (EsTutor)
+        {
+            <div class="card shadow-sm mt-4 entrar">
+                <div class="card-body p-4">
+                    <h3 class="h6 mb-3"><i class="bi bi-patch-check-fill text-primary me-1"></i>Cursos aprobados</h3>
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach (var curso in cursosAprobados)
+                        {
+                            <span class="chip">@curso</span>
+                        }
+                    </div>
+                    <a class="small d-inline-block mt-3 text-decoration-none" href="/tutor/postular">Postular a otro curso <i class="bi bi-arrow-right"></i></a>
+                </div>
+            </div>
+        }
+    </div>
+
+    @* Derecha: pestañas con lo que se puede editar *@
+    <div class="col-lg-8">
+        <div class="segmento mb-3 d-inline-flex">
+            @foreach (var p in Pestanas)
+            {
+                <button type="button" class="@(p == pestana ? "activo" : "")" @onclick="() => pestana = p">@p</button>
+            }
+        </div>
+
+        @if (pestana == "Datos")
+        {
+            <div class="card shadow-sm entrar" @key="pestana">
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Nombre completo</label>
+                            <input class="form-control" value="@Nombre" disabled />
+                            <div class="form-text">Viene de la PUCP, no se puede cambiar.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Correo institucional</label>
+                            <input class="form-control" value="@Correo" disabled />
+                        </div>
+
+                        @if (!EsAdmin)
+                        {
+                            <div class="col-md-6">
+                                <label class="form-label">Facultad / especialidad</label>
+                                <select class="form-select" @bind="especialidad">
+                                    @foreach (var e in Especialidades)
+                                    {
+                                        <option value="@e">@e</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">@(EsTutor ? "Modalidad preferida" : "Ciclo actual")</label>
+                                @if (EsTutor)
+                                {
+                                    <select class="form-select" @bind="modalidad">
+                                        <option>Virtual</option>
+                                        <option>Presencial</option>
+                                        <option>Ambas</option>
+                                    </select>
+                                }
+                                else
+                                {
+                                    <select class="form-select" @bind="ciclo">
+                                        @for (var c = 1; c <= 10; c++)
+                                        {
+                                            <option value="@c">Ciclo @c</option>
+                                        }
+                                    </select>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="col-md-6">
+                                <label class="form-label">Área</label>
+                                <input class="form-control" @bind="area" @bind:event="oninput" maxlength="60" />
+                            </div>
+                        }
+
+                        <div class="col-12">
+                            <label class="form-label">@(EsTutor ? "Presentación para tus estudiantes" : "Sobre mí")</label>
+                            <textarea class="form-control @(BioConContacto ? "is-invalid" : "")" rows="4" maxlength="@MaxBio"
+                                      placeholder="@(EsTutor ? "Cuenta cómo enseñas y en qué temas eres fuerte." : "Cuenta qué cursos te cuestan más.")"
+                                      @bind="bio" @bind:event="oninput"></textarea>
+                            <div class="d-flex justify-content-between form-text">
+                                <span class="text-danger">@(BioConContacto ? "No escribas correos ni teléfonos: la coordinación es por Mensajes." : "")</span>
+                                <span>@bio.Length / @MaxBio</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <button type="button" class="btn btn-light" disabled="@(!HayCambios)" @onclick="Descartar">Descartar</button>
+                        <button type="button" class="btn btn-primary px-4" disabled="@(!PuedeGuardar)" @onclick="Guardar">
+                            <i class="bi bi-check2 me-1"></i>Guardar cambios
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+        else if (pestana == "Seguridad")
+        {
+            <div class="card shadow-sm entrar" @key="pestana">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <span class="icono-titulo" style="background:#eef2ff;color:#4f46e5;"><i class="bi bi-key-fill"></i></span>
+                        <div class="flex-grow-1">
+                            <h3 class="h6 mb-1">Contraseña</h3>
+                            <p class="text-muted small mb-0">Último cambio: @ultimoCambio. Se guarda cifrada, nadie puede verla.</p>
+                        </div>
+                        <button type="button" class="btn btn-primary" @onclick="AbrirClave"><i class="bi bi-pencil me-1"></i>Cambiar contraseña</button>
+                    </div>
+                    <hr />
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="icono-titulo" style="background:#ecfdf5;color:#059669;"><i class="bi bi-clock-history"></i></span>
+                        <div>
+                            <h3 class="h6 mb-1">Cierre automático</h3>
+                            <p class="text-muted small mb-0">Si no usas la página por 30 minutos, tu sesión se cierra sola para protegerte.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="card shadow-sm entrar" @key="pestana">
+                <div class="card-body p-4 d-grid gap-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="avisoMensajes" @bind="avisoMensajes" />
+                        <label class="form-check-label" for="avisoMensajes">Avisarme cuando llegue un mensaje nuevo</label>
+                    </div>
+                    @if (!EsAdmin)
+                    {
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="avisoSesion" @bind="avisoSesion" />
+                            <label class="form-check-label" for="avisoSesion">Recordarme 15 minutos antes de cada sesión</label>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="avisoReclamo" @bind="avisoReclamo" />
+                            <label class="form-check-label" for="avisoReclamo">Avisarme cuando entre un reclamo nuevo</label>
+                        </div>
+                    }
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btn-primary px-4" @onclick="GuardarPreferencias"><i class="bi bi-check2 me-1"></i>Guardar preferencias</button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@* Cambio de contraseña en 3 pasos *@
+<Modal @ref="modalClave" Title="Cambiar contraseña" IsVerticallyCentered="true">
+    <BodyTemplate>
+        <Pasos Etapas="EtapasClave" Actual="pasoClave" />
+        <div class="mt-3">
+            @if (pasoClave == 0)
+            {
+                <label class="form-label">Contraseña actual</label>
+                <div class="input-group">
+                    <input class="form-control" type="@(verClave ? "text" : "password")" @bind="claveActual" @bind:event="oninput" />
+                    <button class="btn btn-light" type="button" @onclick="() => verClave = !verClave"><i class="bi @(verClave ? "bi-eye-slash" : "bi-eye")"></i></button>
+                </div>
+            }
+            else if (pasoClave == 1)
+            {
+                <label class="form-label">Nueva contraseña</label>
+                <div class="input-group mb-2">
+                    <input class="form-control" type="@(verClave ? "text" : "password")" @bind="claveNueva" @bind:event="oninput" />
+                    <button class="btn btn-light" type="button" @onclick="() => verClave = !verClave"><i class="bi @(verClave ? "bi-eye-slash" : "bi-eye")"></i></button>
+                </div>
+                <div class="barra-progreso mb-2"><div style="width:@(Fuerza * 25)%;height:100%;background:@ColorFuerza;transition:width .3s ease;"></div></div>
+                <ul class="list-unstyled small mb-3">
+                    @foreach (var (cumple, texto) in Requisitos)
+                    {
+                        <li class="@(cumple ? "text-success" : "text-muted")"><i class="bi @(cumple ? "bi-check-circle-fill" : "bi-circle") me-1"></i>@texto</li>
+                    }
+                </ul>
+                <label class="form-label">Repite la nueva contraseña</label>
+                <input class="form-control @(claveRepetida.Length > 0 && claveRepetida != claveNueva ? "is-invalid" : "")"
+                       type="@(verClave ? "text" : "password")" @bind="claveRepetida" @bind:event="oninput" />
+                <div class="invalid-feedback">No coincide con la nueva contraseña.</div>
+            }
+            else
+            {
+                <div class="text-center py-3">
+                    <span class="icono-titulo mx-auto mb-2" style="background:#ecfdf5;color:#059669;"><i class="bi bi-check2-circle"></i></span>
+                    <h3 class="h6">¡Listo! Tu contraseña cambió</h3>
+                    <p class="text-muted small mb-0">Se guardó cifrada. La próxima vez ingresa con la nueva.</p>
+                </div>
+            }
+        </div>
+    </BodyTemplate>
+    <FooterTemplate>
+        @if (pasoClave == 1)
+        {
+            <button type="button" class="btn btn-light me-auto" @onclick="() => pasoClave--"><i class="bi bi-arrow-left me-1"></i>Atrás</button>
+        }
+        @if (pasoClave == 0)
+        {
+            <button type="button" class="btn btn-primary" disabled="@(claveActual.Length == 0)" @onclick="() => pasoClave = 1">Continuar</button>
+        }
+        else if (pasoClave == 1)
+        {
+            <button type="button" class="btn btn-primary" disabled="@(!ClaveValida)" @onclick="CambiarClave">Cambiar contraseña</button>
+        }
+        else
+        {
+            <button type="button" class="btn btn-primary" @onclick="() => modalClave.HideAsync()">Cerrar</button>
+        }
+    </FooterTemplate>
+</Modal>
+
+@code {
+    private const int MaxBio = 300;
+    private static readonly string[] Pestanas = ["Datos", "Seguridad", "Preferencias"];
+    private static readonly string[] EtapasClave = ["Actual", "Nueva", "Listo"];
+    private static readonly string[] Especialidades =
+        ["Ingeniería Informática", "Ingeniería Industrial", "Ingeniería Civil", "Ciencias e Ingeniería", "Estudios Generales Ciencias", "Estudios Generales Letras"];
+
+    private readonly string[] cursosAprobados = ["Programación 3", "Cálculo 1", "Física 1"];
+    private readonly List<ToastMessage> avisos = [];
+    private Modal modalClave = default!;
+
+    private string pestana = "Datos";
+
+    // Valores guardados y valores que se están editando (para saber si hay cambios).
+    private string especialidad = "", modalidad = "", ciclo = "", area = "", bio = "";
+    private (string Esp, string Mod, string Ciclo, string Area, string Bio) guardado;
+
+    private bool avisoMensajes = true, avisoSesion = true, avisoReclamo = true;
+
+    private int pasoClave;
+    private bool verClave;
+    private string claveActual = "", claveNueva = "", claveRepetida = "";
+    private string ultimoCambio = "hace 2 meses";
+
+    private bool EsAdmin => Navigation.ToBaseRelativePath(Navigation.Uri).StartsWith("admin", StringComparison.OrdinalIgnoreCase);
+    private bool EsTutor => !EsAdmin && RolActual.Rol == RolActual.Tutor;
+    private string Nombre => EsAdmin ? "Administrador" : RolActual.NombreUsuario;
+    private string Correo => EsAdmin ? "admin@pucp.edu.pe" : RolActual.CorreoUsuario;
+    private string RolTexto => EsAdmin ? "Administrador" : RolActual.Rol;
+    private string Acento => "#2563eb";
+    private string IconoRol => EsAdmin ? "bi-shield-lock-fill" : EsTutor ? "bi-person-workspace" : "bi-backpack2-fill";
+
+    private bool BioConContacto => DatosContacto.Contiene(bio);
+    private bool HayCambios => (especialidad, modalidad, ciclo, area, bio) != guardado;
+    private bool PuedeGuardar => HayCambios && !BioConContacto;
+
+    private (bool, string)[] Requisitos =>
+    [
+        (claveNueva.Length >= 8, "Al menos 8 caracteres"),
+        (claveNueva.Any(char.IsUpper), "Una letra mayúscula"),
+        (claveNueva.Any(char.IsDigit), "Un número"),
+        (claveNueva.Length > 0 && claveNueva != claveActual, "Distinta a la actual"),
+    ];
+    private int Fuerza => Requisitos.Count(r => r.Item1);
+    private string ColorFuerza => Fuerza switch { <= 1 => "#ef4444", 2 => "#f59e0b", 3 => "#3b82f6", _ => "#10b981" };
+    private bool ClaveValida => Fuerza == 4 && claveNueva == claveRepetida;
+
+    protected override void OnInitialized()
+    {
+        CargarDatos();
+        RolActual.Cambio += AlCambiarRol;
+    }
+
+    // Datos de ejemplo según quién entra.
+    private void CargarDatos()
+    {
+        especialidad = "Ingeniería Informática";
+        modalidad = "Virtual";
+        ciclo = "5";
+        area = "Coordinación académica";
+        bio = EsAdmin ? ""
+            : EsTutor ? "Me gusta explicar con ejemplos y ejercicios paso a paso. Fuerte en programación y matemáticas."
+            : "Estoy reforzando Programación 3 y Cálculo.";
+        guardado = (especialidad, modalidad, ciclo, area, bio);
+    }
+
+    private void Guardar()
+    {
+        guardado = (especialidad, modalidad, ciclo, area, bio);
+        Avisar(ToastType.Success, "Perfil actualizado", "Tus cambios se guardaron.");
+    }
+
+    private void Descartar()
+    {
+        (especialidad, modalidad, ciclo, area, bio) = guardado;
+        Avisar(ToastType.Info, "Cambios descartados", "Volvimos a lo que tenías guardado.");
+    }
+
+    private void GuardarPreferencias() =>
+        Avisar(ToastType.Success, "Preferencias guardadas", "Tus avisos quedaron como los elegiste.");
+
+    private async Task AbrirClave()
+    {
+        pasoClave = 0;
+        verClave = false;
+        claveActual = claveNueva = claveRepetida = "";
+        await modalClave.ShowAsync();
+    }
+
+    private void CambiarClave()
+    {
+        pasoClave = 2;
+        ultimoCambio = "hoy";
+        Avisar(ToastType.Success, "Contraseña cambiada", "Se guardó cifrada.");
+    }
+
+    private void Avisar(ToastType tipo, string titulo, string texto) =>
+        avisos.Add(new ToastMessage { Type = tipo, Title = titulo, Message = texto });
+
+    private void AlCambiarRol() => InvokeAsync(() => { CargarDatos(); StateHasChanged(); });
+
+    public void Dispose() => RolActual.Cambio -= AlCambiarRol;
+}

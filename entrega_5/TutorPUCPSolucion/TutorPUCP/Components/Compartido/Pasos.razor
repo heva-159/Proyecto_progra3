@@ -1,0 +1,30 @@
+@* Indicador de pasos (1-2-3) que usan los modales por etapas *@
+
+<div class="pasos">
+    @for (var i = 0; i < Etapas.Length; i++)
+    {
+        var estado = i < Actual ? "hecho" : i == Actual ? "actual" : "";
+        <div class="paso @estado">
+            <div class="paso-circulo">
+                @if (i < Actual)
+                {
+                    <i class="bi bi-check-lg"></i>
+                }
+                else
+                {
+                    @(i + 1)
+                }
+            </div>
+            <div class="paso-texto">@Etapas[i]</div>
+        </div>
+        @if (i < Etapas.Length - 1)
+        {
+            <div class="paso-linea"><span style="width: @(i < Actual ? "100%" : "0%")"></span></div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string[] Etapas { get; set; } = [];
+    [Parameter] public int Actual { get; set; }
+}

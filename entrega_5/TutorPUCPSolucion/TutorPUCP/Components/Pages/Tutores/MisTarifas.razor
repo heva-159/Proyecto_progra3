@@ -1,0 +1,155 @@
+﻿@page "/tutor/tarifas"
+
+<PageTitle>Mis tarifas</PageTitle>
+
+@* =============================================================================
+   ENCABEZADO Y BOTÓN DE REGRESO
+   ============================================================================= *@
+<div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+    <div>
+        <h2 class="text-primary fw-bold mb-1">Mis Tarifas por Hora</h2>
+        <p class="text-muted mb-0">Establece y actualiza cuánto cobrarás por cada hora de asesoría académica</p>
+    </div>
+    <a href="/tutor" class="btn btn-outline-secondary btn-sm">
+        ← Volver al Panel
+    </a>
+</div>
+@* =============================================================================
+   ALERTA INFORMATIVA DEL REQUERIMIENTO RF008
+   Aclara que solo los cursos aprobados pueden tener tarifa
+   ============================================================================= *@
+<div class="alert alert-info shadow-sm border-0 d-flex align-items-center mb-4" role="alert">
+    <i class="bi bi-info-circle-fill fs-4 me-3"></i>
+    <div>
+        <strong>Regla del sistema:</strong><br />
+        Solo puedes registrar y modificar tarifas en aquellos cursos donde tu postulación figure con estado
+        <span class="badge bg-success">APROBADA</span>. Si deseas dictar un curso nuevo, primero debes
+        <a href="/tutor/postular" class="alert-link">enviar tu postulación aquí</a>.
+    </div>
+</div>
+@* =============================================================================
+   ALERTA DE CONFIRMACIÓN SIMULADA
+   Aparece cuando el tutor hace clic en el botón "Guardar" de cualquier fila
+   ============================================================================= *@
+@if (tarifaActualizada)
+{
+    <div class="alert alert-success alert-dismissible fade show shadow-sm border-0" role="alert">
+        <strong>¡Tarifa actualizada!</strong> Se guardó un precio de
+        <strong>S/ @montoGuardado.ToString("0.00") por hora</strong> para el curso <strong>@cursoGuardado</strong>.
+        <button type="button" class="btn-close" @onclick="() => tarifaActualizada = false"></button>
+    </div>
+}
+@* =============================================================================
+   TABLA DE GESTIÓN DE TARIFAS
+   Muestra cada curso habilitado con un campo numérico para editar el precio
+   ============================================================================= *@
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white py-3 border-0">
+        <h5 class="fw-bold mb-0 text-dark">Catálogo de Cursos Habilitados</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3" style="width: 35%;">Curso</th>
+                        <th style="width: 20%;">Acreditación</th>
+                        <th style="width: 30%;">Tarifa por Hora (S/)</th>
+                        <th style="width: 15%;" class="text-center">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @* Verificamos que la lista exista y la recorremos con foreach *@
+                    @if (listaTarifas != null && listaTarifas.Count > 0)
+                    {
+                        @foreach (var item in listaTarifas)
+                        {
+                            <tr>
+                                @* 1. Datos del Curso *@
+                                <td class="ps-3">
+                                    <span class="fw-semibold text-dark">@item.CursoNombre</span><br />
+                                    <small class="text-muted">Código: @item.CursoCodigo</small>
+                                </td>
+                                @* 2. Insignia de Aprobado *@
+                                <td>
+                                    <span class="badge bg-success">APROBADA</span>
+                                </td>
+                                @* 3. Input interactivo para cambiar la tarifa *@
+                                <td>
+                                    <div class="input-group" style="max-width: 220px;">
+                                        <span class="input-group-text fw-bold">S/</span>
+                                        @* @bind conecta este input directamente con la variable C# item.MontoPorHora *@
+                                        <input type="number"
+                                               class="form-control"
+                                               @bind="item.MontoPorHora"
+                                               step="2.50"
+                                               min="15"
+                                               max="120" />
+                                        <span class="input-group-text text-muted small">/ hora</span>
+                                    </div>
+                                </td>
+                                @* 4. Botón para guardar la fila individual *@
+                                <td class="text-center">
+                                    <button class="btn btn-outline-success btn-sm px-3 shadow-sm"
+                                            @onclick="() => GuardarTarifa(item)">
+                                        Guardar
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+@* =============================================================================
+   TARJETA DE CONSEJOS Y POLÍTICAS 
+   ============================================================================= *@
+<div class="card border-0 bg-light p-3 shadow-sm mb-4">
+    <h6 class="fw-bold text-secondary mb-2">Recomendaciones sobre las Tarifas:</h6>
+    <ul class="mb-0 small text-muted">
+        <li>El rango de precio sugerido por la facultad está entre <strong>S/ 25.00</strong> y <strong>S/ 45.00</strong> por hora.</li>
+        <li>Los estudiantes verán este precio publicado cuando utilicen el buscador de tutores.</li>
+        <li>Cualquier cambio de tarifa se aplicará únicamente a las <strong>futuras reservas</strong>; las sesiones ya agendadas conservarán su precio pactado.</li>
+    </ul>
+</div>
+@* =============================================================================
+   LÓGICA EN C# 
+   ============================================================================= *@
+@code {
+    // Bandera para mostrar la alerta verde de confirmación
+    private bool tarifaActualizada = false;
+    private string cursoGuardado = "";
+    private double montoGuardado = 0;
+    // Lista simulada de cursos aprobados con sus tarifas actuales
+    private List<TarifaItem> listaTarifas = new()
+    {
+        new TarifaItem
+        {
+            CursoCodigo = "1INF30",
+            CursoNombre = "Programación 3",
+            MontoPorHora = 35.00
+        },
+        new TarifaItem
+        {
+            CursoCodigo = "1INF01",
+            CursoNombre = "Algoritmia",
+            MontoPorHora = 30.00
+        }
+    };
+    // Método que se ejecuta al presionar "Guardar" en cualquier fila
+    private void GuardarTarifa(TarifaItem item)
+    {
+        cursoGuardado = $"{item.CursoCodigo} - {item.CursoNombre}";
+        montoGuardado = item.MontoPorHora;
+        tarifaActualizada = true;
+    }
+    // Clase que representa cada fila de la tabla
+    public class TarifaItem
+    {
+        public string CursoCodigo { get; set; } = "";
+        public string CursoNombre { get; set; } = "";
+        public double MontoPorHora { get; set; }
+    }
+}

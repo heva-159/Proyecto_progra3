@@ -1,0 +1,70 @@
+﻿@page "/login/administrador"
+@layout AuthLayout
+@inject NavigationManager Navigation
+
+@* Acceso exclusivo del administrador, separado del de estudiantes y tutores.
+   No enlaza al acceso de usuarios ni el acceso de usuarios enlaza aquí. *@
+
+<PageTitle>Acceso administrador · TutorPUCP</PageTitle>
+
+<span class="badge rounded-pill mb-3" style="background: rgba(37, 99, 235, .12); color: #2563eb;"><i class="bi bi-shield-lock me-1"></i>Solo personal autorizado</span>
+<h1 class="acc-titulo">Acceso administrador</h1>
+<p class="acc-sub">Ingresa con tu cuenta de administración.</p>
+
+<form class="mt-4" @onsubmit="Ingresar" novalidate>
+    @if (error is not null)
+    {
+        <div class="acc-alerta mb-3"><i class="bi bi-exclamation-circle"></i><span>@error</span></div>
+    }
+
+    <div class="mb-3">
+        <label for="correo" class="acc-etiqueta">Correo de administrador</label>
+        <div class="campo">
+            <i class="bi bi-person-badge"></i>
+            <input id="correo" type="email" class="form-control" placeholder="admin@mail.com" autocomplete="username" @bind="correo" @bind:event="oninput" />
+        </div>
+    </div>
+
+    <div class="mb-4">
+        <label for="clave" class="acc-etiqueta">Contraseña</label>
+        <CampoClave Id="clave" @bind-Valor="clave" />
+    </div>
+
+    <button type="submit" class="acc-boton" disabled="@ingresando">
+        @if (ingresando)
+        {
+            <span class="spinner-border spinner-border-sm"></span><span>Verificando…</span>
+        }
+        else
+        {
+            <span>Ingresar al panel</span><i class="bi bi-arrow-right"></i>
+        }
+    </button>
+</form>
+
+<div class="acc-ayuda">
+    <i class="bi bi-info-circle fs-5" style="color: #2563eb;"></i>
+    <span>Cada acción queda registrada. La sesión se cierra tras 30 minutos sin actividad.</span>
+</div>
+
+@code {
+    private string correo = "";
+    private string clave = "";
+    private bool ingresando;
+    private string? error;
+
+    private async Task Ingresar()
+    {
+        error = null;
+        var c = correo.Trim().ToLowerInvariant();
+        if (c.Length == 0 || clave.Length == 0)
+            error = "Escribe tu correo y tu contraseña.";
+        else if (!c.EndsWith("@pucp.edu.pe") || c.Length <= "@pucp.edu.pe".Length)
+            error = "El correo debe terminar en @pucp.edu.pe.";
+        if (error is not null) return;
+
+        ingresando = true;
+        await Task.Delay(500); // Pantalla visual: aún no hay base de datos.
+        Navigation.NavigateTo("/admin");
+    }
+}

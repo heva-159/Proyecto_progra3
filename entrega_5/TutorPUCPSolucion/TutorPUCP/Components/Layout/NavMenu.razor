@@ -1,0 +1,234 @@
+﻿@implements IDisposable
+@inject NavigationManager Navigation
+@inject RolActual RolActual
+
+@* Menú lateral: el selector de arriba cambia entre Estudiante y Tutor y las secciones se animan al cambiar *@
+
+<nav class="sb" style="--acento: @Acento;">
+    <div class="sb-cabecera">
+        <a class="sb-marca" href="/">
+            <span class="sb-logo"><i class="bi bi-mortarboard-fill"></i></span>
+            <span>Tutor<b>PUCP</b></span>
+        </a>
+        <button class="sb-hamburguesa d-lg-none" type="button" @onclick="() => menuAbierto = !menuAbierto"
+                aria-label="Mostrar u ocultar el menú">
+            <i class="bi @(menuAbierto ? "bi-x-lg" : "bi-list")"></i>
+        </button>
+    </div>
+
+    <div class="sb-cuerpo @(menuAbierto ? "abierto" : "")">
+        @if (EsAdmin)
+        {
+            <div class="sb-rol sb-rol-fijo">
+                <span class="sb-rol-icono"><i class="bi bi-shield-lock-fill"></i></span>
+                <span class="sb-rol-texto">
+                    <small>Panel</small>
+                    Administrador
+                </span>
+            </div>
+        }
+        else
+        {
+            <div class="sb-selector">
+                <button type="button" class="sb-rol @(selectorAbierto ? "abierto" : "") @(pulso ? "pulso" : "")"
+                        @onclick="() => selectorAbierto = !selectorAbierto" aria-haspopup="listbox" aria-expanded="@selectorAbierto">
+                    <span class="sb-rol-icono"><i class="bi @IconoRol(RolActual.Rol)"></i></span>
+                    <span class="sb-rol-texto">
+                        <small>Ingresaste como</small>
+                        @RolActual.Rol
+                    </span>
+                    <i class="bi bi-chevron-down sb-rol-flecha"></i>
+                </button>
+
+                @if (selectorAbierto)
+                {
+                    <div class="sb-rol-menu" role="listbox">
+                        @foreach (var rol in new[] { RolActual.Estudiante, RolActual.Tutor })
+                        {
+                            <button type="button" class="sb-rol-opcion @(rol == RolActual.Rol ? "elegida" : "")"
+                                    role="option" aria-selected="@(rol == RolActual.Rol)" @onclick="() => ElegirRol(rol)">
+                                <span class="sb-rol-opcion-icono @rol.ToLower()"><i class="bi @IconoRol(rol)"></i></span>
+                                <span>
+                                    <span class="d-block fw-semibold">@rol</span>
+                                    <small class="text-muted">@(rol == RolActual.Estudiante ? "Busca tutores y agenda sesiones" : "Dicta sesiones y gestiona tarifas")</small>
+                                </span>
+                                @if (rol == RolActual.Rol)
+                                {
+                                    <i class="bi bi-check2 ms-auto text-primary"></i>
+                                }
+                            </button>
+                        }
+                    </div>
+                }
+            </div>
+        }
+
+        @* @key hace que la sección se vuelva a crear al cambiar de rol y así se repite la animación *@
+        @{ var n = 0; }
+        <div class="sb-secciones" @key="SeccionClave">
+            @foreach (var seccion in Secciones)
+            {
+                <div class="sb-titulo">@seccion.Titulo</div>
+                <ul class="sb-lista">
+                    @foreach (var item in seccion.Items)
+                    {
+                        <li style="--i: @(n++);">
+                            <NavLink class="sb-link" href="@item.Href" Match="@(item.Exacto ? NavLinkMatch.All : NavLinkMatch.Prefix)">
+                                <i class="bi @item.Icono"></i>
+                                <span>@item.Texto</span>
+                                @if (item.Contador > 0)
+                                {
+                                    <span class="sb-contador">@item.Contador</span>
+                                }
+                            </NavLink>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+
+        @* Perfil abajo: al tocarlo se abre hacia arriba con las opciones de cuenta y "Cerrar sesión" *@
+        <div class="sb-pie">
+            @if (perfilAbierto)
+            {
+                @* Capa invisible: al tocar fuera del menú, se cierra *@
+                <div class="sb-capa" @onclick="() => perfilAbierto = false"></div>
+                <div class="sb-perfil-menu" role="menu">
+                    <div class="sb-perfil-cabecera">
+                        <Avatar Nombre="@NombrePerfil" Tamano="sm" />
+                        <span class="sb-perfil-texto">
+                            <b>@NombrePerfil</b>
+                            <small>@CorreoPerfil</small>
+                        </span>
+                    </div>
+                    <a class="sb-perfil-item" role="menuitem" href="@(EsAdmin ? "/admin/perfil" : "/perfil")">
+                        <i class="bi bi-person-circle"></i>Mi perfil
+                    </a>
+                    <div class="sb-perfil-divisor"></div>
+                    <a class="sb-perfil-item salir" role="menuitem" href="@(EsAdmin ? "/login/administrador" : "/login/usuario")">
+                        <i class="bi bi-box-arrow-right"></i>Cerrar sesión
+                    </a>
+                </div>
+            }
+            <button type="button" class="sb-perfil @(perfilAbierto ? "show" : "")" aria-haspopup="menu" aria-expanded="@perfilAbierto"
+                    @onclick="() => perfilAbierto = !perfilAbierto">
+                <Avatar Nombre="@NombrePerfil" Tamano="sm" />
+                <span class="sb-perfil-texto">
+                    <b>@NombrePerfil</b>
+                    <small>@(EsAdmin ? "Panel de administración" : RolActual.Rol + " · PUCP")</small>
+                </span>
+                <i class="bi bi-chevron-@(perfilAbierto ? "down" : "up") ms-auto"></i>
+            </button>
+        </div>
+    </div>
+</nav>
+
+@code {
+    private record Item(string Href, string Icono, string Texto, bool Exacto = false, int Contador = 0);
+    private record Seccion(string Titulo, Item[] Items);
+
+    private bool menuAbierto;
+    private bool selectorAbierto;
+    private bool pulso;
+    private bool perfilAbierto;
+
+    private bool EsAdmin => Navigation.ToBaseRelativePath(Navigation.Uri).StartsWith("admin", StringComparison.OrdinalIgnoreCase);
+
+    private string SeccionClave => EsAdmin ? "admin" : RolActual.Rol;
+
+    private string NombrePerfil => EsAdmin ? "Administrador" : RolActual.NombreUsuario;
+
+    private string CorreoPerfil => EsAdmin ? "admin@pucp.edu.pe" : RolActual.CorreoUsuario;
+
+    private string Acento => "#2563eb"; // un solo color de acento para todos los roles
+
+    private static string IconoRol(string rol) => rol == RolActual.Tutor ? "bi-person-workspace" : "bi-backpack2-fill";
+
+    private static readonly Seccion[] MenuEstudiante =
+    [
+        new("Estudiante", [
+            new("/estudiante", "bi-house-door", "Inicio", Exacto: true),
+            new("/estudiante/buscar-tutores", "bi-compass", "Explorar"),
+        ]),
+    ];
+
+    private static readonly Seccion[] MenuTutor =
+    [
+        new("Tutor", [
+            new("/tutor", "bi-house-door", "Inicio", Exacto: true),
+            new("/tutor/postular", "bi-journal-plus", "Postular a curso"),
+            new("/tutor/postulaciones", "bi-card-checklist", "Mis postulaciones"),
+            new("/tutor/tarifas", "bi-cash-coin", "Mis tarifas"),
+            new("/tutor/sesiones/nueva", "bi-calendar-plus", "Registrar sesión"),
+            new("/tutor/reportes", "bi-bar-chart", "Reportes"),
+        ]),
+    ];
+
+    private static readonly Seccion General = new("General", [
+        new("/sesiones", "bi-calendar-week", "Mis sesiones"),
+        new("/mensajes", "bi-chat-dots", "Mensajes", Contador: 2),
+        new("/reclamos/nuevo", "bi-flag", "Reclamos"),
+    ]);
+
+    private static readonly Seccion[] MenuAdmin =
+    [
+        new("Administrador", [
+            new("/admin", "bi-speedometer2", "Inicio", Exacto: true),
+            new("/admin/postulaciones", "bi-person-check", "Postulaciones"),
+            new("/admin/cursos", "bi-book", "Cursos"),
+            new("/admin/temas", "bi-tags", "Temas"),
+            new("/admin/reclamos", "bi-flag", "Reclamos", Contador: 4),
+            new("/admin/reportes", "bi-graph-up-arrow", "Reportes"),
+        ]),
+    ];
+
+    private IEnumerable<Seccion> Secciones =>
+        EsAdmin ? MenuAdmin
+        : (RolActual.Rol == RolActual.Tutor ? MenuTutor : MenuEstudiante).Append(General);
+
+    protected override void OnInitialized()
+    {
+        SincronizarConRuta();
+        Navigation.LocationChanged += AlCambiarRuta;
+        RolActual.Cambio += AlCambiarRol;
+    }
+
+    private async Task ElegirRol(string rol)
+    {
+        selectorAbierto = false;
+        if (rol == RolActual.Rol) return;
+
+        RolActual.Cambiar(rol);
+        Navigation.NavigateTo(rol == RolActual.Tutor ? "/tutor" : "/estudiante");
+
+        pulso = true;
+        await Task.Delay(700);
+        pulso = false;
+        StateHasChanged();
+    }
+
+    // Si se entra directo a /tutor/... o /estudiante/..., el selector se ajusta solo.
+    private void SincronizarConRuta()
+    {
+        var ruta = Navigation.ToBaseRelativePath(Navigation.Uri);
+        if (ruta.StartsWith("tutor", StringComparison.OrdinalIgnoreCase)) RolActual.Cambiar(RolActual.Tutor);
+        else if (ruta.StartsWith("estudiante", StringComparison.OrdinalIgnoreCase)) RolActual.Cambiar(RolActual.Estudiante);
+    }
+
+    private void AlCambiarRuta(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        menuAbierto = false;
+        selectorAbierto = false;
+        perfilAbierto = false;
+        SincronizarConRuta();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void AlCambiarRol() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= AlCambiarRuta;
+        RolActual.Cambio -= AlCambiarRol;
+    }
+}

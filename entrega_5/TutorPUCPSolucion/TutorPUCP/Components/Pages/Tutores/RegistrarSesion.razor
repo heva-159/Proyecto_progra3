@@ -1,0 +1,271 @@
+﻿@page "/tutor/sesiones/nueva"
+@using System.Globalization
+
+<PageTitle>Registrar sesión</PageTitle>
+
+<Toasts class="p-3" Messages="avisos" AutoHide="true" Delay="4500" Placement="ToastsPlacement.TopRight" />
+
+<div class="titulo-pagina">
+    <div class="d-flex align-items-center gap-3">
+        <span class="icono-titulo"><i class="bi bi-calendar-plus-fill"></i></span>
+        <div>
+            <h1 class="h3">Registrar sesión</h1>
+            <p>Agenda una tutoría con un estudiante. La sesión se crea como Programada.</p>
+        </div>
+    </div>
+</div>
+
+@if (registrada)
+{
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-body text-center py-4">
+                    <div class="exito-icono"><i class="bi bi-check-lg"></i></div>
+                    <h2 class="h4">¡Sesión registrada!</h2>
+                    <p class="text-muted">
+                        La sesión N.º @numero de <b>@Curso?.Nombre</b> con <b>@estudiante</b> quedó
+                        <span class="badge text-bg-primary">Programada</span> para el @InicioTexto
+                    </p>
+                    <div class="d-flex flex-wrap gap-2 justify-content-center">
+                        <a class="btn btn-primary" href="/sesiones">Ver mis sesiones</a>
+                        <button type="button" class="btn btn-outline-secondary" @onclick="RegistrarOtra">Registrar otra</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card entrar" style="--i: 0;">
+                <div class="card-body">
+                    <div class="nota small d-flex gap-2 mb-4">
+                        <i class="bi bi-info-circle text-primary mt-1"></i>
+                        <div>Solo aparecen los cursos activos en los que tu postulación está aprobada. ¿Te falta alguno? <a href="/tutor/postular">Postula aquí</a>.</div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="estudiante" class="form-label fw-semibold">Estudiante</label>
+                            <select id="estudiante" class="form-select" @bind="estudiante">
+                                <option value="">Elige un estudiante</option>
+                                @foreach (var e in estudiantes)
+                                {
+                                    <option value="@e">@e</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="curso" class="form-label fw-semibold">Curso</label>
+                            <select id="curso" class="form-select" @bind="cursoNombre" @bind:after="AlCambiarCurso">
+                                <option value="">Elige un curso</option>
+                                @foreach (var c in cursos)
+                                {
+                                    <option value="@c.Nombre">@c.Nombre · S/ @c.Tarifa.ToString("0.00") por hora</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold d-block">Temas de la sesión</label>
+                            @if (Curso is null)
+                            {
+                                <div class="small text-muted">Elige primero un curso para ver sus temas.</div>
+                            }
+                            else
+                            {
+                                <div class="d-flex flex-wrap gap-2">
+                                    @foreach (var t in Curso.Temas)
+                                    {
+                                        var elegido = temasElegidos.Contains(t);
+                                        <button type="button" class="chip @(elegido ? "activo" : "")" aria-pressed="@(elegido ? "true" : "false")"
+                                                @onclick="() => AlternarTema(t)">
+                                            @if (elegido)
+                                            {
+                                                <i class="bi bi-check-lg me-1"></i>
+                                            }
+                                            @t
+                                        </button>
+                                    }
+                                </div>
+                                <div class="form-text">Elige uno o más temas que verán en la sesión.</div>
+                            }
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="fecha" class="form-label fw-semibold">Fecha</label>
+                            <RadzenDatePicker TValue="DateOnly?" @bind-Value="fecha" Name="fecha" DateFormat="dd/MM/yyyy" Placeholder="dd/mm/aaaa"
+                                              Min="@Hoy.ToDateTime(TimeOnly.MinValue)" Culture="@Peru" class="tp-fecha" />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="hora" class="form-label fw-semibold">Hora de inicio</label>
+                            <select id="hora" class="form-select" @bind="hora">
+                                <option value="">Elige una hora</option>
+                                @foreach (var h in horarios)
+                                {
+                                    <option value="@Clave(h)" disabled="@HoraPasada(h)">@Hora12(h)</option>
+                                }
+                            </select>
+                            @if (fecha == Hoy)
+                            {
+                                <div class="form-text">Para hoy solo puedes elegir horas que aún no pasaron.</div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap align-items-center justify-content-end gap-2 mt-4">
+                        @if (!EsValido)
+                        {
+                            <small class="text-muted me-auto">Falta elegir: @Faltan.</small>
+                        }
+                        <a class="btn btn-outline-secondary" href="/sesiones">Cancelar</a>
+                        <button type="button" class="btn btn-primary" disabled="@(!EsValido || guardando)" @onclick="Registrar">
+                            @if (guardando)
+                            {
+                                <span class="spinner-border spinner-border-sm me-1"></span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-calendar-check me-1"></i>
+                            }
+                            Registrar sesión
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card entrar" style="--i: 1;">
+                <div class="card-body">
+                    <h2 class="h5 mb-3"><i class="bi bi-card-list me-2 text-primary"></i>Resumen</h2>
+                    <dl class="row datos mb-0">
+                        <dt class="col-4">Estudiante</dt>
+                        <dd class="col-8">@(estudiante == "" ? "—" : estudiante)</dd>
+                        <dt class="col-4">Curso</dt>
+                        <dd class="col-8">@(Curso?.Nombre ?? "—")</dd>
+                        <dt class="col-4">Temas</dt>
+                        <dd class="col-8">@(temasElegidos.Count == 0 ? "—" : string.Join(", ", TemasEnOrden))</dd>
+                        <dt class="col-4">Inicio</dt>
+                        <dd class="col-8">@InicioTexto</dd>
+                        <dt class="col-4">Tarifa</dt>
+                        <dd class="col-8">@(Curso is null ? "—" : "S/ " + Curso.Tarifa.ToString("0.00") + " por hora")</dd>
+                        <dt class="col-4">Estado</dt>
+                        <dd class="col-8 mb-0"><span class="badge text-bg-primary">Programada</span></dd>
+                    </dl>
+                </div>
+            </div>
+            <div class="nota small mt-3">
+                <i class="bi bi-info-circle me-1 text-primary"></i>Cuando los dos registren su check-in, la sesión pasa a En curso.
+                Si pasan 15 minutos sin ambos check-in, se cancela por inasistencia.
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private record CursoTutor(string Nombre, decimal Tarifa, string[] Temas);
+
+    private static readonly CultureInfo Peru = new("es-PE");
+
+    // Cursos activos del tutor con postulación aprobada, con la tarifa que fijó en "Mis tarifas"
+    private static readonly CursoTutor[] cursos =
+    [
+        new("Cálculo 1", 35.00m, ["Límites y continuidad", "Derivadas", "Regla de la cadena", "Integrales"]),
+        new("Física 1", 32.00m, ["Cinemática", "Leyes de Newton", "Trabajo y energía"]),
+        new("Química General", 28.00m, ["Estequiometría", "Enlaces químicos", "Equilibrio químico"]),
+    ];
+
+    private static readonly string[] estudiantes = ["Camila Torres", "Diego Paredes", "Lucía Ramos", "Mateo Quispe"];
+
+    // Inicios posibles: de 8:00 a. m. a 9:30 p. m., cada media hora
+    private static readonly TimeOnly[] horarios =
+        Enumerable.Range(0, 28).Select(i => new TimeOnly(8, 0).AddMinutes(30 * i)).ToArray();
+
+    private readonly List<ToastMessage> avisos = [];
+    private readonly HashSet<string> temasElegidos = [];
+
+    private string estudiante = "";
+    private string cursoNombre = "";
+    private DateOnly? fecha;
+    private string hora = "";
+    private bool guardando;
+    private bool registrada;
+    private int numero = 33; // la última sesión creada; la nueva toma el siguiente número
+
+    private static DateOnly Hoy => DateOnly.FromDateTime(DateTime.Today);
+
+    private CursoTutor? Curso => cursos.FirstOrDefault(c => c.Nombre == cursoNombre);
+
+    private IEnumerable<string> TemasEnOrden => Curso?.Temas.Where(temasElegidos.Contains) ?? [];
+
+    private DateTime? Inicio =>
+        fecha is { } f && TimeOnly.TryParseExact(hora, "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out var h)
+            ? f.ToDateTime(h)
+            : null;
+
+    private string InicioTexto =>
+        Inicio is { } i ? $"{i.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)} · {Hora12(TimeOnly.FromDateTime(i))}"
+        : fecha is { } f ? f.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)
+        : "—";
+
+    private string Faltan
+    {
+        get
+        {
+            var faltan = new List<string>();
+            if (estudiante == "") faltan.Add("estudiante");
+            if (Curso is null) faltan.Add("curso");
+            else if (temasElegidos.Count == 0) faltan.Add("al menos un tema");
+            if (fecha is null) faltan.Add("fecha");
+            if (hora == "") faltan.Add("hora");
+            else if (Inicio is { } i && i <= DateTime.Now) faltan.Add("una fecha y hora que no hayan pasado");
+            return string.Join(", ", faltan);
+        }
+    }
+
+    private bool EsValido => Faltan.Length == 0;
+
+    // Para hoy, las horas que ya pasaron no se pueden elegir
+    private bool HoraPasada(TimeOnly h) => fecha == Hoy && h <= TimeOnly.FromDateTime(DateTime.Now);
+
+    private static string Clave(TimeOnly h) => h.ToString("HH:mm", CultureInfo.InvariantCulture);
+
+    private static string Hora12(TimeOnly h) =>
+        $"{(h.Hour % 12 == 0 ? 12 : h.Hour % 12)}:{h.Minute:00} {(h.Hour < 12 ? "a. m." : "p. m.")}";
+
+    private void AlCambiarCurso() => temasElegidos.Clear();
+
+    private void AlternarTema(string tema)
+    {
+        if (!temasElegidos.Remove(tema)) temasElegidos.Add(tema);
+    }
+
+    private async Task Registrar()
+    {
+        guardando = true;
+        await Task.Delay(900); // Pantalla visual: todavía no se guarda en la base de datos.
+        numero++;
+        guardando = false;
+        registrada = true;
+        avisos.Add(new ToastMessage
+        {
+            Type = ToastType.Success,
+            Title = "Sesión registrada",
+            Message = $"La sesión N.º {numero} quedó Programada.",
+        });
+    }
+
+    private void RegistrarOtra()
+    {
+        estudiante = "";
+        cursoNombre = "";
+        temasElegidos.Clear();
+        fecha = null;
+        hora = "";
+        registrada = false;
+    }
+}

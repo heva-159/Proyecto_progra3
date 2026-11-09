@@ -1,0 +1,278 @@
+﻿@page "/admin/cursos"
+
+@* Requisito: RF006. Datos de prueba de script_tutorPUCP.sql *@
+
+<PageTitle>Cursos</PageTitle>
+
+<Toasts class="p-3" Messages="avisos" AutoHide="true" Delay="4500" Placement="ToastsPlacement.TopRight" />
+
+<div class="titulo-pagina">
+    <div class="d-flex align-items-center gap-3">
+        <span class="icono-titulo" style="background:#dbeafe;color:#1d4ed8;"><i class="bi bi-book-fill"></i></span>
+        <div>
+            <h1 class="h3">Cursos</h1>
+            <p>Registra, modifica, desactiva o reactiva los cursos del catálogo académico.</p>
+        </div>
+    </div>
+    <button type="button" class="btn btn-primary" @onclick="AbrirNuevo"><i class="bi bi-plus-lg me-1"></i>Nuevo curso</button>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3 entrar" style="--i: 0;">
+        <div class="card kpi h-100"><div class="card-body d-flex align-items-center gap-3">
+            <span class="kpi-icono" style="background:#dbeafe;color:#1d4ed8;"><i class="bi bi-journals"></i></span>
+            <div><div class="kpi-valor">@cursos.Count</div><div class="small text-muted">Cursos</div></div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3 entrar" style="--i: 1;">
+        <div class="card kpi h-100"><div class="card-body d-flex align-items-center gap-3">
+            <span class="kpi-icono" style="background:#dcfce7;color:#16a34a;"><i class="bi bi-check2-circle"></i></span>
+            <div><div class="kpi-valor">@cursos.Count(c => c.Activo)</div><div class="small text-muted">Activos</div></div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3 entrar" style="--i: 2;">
+        <div class="card kpi h-100"><div class="card-body d-flex align-items-center gap-3">
+            <span class="kpi-icono" style="background:#f1f5f9;color:#475569;"><i class="bi bi-pause-circle"></i></span>
+            <div><div class="kpi-valor">@cursos.Count(c => !c.Activo)</div><div class="small text-muted">Inactivos</div></div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3 entrar" style="--i: 3;">
+        <a class="card kpi tarjeta-hover h-100 text-decoration-none" href="/admin/temas"><div class="card-body d-flex align-items-center gap-3">
+            <span class="kpi-icono" style="background:#ede9fe;color:#6d28d9;"><i class="bi bi-tags"></i></span>
+            <div><div class="kpi-valor">@cursos.Sum(c => c.Temas)</div><div class="small text-muted">Temas en total</div></div>
+        </div></a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header py-3">
+        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+            <div class="position-relative flex-grow-1" style="max-width: 340px;">
+                <i class="bi bi-search position-absolute text-muted" style="left: .8rem; top: 50%; transform: translateY(-50%);"></i>
+                <input type="text" class="form-control ps-5" placeholder="Código o nombre del curso" aria-label="Buscar"
+                       @bind="busqueda" @bind:event="oninput" />
+            </div>
+            <div class="segmento" role="group" aria-label="Estado del curso">
+                @foreach (var e in new[] { "Todos", "Activos", "Inactivos" })
+                {
+                    <button type="button" class="@(filtro == e ? "activo" : "")" @onclick="() => filtro = e">@e</button>
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (Filtrados.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-primary">
+                    <tr>
+                        <th class="ps-3">Código</th>
+                        <th>Nombre</th>
+                        <th>Temas</th>
+                        <th>Estado</th>
+                        <th class="text-end pe-3">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ var i = 0; }
+                    @foreach (var c in Filtrados)
+                    {
+                        <tr class="entrar" style="--i: @(i++);" @key="c">
+                            <td class="ps-3 fw-bold">@c.Codigo</td>
+                            <td class="fw-semibold">@c.Nombre</td>
+                            <td><span class="badge etiqueta">@c.Temas @(c.Temas == 1 ? "tema" : "temas")</span></td>
+                            <td><span class="badge @(c.Activo ? "text-bg-success" : "text-bg-secondary")">@(c.Activo ? "Activo" : "Inactivo")</span></td>
+                            <td class="text-end pe-3 text-nowrap">
+                                <Tooltip Title="Ver temas" Placement="TooltipPlacement.Top">
+                                    <a class="btn btn-light btn-sm" href="@($"/admin/temas?curso={c.Codigo}")" aria-label="Ver temas"><i class="bi bi-tags"></i></a>
+                                </Tooltip>
+                                <button type="button" class="btn btn-outline-primary btn-sm" @onclick="() => AbrirEditar(c)">
+                                    <i class="bi bi-pencil me-1"></i>Editar
+                                </button>
+                                @if (c.Activo)
+                                {
+                                    <button type="button" class="btn btn-outline-danger btn-sm" @onclick="() => AbrirCambioEstado(c)">
+                                        <i class="bi bi-pause-circle me-1"></i>Desactivar
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button type="button" class="btn btn-outline-success btn-sm" @onclick="() => AbrirCambioEstado(c)">
+                                        <i class="bi bi-play-circle me-1"></i>Reactivar
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="estado-vacio">
+            <i class="bi bi-search"></i>
+            <div class="fw-semibold">Ningún curso coincide con el filtro</div>
+        </div>
+    }
+</div>
+
+@* Registrar o editar un curso *@
+<Modal @ref="modalCurso" Title="@(editando is null ? "Nuevo curso" : $"Editar curso {editando.Codigo}")" IsVerticallyCentered="true">
+    <BodyTemplate>
+        <div class="row g-3">
+            <div class="col-sm-4">
+                <label for="codigo" class="form-label fw-semibold">Código</label>
+                <input id="codigo" type="text" class="form-control" maxlength="20" placeholder="1INF01"
+                       @bind="codigo" @bind:event="oninput" />
+            </div>
+            <div class="col-sm-8">
+                <label for="nombre" class="form-label fw-semibold">Nombre</label>
+                <input id="nombre" type="text" class="form-control" maxlength="150" placeholder="Fundamentos de Programacion"
+                       @bind="nombre" @bind:event="oninput" />
+            </div>
+            @if (CodigoRepetido)
+            {
+                <div class="col-12">
+                    <div class="nota nota-error small"><i class="bi bi-exclamation-triangle me-1"></i>Ya existe otro curso con el código @codigo.Trim().</div>
+                </div>
+            }
+            @if (editando is null)
+            {
+                <div class="col-12">
+                    <label for="temas" class="form-label fw-semibold">Temas iniciales</label>
+                    <textarea id="temas" class="form-control" rows="4" placeholder="Un tema por línea"
+                              @bind="temasIniciales" @bind:event="oninput"></textarea>
+                    <small class="text-muted">Opcional. El curso y sus temas se guardan juntos; luego puedes agregar más desde Temas.</small>
+                </div>
+            }
+        </div>
+    </BodyTemplate>
+    <FooterTemplate>
+        <button type="button" class="btn btn-outline-secondary" @onclick="() => modalCurso.HideAsync()">Cancelar</button>
+        <button type="button" class="btn btn-primary" disabled="@(!PuedeGuardar)" @onclick="GuardarCurso">
+            <i class="bi bi-save me-1"></i>@(editando is null ? "Registrar curso" : "Guardar cambios")
+        </button>
+    </FooterTemplate>
+</Modal>
+
+@* Confirmar desactivar o reactivar *@
+<Modal @ref="modalEstado" Title="@(cambiando?.Activo == true ? "Desactivar curso" : "Reactivar curso")" IsVerticallyCentered="true">
+    <BodyTemplate>
+        @if (cambiando is not null)
+        {
+            if (cambiando.Activo)
+            {
+                <p class="mb-2">¿Desactivar <b>@cambiando.Codigo · @cambiando.Nombre</b>?</p>
+                <div class="nota small">El curso deja de mostrarse para postular y registrar sesiones, pero conserva sus temas, postulaciones y sesiones. Podrás reactivarlo cuando quieras.</div>
+            }
+            else
+            {
+                <p class="mb-2">¿Reactivar <b>@cambiando.Codigo · @cambiando.Nombre</b>?</p>
+                <div class="nota nota-ok small">El curso vuelve a estar disponible para postular y registrar sesiones.</div>
+            }
+        }
+    </BodyTemplate>
+    <FooterTemplate>
+        <button type="button" class="btn btn-outline-secondary" @onclick="() => modalEstado.HideAsync()">Cancelar</button>
+        <button type="button" class="btn @(cambiando?.Activo == true ? "btn-danger" : "btn-success")" @onclick="CambiarEstado">
+            Sí, @(cambiando?.Activo == true ? "desactivar" : "reactivar")
+        </button>
+    </FooterTemplate>
+</Modal>
+
+@code {
+    private class Curso
+    {
+        public string Codigo { get; set; } = "";
+        public string Nombre { get; set; } = "";
+        public int Temas { get; set; }
+        public bool Activo { get; set; }
+    }
+
+    private Modal modalCurso = default!;
+    private Modal modalEstado = default!;
+    private readonly List<ToastMessage> avisos = [];
+
+    private string busqueda = "";
+    private string filtro = "Todos";
+
+    private Curso? editando;
+    private Curso? cambiando;
+    private string codigo = "";
+    private string nombre = "";
+    private string temasIniciales = "";
+
+    // Los 4 cursos de script_tutorPUCP.sql, con la cantidad de temas de cada uno.
+    private readonly List<Curso> cursos =
+    [
+        new() { Codigo = "1INF01", Nombre = "Fundamentos de Programacion", Temas = 3, Activo = true },
+        new() { Codigo = "1MAT05", Nombre = "Calculo Diferencial", Temas = 3, Activo = true },
+        new() { Codigo = "1FIS01", Nombre = "Fisica 1", Temas = 2, Activo = true },
+        new() { Codigo = "1QUI01", Nombre = "Quimica 1", Temas = 1, Activo = false },
+    ];
+
+    private IEnumerable<Curso> Filtrados => cursos
+        .Where(c => filtro == "Todos" || (filtro == "Activos") == c.Activo)
+        .Where(c => string.IsNullOrWhiteSpace(busqueda)
+                    || c.Codigo.Contains(busqueda, StringComparison.OrdinalIgnoreCase)
+                    || c.Nombre.Contains(busqueda, StringComparison.OrdinalIgnoreCase));
+
+    // Igual que el backend: el código no puede repetirse con el de otro curso.
+    private bool CodigoRepetido => cursos.Any(c => c != editando
+                                                   && c.Codigo.Equals(codigo.Trim(), StringComparison.OrdinalIgnoreCase));
+
+    private bool PuedeGuardar => !string.IsNullOrWhiteSpace(codigo) && !string.IsNullOrWhiteSpace(nombre) && !CodigoRepetido;
+
+    private async Task AbrirNuevo()
+    {
+        editando = null;
+        codigo = nombre = temasIniciales = "";
+        await modalCurso.ShowAsync();
+    }
+
+    private async Task AbrirEditar(Curso c)
+    {
+        editando = c;
+        codigo = c.Codigo;
+        nombre = c.Nombre;
+        await modalCurso.ShowAsync();
+    }
+
+    private async Task GuardarCurso()
+    {
+        await modalCurso.HideAsync();
+        if (editando is null)
+        {
+            var temas = temasIniciales.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Length;
+            cursos.Add(new Curso { Codigo = codigo.Trim(), Nombre = nombre.Trim(), Temas = temas, Activo = true });
+            Avisar(ToastType.Success, "Curso registrado", $"{codigo.Trim()} · {nombre.Trim()} con {temas} {(temas == 1 ? "tema" : "temas")}.");
+        }
+        else
+        {
+            editando.Codigo = codigo.Trim();
+            editando.Nombre = nombre.Trim();
+            Avisar(ToastType.Success, "Curso modificado", $"Se guardaron los cambios de {editando.Codigo}.");
+        }
+    }
+
+    private async Task AbrirCambioEstado(Curso c)
+    {
+        cambiando = c;
+        await modalEstado.ShowAsync();
+    }
+
+    private async Task CambiarEstado()
+    {
+        await modalEstado.HideAsync();
+        if (cambiando is null) return;
+        cambiando.Activo = !cambiando.Activo;
+        Avisar(cambiando.Activo ? ToastType.Success : ToastType.Danger,
+            cambiando.Activo ? "Curso reactivado" : "Curso desactivado",
+            $"{cambiando.Codigo} · {cambiando.Nombre}");
+    }
+
+    private void Avisar(ToastType tipo, string titulo, string mensaje) =>
+        avisos.Add(new ToastMessage { Type = tipo, Title = titulo, Message = mensaje });
+}

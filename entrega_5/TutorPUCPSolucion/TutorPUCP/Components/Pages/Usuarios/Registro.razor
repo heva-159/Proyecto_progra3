@@ -1,0 +1,392 @@
+﻿@page "/registro"
+@layout AuthLayout
+@inject NavigationManager Navigation
+
+@* Registro (RF001): una sola cuenta de usuario que puede ser Estudiante, Tutor o ambos.
+   El formulario va por pasos (Datos, Cuenta PUCP, Rol, Seguridad) y cada paso se valida antes de seguir; Facultad y Especialidad usan la misma lista desplegable
+   (siempre se abre hacia abajo). El teléfono se guarda pero nunca se muestra a otros (RNF005). *@
+
+<PageTitle>Crear cuenta · TutorPUCP</PageTitle>
+
+<h1 class="acc-titulo">Crea tu cuenta</h1>
+<p class="acc-sub">@Subtitulos[paso]</p>
+
+<div class="reg-pasos mt-4">
+    <Pasos Etapas="Etapas" Actual="paso" />
+</div>
+
+<form @onsubmit="Avanzar" novalidate>
+    @if (revisados.Contains(paso) && ErroresDelPaso(paso) is { Count: > 0 } ep)
+    {
+        <div class="acc-alerta mb-3">
+            <i class="bi bi-exclamation-circle"></i>
+            <span>Revisa @(ep.Count == 1 ? "1 campo marcado" : $"{ep.Count} campos marcados") en rojo.</span>
+        </div>
+    }
+
+    @if (paso == 0)
+    {
+    <section class="reg-bloque" @key="0">
+        <div class="reg-bloque-titulo"><span><i class="bi bi-person"></i></span>Datos personales</div>
+        <div class="row g-3">
+            <div class="col-sm-6">
+                <label for="nombres" class="acc-etiqueta">Nombres</label>
+                <div class="campo">
+                    <i class="bi bi-person"></i>
+                    <input id="nombres" class="form-control @Marca("nombres")" placeholder="Ej. Lucía" autocomplete="given-name" @bind="nombres" @bind:event="oninput" />
+                </div>
+                <CampoError Texto="@Err("nombres")" />
+            </div>
+            <div class="col-sm-6">
+                <label for="apellidos" class="acc-etiqueta">Apellidos</label>
+                <div class="campo">
+                    <i class="bi bi-person"></i>
+                    <input id="apellidos" class="form-control @Marca("apellidos")" placeholder="Ej. Ramos Torres" autocomplete="family-name" @bind="apellidos" @bind:event="oninput" />
+                </div>
+                <CampoError Texto="@Err("apellidos")" />
+            </div>
+            <div class="col-12">
+                <label for="telefono" class="acc-etiqueta">Teléfono celular</label>
+                <Telefono Id="telefono" @bind-Pais="pais" @bind-Numero="telefono" MostrarEstado="@revisados.Contains(0)" />
+                @if (Err("telefono") is { } et)
+                {
+                    <CampoError Texto="@et" />
+                }
+                else
+                {
+                    <div class="campo-ayuda"><i class="bi bi-eye-slash me-1"></i>Solo lo ve la administración. Nunca se muestra a otros usuarios.</div>
+                }
+            </div>
+        </div>
+    </section>
+    }
+
+    @if (paso == 1)
+    {
+    <section class="reg-bloque" @key="1">
+        <div class="reg-bloque-titulo"><span><i class="bi bi-mortarboard"></i></span>Cuenta PUCP</div>
+        <div class="row g-3">
+            <div class="col-sm-5">
+                <label for="codigo" class="acc-etiqueta">Código de alumno</label>
+                <div class="campo">
+                    <i class="bi bi-hash"></i>
+                    <input id="codigo" class="form-control @Marca("codigo")" placeholder="20231234" inputmode="numeric" maxlength="8" @bind="codigo" @bind:event="oninput" />
+                </div>
+                <CampoError Texto="@Err("codigo")" />
+            </div>
+            <div class="col-sm-7">
+                <label for="correo" class="acc-etiqueta">Correo institucional</label>
+                <div class="campo">
+                    <i class="bi bi-envelope"></i>
+                    <input id="correo" type="email" class="form-control @Marca("correo")" placeholder="usuario@pucp.edu.pe" autocomplete="email" @bind="correo" @bind:event="oninput" />
+                </div>
+                <CampoError Texto="@Err("correo")" />
+            </div>
+            <div class="col-sm-6">
+                <label for="facultad" class="acc-etiqueta">Facultad</label>
+                <Selector Id="facultad" Icono="bi-building" Placeholder="Selecciona una facultad"
+                          Opciones="Facultades" Valor="@facultad" ValorChanged="ElegirFacultad" />
+                <CampoError Texto="@Err("facultad")" />
+            </div>
+            <div class="col-sm-6">
+                <label for="especialidad" class="acc-etiqueta">Especialidad</label>
+                <Selector Id="especialidad" Icono="bi-journal-bookmark" Deshabilitado="@(facultad == "")"
+                          Placeholder="@(facultad == "" ? "Primero elige la facultad" : "Selecciona una especialidad")"
+                          Opciones="Especialidades" @bind-Valor="especialidad" />
+                <CampoError Texto="@Err("especialidad")" />
+            </div>
+        </div>
+    </section>
+    }
+
+    @if (paso == 2)
+    {
+    <section class="reg-bloque" @key="2">
+        <div class="reg-bloque-titulo"><span><i class="bi bi-people"></i></span>¿Cómo usarás TutorPUCP?</div>
+        <div class="row g-2">
+            <div class="col-sm-6">
+                <button type="button" class="reg-rol @(esEstudiante ? "elegido" : "")" @onclick="() => esEstudiante = !esEstudiante" aria-pressed="@esEstudiante">
+                    <span class="reg-rol-icono" style="background: rgba(37,99,235,.12); color: #2563eb;"><i class="bi bi-backpack2"></i></span>
+                    <span><b class="d-block">Estudiante</b><small style="color: var(--tp-tenue);">Busco tutorías</small></span>
+                    <span class="reg-rol-marca">@if (esEstudiante) { <i class="bi bi-check-lg"></i> }</span>
+                </button>
+            </div>
+            <div class="col-sm-6">
+                <button type="button" class="reg-rol @(esTutor ? "elegido" : "")" @onclick="() => esTutor = !esTutor" aria-pressed="@esTutor">
+                    <span class="reg-rol-icono" style="background: rgba(124,58,237,.12); color: #7c3aed;"><i class="bi bi-person-workspace"></i></span>
+                    <span><b class="d-block">Tutor</b><small style="color: var(--tp-tenue);">Quiero enseñar</small></span>
+                    <span class="reg-rol-marca">@if (esTutor) { <i class="bi bi-check-lg"></i> }</span>
+                </button>
+            </div>
+        </div>
+        @if (Err("rol") is { } er)
+        {
+            <CampoError Texto="@er" />
+        }
+        else
+        {
+            <div class="campo-ayuda">
+                @(esEstudiante && esTutor ? "Tendrás los dos roles y podrás cambiar entre ellos sin cerrar sesión."
+                  : esTutor ? "Como tutor tendrás que postular a cada curso antes de dictarlo."
+                  : "Puedes marcar las dos opciones si también quieres enseñar.")
+            </div>
+        }
+    </section>
+    }
+
+    @if (paso == 3)
+    {
+    <section class="reg-bloque" @key="3">
+        <div class="reg-bloque-titulo"><span><i class="bi bi-shield-lock"></i></span>Contraseña</div>
+        <div class="row g-3">
+            <div class="col-sm-6">
+                <label for="clave" class="acc-etiqueta">Contraseña</label>
+                <CampoClave Id="clave" Autocompletar="new-password" Clase="@Marca("clave")" @bind-Valor="clave" />
+                <div class="fuerza" aria-hidden="true">
+                    @for (var i = 1; i <= 4; i++)
+                    {
+                        <span style="@(i <= Fuerza ? $"background:{ColorFuerza}" : "")"></span>
+                    }
+                </div>
+                <div class="campo-ayuda">@TextoFuerza</div>
+                <CampoError Texto="@Err("clave")" />
+            </div>
+            <div class="col-sm-6">
+                <label for="confirmar" class="acc-etiqueta">Confirmar contraseña</label>
+                <CampoClave Id="confirmar" Autocompletar="new-password" Clase="@Marca("confirmar")" @bind-Valor="confirmar" />
+                @if (confirmar.Length > 0 && confirmar == clave)
+                {
+                    <div class="campo-ayuda text-success"><i class="bi bi-check-circle me-1"></i>Coinciden</div>
+                }
+                <CampoError Texto="@Err("confirmar")" />
+            </div>
+        </div>
+    </section>
+
+    <section class="reg-bloque reg-resumen">
+        <div class="reg-bloque-titulo"><span><i class="bi bi-card-checklist"></i></span>Revisa tus datos</div>
+        <dl>
+            <dt>Nombre</dt><dd>@nombres @apellidos</dd>
+            <dt>Correo</dt><dd>@correo.Trim().ToLowerInvariant()</dd>
+            <dt>Código</dt><dd>@codigo</dd>
+            <dt>Especialidad</dt><dd>@especialidad</dd>
+            <dt>Rol</dt><dd>@TextoRol</dd>
+        </dl>
+        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" @onclick="() => paso = 0"><i class="bi bi-pencil me-1"></i>Corregir algo</button>
+    </section>
+
+    <section class="reg-bloque">
+        <div class="form-check mb-2">
+            <input class="form-check-input @Marca("datos")" type="checkbox" id="consentimientoDatos" @bind="aceptaDatos" />
+            <label class="form-check-label small" for="consentimientoDatos">Acepto el tratamiento de mis datos personales.</label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="consentimientoCalificaciones" @bind="aceptaCalificaciones" />
+            <label class="form-check-label small" for="consentimientoCalificaciones">Acepto que mis calificaciones sean visibles para la administración.</label>
+        </div>
+        <CampoError Texto="@Err("datos")" />
+    </section>
+    }
+
+    <div class="reg-acciones">
+        @if (paso > 0)
+        {
+            <button type="button" class="reg-atras" @onclick="Atras" disabled="@enviando"><i class="bi bi-arrow-left"></i><span>Atrás</span></button>
+        }
+        <button type="submit" class="acc-boton" disabled="@enviando">
+            @if (enviando)
+            {
+                <span class="spinner-border spinner-border-sm"></span><span>Creando cuenta…</span>
+            }
+            else if (paso < Etapas.Length - 1)
+            {
+                <span>Continuar</span><i class="bi bi-arrow-right"></i>
+            }
+            else
+            {
+                <span>Crear cuenta</span><i class="bi bi-check2"></i>
+            }
+        </button>
+    </div>
+</form>
+
+<p class="text-center small mt-4 mb-0" style="color: var(--tp-tenue);">
+    ¿Ya tienes cuenta? <a href="/login/usuario" class="fw-semibold text-decoration-none">Inicia sesión</a>
+</p>
+
+@code {
+    private string nombres = "", apellidos = "", codigo = "", correo = "";
+    private string pais = "PE", telefono = "";
+    private string facultad = "", especialidad = "";
+    private string clave = "", confirmar = "";
+    private bool esEstudiante = true, esTutor;
+    private bool aceptaDatos, aceptaCalificaciones;
+    private bool enviando;
+
+    // ---------- Pasos ----------
+    private static readonly string[] Etapas = ["Datos", "Cuenta PUCP", "Rol", "Seguridad"];
+    private static readonly string[] Subtitulos =
+    [
+        "Empecemos por tus datos personales.",
+        "Tu cuenta y tus estudios en la PUCP.",
+        "Elige cómo usarás TutorPUCP. Puedes marcar los dos.",
+        "Crea tu contraseña y revisa tus datos.",
+    ];
+    private int paso;
+    private readonly HashSet<int> revisados = []; // Pasos en los que ya se intentó continuar: ahí se muestran los errores.
+
+    // A qué paso pertenece cada campo.
+    private static int PasoDe(string campo) => campo switch
+    {
+        "nombres" or "apellidos" or "telefono" => 0,
+        "codigo" or "correo" or "facultad" or "especialidad" => 1,
+        "rol" => 2,
+        _ => 3,
+    };
+
+    private Dictionary<string, string> ErroresDelPaso(int p) =>
+        Errores.Where(e => PasoDe(e.Key) == p).ToDictionary();
+
+    private string TextoRol => esEstudiante && esTutor ? "Estudiante y Tutor" : esTutor ? "Tutor" : "Estudiante";
+
+    private async Task Avanzar()
+    {
+        revisados.Add(paso);
+        if (ErroresDelPaso(paso).Count > 0) return;
+        if (paso < Etapas.Length - 1)
+        {
+            paso++;
+            return;
+        }
+        await Registrar();
+    }
+
+    private void Atras()
+    {
+        if (paso > 0) paso--;
+    }
+
+    // ---------- Validación (se muestra después del primer intento de enviar) ----------
+    private Dictionary<string, string> Errores
+    {
+        get
+        {
+            var e = new Dictionary<string, string>();
+            if (string.IsNullOrWhiteSpace(nombres)) e["nombres"] = "Escribe tus nombres.";
+            if (string.IsNullOrWhiteSpace(apellidos)) e["apellidos"] = "Escribe tus apellidos.";
+            if (string.IsNullOrWhiteSpace(telefono)) e["telefono"] = "Escribe tu número de celular.";
+            else if (!Telefono.EsValido(pais, telefono)) e["telefono"] = "El número no es válido para el país elegido.";
+            if (codigo.Length != 8 || !codigo.All(char.IsDigit)) e["codigo"] = "El código tiene 8 dígitos.";
+            var c = correo.Trim().ToLowerInvariant();
+            if (!c.EndsWith("@pucp.edu.pe") || c.Length <= "@pucp.edu.pe".Length) e["correo"] = "Debe terminar en @pucp.edu.pe.";
+            if (facultad == "") e["facultad"] = "Elige tu facultad.";
+            if (especialidad == "") e["especialidad"] = "Elige tu especialidad.";
+            if (!esEstudiante && !esTutor) e["rol"] = "Elige al menos un rol.";
+            if (Fuerza < 3) e["clave"] = "Usa 8 caracteres o más, con mayúscula, número y símbolo.";
+            if (confirmar != clave || confirmar == "") e["confirmar"] = "Las contraseñas no coinciden.";
+            if (!aceptaDatos) e["datos"] = "Debes aceptar el tratamiento de datos para crear la cuenta.";
+            return e;
+        }
+    }
+
+    private string? Err(string campo) => revisados.Contains(PasoDe(campo)) && Errores.TryGetValue(campo, out var m) ? m : null;
+    private string Marca(string campo) => Err(campo) is null ? "" : "is-invalid";
+
+    private int Fuerza =>
+        (clave.Length >= 8 ? 1 : 0) + (clave.Any(char.IsUpper) && clave.Any(char.IsLower) ? 1 : 0)
+        + (clave.Any(char.IsDigit) ? 1 : 0) + (clave.Any(ch => !char.IsLetterOrDigit(ch)) ? 1 : 0);
+    private string ColorFuerza => Fuerza switch { <= 1 => "#ef4444", 2 => "#f59e0b", 3 => "#3b82f6", _ => "#22c55e" };
+    private string TextoFuerza => clave.Length == 0 ? "Mínimo 8 caracteres." : Fuerza switch { <= 1 => "Muy débil", 2 => "Débil", 3 => "Buena", _ => "Muy segura" };
+
+    private async Task Registrar()
+    {
+        if (Errores.Count > 0) return;
+        enviando = true;
+        await Task.Delay(600); // Pantalla visual: aún no hay base de datos.
+        Navigation.NavigateTo("/verificar-cuenta?correo=" + Uri.EscapeDataString(correo.Trim().ToLowerInvariant()));
+    }
+
+    // ---------- Facultad y especialidad ----------
+    private Selector.Opcion[] Facultades => carrerasPorFacultad.Keys.Select(f => new Selector.Opcion(f, f)).ToArray();
+
+    private Selector.Opcion[] Especialidades =>
+        (carrerasPorFacultad.TryGetValue(facultad, out var carreras) ? carreras : Array.Empty<string>())
+        .Select(c => new Selector.Opcion(c, c)).ToArray();
+
+    private void ElegirFacultad(string f)
+    {
+        if (f == facultad) return;
+        facultad = f;
+        var lista = carrerasPorFacultad[f];
+        especialidad = lista.Length == 1 ? lista[0] : ""; // Si solo hay una, se elige sola.
+    }
+
+    private readonly Dictionary<string, string[]> carrerasPorFacultad = new()
+    {
+        ["Arquitectura y Urbanismo"] = new[] { "Arquitectura" },
+        ["Arte y Diseño"] = new[]
+        {
+            "Educación Artística",
+            "Diseño Gráfico",
+            "Diseño Industrial",
+            "Escultura",
+            "Pintura",
+            "Arte, moda y diseño textil",
+            "Grabado"
+        },
+        ["Artes Escénicas"] = new[] { "Danza", "Teatro", "Música", "Creación y Producción Escénica" },
+        ["Ciencias Contables"] = new[] { "Contabilidad" },
+        ["Ciencias e Ingeniería"] = new[]
+        {
+            "Estadística",
+            "Física",
+            "Matemáticas",
+            "Química",
+            "Ingeniería Ambiental y Sostenible",
+            "Ingeniería Biomédica PUCP",
+            "Ingeniería Civil",
+            "Ingeniería de las Telecomunicaciones",
+            "Ingeniería de Minas",
+            "Ingeniería Electrónica",
+            "Ingeniería Geológica",
+            "Ingeniería Industrial",
+            "Ingeniería Informática",
+            "Ingeniería Mecánica",
+            "Ingeniería Mecatrónica",
+            "Ingeniería Química"
+        },
+        ["Ciencias Sociales"] = new[]
+        {
+            "Antropología",
+            "Ciencia Política y Gobierno",
+            "Economía",
+            "Finanzas",
+            "Relaciones Internacionales",
+            "Sociología"
+        },
+        ["Ciencias y Artes de la Comunicación"] = new[]
+        {
+            "Comunicación Audiovisual",
+            "Comunicación para el desarrollo",
+            "Publicidad",
+            "Periodismo"
+        },
+        ["Derecho"] = new[] { "Derecho" },
+        ["Educación"] = new[] { "Educación Primaria", "Educación Inicial", "Educación Secundaria" },
+        ["Estudios Generales Ciencias"] = new[] { "Sin especialidad (Estudios Generales)" },
+        ["Estudios Generales Letras"] = new[] { "Sin especialidad (Estudios Generales)" },
+        ["Gastronomía, Hotelería y Turismo"] = new[] { "Gastronomía", "Hotelería", "Turismo" },
+        ["Gestión y Alta Dirección"] = new[] { "Gestión" },
+        ["Letras y Ciencias Humanas"] = new[]
+        {
+            "Arqueología",
+            "Ciencias de la Información",
+            "Filosofía",
+            "Geografía y Medio Ambiente",
+            "Historia",
+            "Humanidades",
+            "Lingüística y Literatura"
+        },
+        ["Psicología"] = new[] { "Psicología" },
+    };
+}

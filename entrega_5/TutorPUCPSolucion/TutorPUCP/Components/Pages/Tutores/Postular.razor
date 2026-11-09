@@ -1,0 +1,144 @@
+﻿@page "/tutor/postular"
+
+<PageTitle>Postular a curso</PageTitle>
+
+<div class="row justify-content-center">
+    @* Limitamos el ancho a 8 columnas para que el formulario no quede estirado en pantallas anchas *@
+    <div class="col-lg-8">
+        @* Encabezado y botón para regresar *@
+        <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+            <div>
+                <h2 class="text-primary fw-bold mb-1">Postulación a Curso</h2>
+                <p class="text-muted mb-0">Solicita acreditación docente adjuntando tu certificado de notas oficial.</p>
+            </div>
+            <a href="/tutor" class="btn btn-outline-secondary btn-sm">
+                ← Volver al Panel
+            </a>
+        </div>
+        @* =====================================================================
+           ALERTA INFORMATIVA DEL REQUERIMIENTO RF004
+           Recuerda al tutor la restricción de formato y tamaño del archivo.
+           ===================================================================== *@
+        <div class="alert alert-info shadow-sm border-0 d-flex align-items-center mb-4" role="alert">
+            <i class="bi bi-info-circle-fill fs-4 me-3"></i>
+            <div>
+                <strong>Requisitos oficiales:</strong><br />
+                Debes adjuntar tu certificado de notas emitido por la facultad. El documento debe estar en formato
+                <strong class="text-dark">PDF</strong> y tener un tamaño máximo de <strong class="text-dark">5 MB</strong>.
+            </div>
+        </div>
+        @* =====================================================================
+           ALERTA DE ÉXITO SIMULADA
+           Solo aparece si el tutor presiona el botón "Enviar Postulación".
+           Controlada por la variable C# @postulacionEnviada.
+           ===================================================================== *@
+        @if (postulacionEnviada)
+        {
+            <div class="alert alert-success alert-dismissible fade show shadow-sm border-0" role="alert">
+                <h5 class="alert-heading mb-1">¡Postulación Registrada!</h5>
+                <p class="mb-2">Tu postulación para <strong>@cursoSeleccionadoTexto</strong> ha sido enviada con éxito.</p>
+                <hr class="my-2" />
+                <p class="small mb-0">
+                    Se encuentra en estado <strong>PENDIENTE</strong>. La coordinación académica la evaluará pronto.
+                    Puedes revisar su avance en <a href="/tutor/postulaciones" class="alert-link">Mis Postulaciones</a>.
+                </p>
+                <button type="button" class="btn-close" @onclick="() => postulacionEnviada = false"></button>
+            </div>
+        }
+        @* =====================================================================
+             FORMULARIO DE POSTULACIÓN
+           ===================================================================== *@
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+
+                @* 1. Menú Desplegable: Selección de Curso *@
+                <div class="mb-4">
+                    <label class="form-label fw-bold">
+                        1. Curso al que deseas postular <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select" @bind="cursoSeleccionado">
+                        <option value="" disabled selected>-- Selecciona un curso del catálogo universitario --</option>
+
+                        @* Verificamos que la lista no sea null y la recorremos con foreach *@
+                        @if (listaCursos != null)
+                        {
+                            @foreach (var curso in listaCursos)
+                            {
+                                <option value="@curso">@curso</option>
+                            }
+                        }
+                    </select>
+                    <div class="form-text">Solo se muestran los cursos activos aprobados por la facultad.</div>
+                </div>
+                @* 2. Campo de Archivo: Certificado PDF (RF004) *@
+                <div class="mb-4">
+                    <label class="form-label fw-bold">
+                        2. Certificado de Notas (PDF) <span class="text-danger">*</span>
+                    </label>
+                    @* "accept=.pdf" restringe a que el explorador solo deje elegir archivos PDF *@
+                    <input type="file" class="form-control" accept=".pdf" />
+                    <div class="form-text text-muted">
+                        Formatos válidos: solo <code>.pdf</code>. Tamaño máximo permitido: 5 MB.
+                    </div>
+                </div>
+                @* 3. Área de Texto: Motivación / Experiencia (Opcional) *@
+                <div class="mb-4">
+                    <label class="form-label fw-bold">
+                        3. Comentarios o Experiencia Académica Previa <span class="text-muted fw-normal">(Opcional)</span>
+                    </label>
+                    <textarea class="form-control" rows="3"
+                              placeholder="Ejemplo: Aprobé el curso con nota 18, fui jefe de práctica en el ciclo 2025-2..."></textarea>
+                    <div class="form-text">
+                        Puedes añadir notas breves para que el Administrador evalúe con mayor rapidez tu solicitud.
+                    </div>
+                </div>
+                @* Botones de Acción *@
+                <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                    <a href="/tutor" class="btn btn-outline-secondary">
+                        Cancelar
+                    </a>
+                    @* Al hacer clic, ejecuta el método C# EnviarPostulacionSimulada() *@
+                    <button type="button" class="btn btn-primary px-4 shadow-sm" @onclick="EnviarPostulacionSimulada">
+                        Enviar Postulación
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@* =============================================================================
+   SECCIÓN C#
+   ============================================================================= *@
+@code {
+
+
+    private bool postulacionEnviada = false;
+    private string cursoSeleccionado = "";
+    private string cursoSeleccionadoTexto = "";
+
+    // Lista de cursos simulada en C#
+    private List<string> listaCursos = new()
+    {
+        "1INF30 - Programación 3",
+        "1INF01 - Algoritmia",
+        "1INF08 - Base de Datos",
+        "1MAT05 - Cálculo 1",
+        "1MAT06 - Cálculo 2",
+        "1INF15 - Sistemas Operativos"
+    };
+
+    private void EnviarPostulacionSimulada()
+    {
+        // Si no seleccionó ningún curso, le asignamos uno por defecto para que la prueba se vea bien
+        if (string.IsNullOrWhiteSpace(cursoSeleccionado))
+        {
+            cursoSeleccionadoTexto = "1INF30 - Programación 3";
+        }
+        else
+        {
+            cursoSeleccionadoTexto = cursoSeleccionado;
+        }
+        // Activamos la alerta verde de éxito
+        postulacionEnviada = true;
+    }
+}

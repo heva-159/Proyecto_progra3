@@ -1,0 +1,191 @@
+﻿@page "/estudiante/buscar-tutores"
+
+<PageTitle>Buscar tutores</PageTitle>
+
+@* =============================================================================
+   ENCABEZADO PRINCIPAL
+   ============================================================================= *@
+<div class="mb-4 pb-2 border-bottom">
+    <h2 class="text-primary fw-bold mb-1">Buscar Tutores Disponibles</h2>
+    <p class="text-muted mb-0">
+        Encuentra asesoría personalizada con tutores calificados que cuentan con postulación aprobada por la facultad.
+    </p>
+</div>
+@* =============================================================================
+    CAJA DE FILTROS (RF009)
+   ============================================================================= *@
+<div class="card shadow-sm border-0 bg-light mb-4">
+    <div class="card-body p-4">
+        <h5 class="card-title fw-bold text-dark mb-3">Filtros de Búsqueda</h5>
+
+        <div class="row g-3 align-items-end">
+            @* Filtro 1: Desplegable de Curso *@
+            <div class="col-md-4">
+                <label class="form-label fw-semibold small text-muted">CURSO:</label>
+                <select class="form-select shadow-sm" @bind="filtroCurso">
+                    <option value="">-- Todos los cursos --</option>
+
+                    @* Recorremos la lista de cursos en C# protegida con el @if *@
+                    @if (listaCursosFiltro != null)
+                    {
+                        @foreach (var curso in listaCursosFiltro)
+                        {
+                            <option value="@curso">@curso</option>
+                        }
+                    }
+                </select>
+            </div>
+            @* Filtro 2: Desplegable de Tarifa Máxima *@
+            <div class="col-md-3">
+                <label class="form-label fw-semibold small text-muted">PRECIO MÁXIMO:</label>
+                <select class="form-select shadow-sm" @bind="filtroPrecio">
+                    <option value="0">Cualquier tarifa</option>
+                    <option value="25">Hasta S/ 25.00 / hora</option>
+                    <option value="35">Hasta S/ 35.00 / hora</option>
+                    <option value="50">Hasta S/ 50.00 / hora</option>
+                </select>
+            </div>
+            @* Filtro 3: Desplegable de Calificación Mínima *@
+            <div class="col-md-3">
+                <label class="form-label fw-semibold small text-muted">CALIFICACIÓN MÍNIMA:</label>
+                <select class="form-select shadow-sm" @bind="filtroCalificacion">
+                    <option value="0">Todas las calificaciones</option>
+                    <option value="4.0"> 4.0 o más</option>
+                    <option value="4.5"> 4.5 o más</option>
+                    <option value="4.8"> 4.8 o más</option>
+                </select>
+            </div>
+            @* Botón de Filtrar *@
+            <div class="col-md-2">
+                <button type="button" class="btn btn-primary w-100 shadow-sm" @onclick="AplicarFiltroSimulado">
+                    Filtrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+@* =============================================================================
+   RESULTADOS DE BÚSQUEDA (TARJETAS DE TUTORES)
+   Muestra las cards con foto/avatar, nombre, estrellas, cursos y tarifa por hora.
+   ============================================================================= *@
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold text-dark mb-0">Tutores Acreditados Encontrados (@listaTutores.Count)</h5>
+    <span class="text-muted small">Mostrando tutores con acreditación aprobada</span>
+</div>
+<div class="row g-4 mb-4">
+    @if (listaTutores != null && listaTutores.Count > 0)
+    {
+        @foreach (var tutor in listaTutores)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-body text-center p-4 d-flex flex-column justify-content-between">
+                        <div>
+                            @* Avatar con las iniciales del tutor *@
+                            <div class="mb-2"><Avatar Nombre="@tutor.Nombre" Tamano="lg" /></div>
+
+                            @* Nombre del Tutor *@
+                            <h5 class="card-title fw-bold text-dark mb-1">@tutor.Nombre</h5>
+
+                            @* Especialidad y Ciclo *@
+                            <p class="text-muted small mb-2">@tutor.Especialidad</p>
+                            @* Calificación en estrellas y total de sesiones *@
+                            <div class="mb-3 text-warning">
+                                 <i class="bi bi-star-fill"></i> <strong>@tutor.Calificacion.ToString("0.0")</strong>
+                                <span class="text-muted small">(@tutor.SesionesDictadas tutorías)</span>
+                            </div>
+                            @* Cursos que dicta (Badges) *@
+                            <div class="mb-3">
+                                <span class="badge bg-primary px-2 py-1">@tutor.CursoPrincipal</span>
+                            </div>
+                        </div>
+                        <div>
+                            @* Tarifa por hora destacada en verde (RF009) *@
+                            <div class="bg-light rounded p-2 mb-3">
+                                <span class="text-muted small d-block">Tarifa de asesoría:</span>
+                                <h4 class="text-success fw-bold mb-0">
+                                    S/ @tutor.TarifaPorHora.ToString("0.00")
+                                    <span class="fs-6 text-muted fw-normal">/ hora</span>
+                                </h4>
+                            </div>
+                            @* =========================================================
+                               ENLACE AL PERFIL DEL TUTOR
+                               Lleva a la pantalla  /estudiante/tutor
+                               ========================================================= *@
+                            <a href="/estudiante/tutor" class="btn btn-outline-primary w-100 shadow-sm">
+                                Ver Perfil →
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+@* =============================================================================
+   LÓGICA Y MODELO EN C# 
+   ============================================================================= *@
+@code {
+    // Variables enlazadas a los filtros desplegables
+    private string filtroCurso = "";
+    private string filtroPrecio = "0";
+    private string filtroCalificacion = "0";
+
+
+    // Lista de cursos para el filtro desplegable
+    private List<string> listaCursosFiltro = new()
+    {
+        "1INF30 - Programación 3",
+        "1INF01 - Algoritmia",
+        "1INF08 - Base de Datos",
+        "1MAT05 - Cálculo 1",
+        "1INF15 - Sistemas Operativos"
+    };
+
+
+    // Lista simulada de tutores acreditados (RF009)
+    private List<TutorCardItem> listaTutores = new()
+    {
+        new TutorCardItem
+        {
+            Nombre = "Carlos Mendoza R.",
+            Especialidad = "Ing. Informática - 8vo ciclo",
+            Calificacion = 4.9,
+            SesionesDictadas = 16,
+            CursoPrincipal = "1INF30 - Programación 3",
+            TarifaPorHora = 35.00
+        },
+        new TutorCardItem
+        {
+            Nombre = "Valeria Quispe G.",
+            Especialidad = "Ing. de Software - Egresada",
+            Calificacion = 4.8,
+            SesionesDictadas = 22,
+            CursoPrincipal = "1INF08 - Base de Datos",
+            TarifaPorHora = 40.00
+        },
+        new TutorCardItem
+        {
+            Nombre = "Jorge Ramos T.",
+            Especialidad = "Ciencias de la Computación - 9no ciclo",
+            Calificacion = 4.7,
+            SesionesDictadas = 11,
+            CursoPrincipal = "1INF01 - Algoritmia",
+            TarifaPorHora = 30.00
+        }
+    };
+    // Método del botón Filtrar simulado
+    private void AplicarFiltroSimulado()
+    {
+        ////
+    }
+    public class TutorCardItem
+    {
+        public string Nombre { get; set; } = "";
+        public string Especialidad { get; set; } = "";
+        public double Calificacion { get; set; }
+        public int SesionesDictadas { get; set; }
+        public string CursoPrincipal { get; set; } = "";
+        public double TarifaPorHora { get; set; }
+    }
+}

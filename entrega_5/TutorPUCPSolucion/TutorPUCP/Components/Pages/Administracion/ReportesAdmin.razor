@@ -1,0 +1,346 @@
+﻿@page "/admin/reportes"
+
+@* Requisito: RF018 *@
+
+<PageTitle>Reportes</PageTitle>
+
+<Toasts class="p-3" Messages="avisos" AutoHide="true" Delay="4500" Placement="ToastsPlacement.TopRight" />
+
+<div class="titulo-pagina">
+    <div class="d-flex align-items-center gap-3">
+        <span class="icono-titulo"><i class="bi bi-bar-chart-line-fill"></i></span>
+        <div>
+            <h1 class="h3 mb-0">Reportes</h1>
+            <p>Sesiones y reclamos de la plataforma por rango de fechas.</p>
+        </div>
+    </div>
+    <button type="button" class="btn btn-primary" @onclick="AbrirExportar"><i class="bi bi-download me-1"></i>Exportar reporte</button>
+</div>
+
+<div class="card mb-4 entrar" style="--i: 0;">
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-sm-6 col-lg-3">
+                <label for="desde" class="form-label fw-semibold">Desde</label>
+                <RadzenDatePicker TValue="DateOnly" @bind-Value="desde" Name="desde" DateFormat="dd/MM/yyyy" Max="@hasta.ToDateTime(TimeOnly.MinValue)" Culture="@Peru" Placeholder="dd/mm/aaaa" class="tp-fecha" />
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <label for="hasta" class="form-label fw-semibold">Hasta</label>
+                <RadzenDatePicker TValue="DateOnly" @bind-Value="hasta" Name="hasta" DateFormat="dd/MM/yyyy" Min="@desde.ToDateTime(TimeOnly.MinValue)" Culture="@Peru" Placeholder="dd/mm/aaaa" class="tp-fecha" />
+            </div>
+            <div class="col-lg-6">
+                <div class="d-flex flex-wrap gap-2">
+                    @foreach (var (nombre, d, h) in Rangos)
+                    {
+                        <button type="button" class="chip @(desde == d && hasta == h ? "activo" : "")" @onclick="() => { desde = d; hasta = h; }">@nombre</button>
+                    }
+                </div>
+            </div>
+        </div>
+        @if (desde > hasta)
+        {
+            <div class="alert alert-warning py-2 small mt-3 mb-0 alerta-sacudir"><i class="bi bi-exclamation-triangle me-1"></i>La fecha «Desde» no puede ser posterior a «Hasta».</div>
+        }
+    </div>
+</div>
+
+<div class="row g-3 mb-4" @key="ClaveRango">
+    @{ var n = 0; }
+    @foreach (var k in Kpis)
+    {
+        <div class="col-6 col-lg-3">
+            <div class="card kpi tarjeta-hover entrar" style="--i: @(n++);">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <span class="kpi-icono" style="background:@k.Fondo;color:@k.Color;"><i class="bi @k.Icono"></i></span>
+                    <div>
+                        <div class="kpi-valor">@k.Valor</div>
+                        <small class="text-muted">@k.Titulo</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h6 mb-3">Sesiones por estado</h2>
+                @foreach (var (estado, color) in EstadosSesion)
+                {
+                    var cantidad = SesionesFiltradas.Count(s => s.Estado == estado);
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between small mb-1"><span>@estado</span><b>@cantidad</b></div>
+                        <div class="barra-progreso"><span style="width:@Porcentaje(cantidad, SesionesFiltradas.Count)%;background:@color;"></span></div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h6 mb-3">Reclamos por estado</h2>
+                @foreach (var (estado, color) in EstadosReclamo)
+                {
+                    var cantidad = ReclamosFiltrados.Count(r => r.Estado == estado);
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between small mb-1"><span>@estado</span><b>@cantidad</b></div>
+                        <div class="barra-progreso"><span style="width:@Porcentaje(cantidad, ReclamosFiltrados.Count)%;background:@color;"></span></div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <Tabs EnableFadeEffect="true">
+            <Tab Title="Sesiones" Active="true">
+                <Content>
+                    <div class="table-responsive mt-3">
+                        <table class="table align-middle mb-0">
+                            <thead class="table-primary">
+                                <tr><th>Fecha</th><th>Curso</th><th>Tutor</th><th>Estudiante</th><th>Estado</th></tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var s in SesionesFiltradas)
+                                {
+                                    <tr>
+                                        <td>@s.Fecha.ToString("dd/MM/yyyy")</td>
+                                        <td>@s.Curso</td>
+                                        <td>@s.Tutor</td>
+                                        <td>@s.Estudiante</td>
+                                        <td><span class="badge @ClaseSesion(s.Estado)">@s.Estado</span></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        @if (SesionesFiltradas.Count == 0)
+                        {
+                            <div class="estado-vacio"><i class="bi bi-calendar-x"></i><p class="mb-0">No hay sesiones en este rango.</p></div>
+                        }
+                    </div>
+                </Content>
+            </Tab>
+            <Tab Title="Reclamos">
+                <Content>
+                    <div class="table-responsive mt-3">
+                        <table class="table align-middle mb-0">
+                            <thead class="table-primary">
+                                <tr><th>N.º</th><th>Fecha</th><th>Sesión</th><th>Reclamante</th><th>Rol</th><th>Estado</th></tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var r in ReclamosFiltrados)
+                                {
+                                    <tr>
+                                        <td>@r.Numero</td>
+                                        <td>@r.Fecha.ToString("dd/MM/yyyy")</td>
+                                        <td>@r.Sesion</td>
+                                        <td>@r.Reclamante</td>
+                                        <td>@r.Rol</td>
+                                        <td><span class="badge @ClaseReclamo(r.Estado)">@r.Estado</span></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        @if (ReclamosFiltrados.Count == 0)
+                        {
+                            <div class="estado-vacio"><i class="bi bi-flag"></i><p class="mb-0">No hay reclamos en este rango.</p></div>
+                        }
+                    </div>
+                    <div class="text-end mt-3">
+                        <a class="btn btn-outline-primary btn-sm" href="/admin/reclamos"><i class="bi bi-hourglass-split me-1"></i>Ver pendientes</a>
+                    </div>
+                </Content>
+            </Tab>
+        </Tabs>
+    </div>
+</div>
+
+<Modal @ref="exportar" Title="Exportar reporte" IsVerticallyCentered="true" UseStaticBackdrop="true">
+    <BodyTemplate>
+        <Pasos Etapas="EtapasExportar" Actual="paso" />
+
+        @if (paso == 0)
+        {
+            <div class="paso-panel" @key="paso">
+                <p class="text-muted small">Rango: @desde.ToString("dd/MM/yyyy") al @hasta.ToString("dd/MM/yyyy")</p>
+                <div class="d-grid gap-2">
+                    <button type="button" class="opcion-tarjeta @(incluirSesiones ? "elegida" : "")" @onclick="() => incluirSesiones = !incluirSesiones">
+                        <span class="opcion-marca"><i class="bi bi-check"></i></span>
+                        <span class="lh-sm"><b>Sesiones</b><br /><small class="text-muted">@SesionesFiltradas.Count registros</small></span>
+                    </button>
+                    <button type="button" class="opcion-tarjeta @(incluirReclamos ? "elegida" : "")" @onclick="() => incluirReclamos = !incluirReclamos">
+                        <span class="opcion-marca"><i class="bi bi-check"></i></span>
+                        <span class="lh-sm"><b>Reclamos</b><br /><small class="text-muted">@ReclamosFiltrados.Count registros</small></span>
+                    </button>
+                </div>
+            </div>
+        }
+        else if (paso == 1)
+        {
+            <div class="paso-panel" @key="paso">
+                <div class="row g-2">
+                    @foreach (var (f, icono, _) in Formatos)
+                    {
+                        <div class="col-6">
+                            <button type="button" class="opcion-tarjeta w-100 flex-column text-center @(formato == f ? "elegida" : "")" @onclick="() => formato = f">
+                                <i class="bi @icono fs-1 text-primary"></i>
+                                <b>@f</b>
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="paso-panel text-center py-3" @key="paso">
+                @if (generando)
+                {
+                    <div class="spinner-border text-primary mb-3" role="status"></div>
+                    <p class="mb-0">Generando el archivo @formato...</p>
+                }
+                else
+                {
+                    <div class="exito-icono"><i class="bi bi-check-lg"></i></div>
+                    <h3 class="h5">¡Reporte listo!</h3>
+                    <p class="text-muted mb-0">@NombreArchivo</p>
+                }
+            </div>
+        }
+    </BodyTemplate>
+    <FooterTemplate>
+        @if (paso < 2)
+        {
+            <button type="button" class="btn btn-outline-secondary" @onclick="Atras">@(paso == 0 ? "Cancelar" : "Atrás")</button>
+            <button type="button" class="btn btn-primary" disabled="@(paso == 0 ? !(incluirSesiones || incluirReclamos) : formato == "")" @onclick="Siguiente">
+                @(paso == 1 ? "Generar" : "Siguiente")<i class="bi bi-arrow-right ms-1"></i>
+            </button>
+        }
+        else if (!generando)
+        {
+            <button type="button" class="btn btn-primary" @onclick="() => exportar.HideAsync()">Cerrar</button>
+        }
+    </FooterTemplate>
+</Modal>
+
+@code {
+    private static readonly System.Globalization.CultureInfo Peru = new("es-PE");
+
+    private record Sesion(DateOnly Fecha, string Curso, string Tutor, string Estudiante, string Estado);
+    private record Reclamo(int Numero, DateOnly Fecha, string Sesion, string Reclamante, string Rol, string Estado);
+    private record Kpi(string Titulo, int Valor, string Icono, string Fondo, string Color);
+
+    private static readonly string[] EtapasExportar = ["Contenido", "Formato", "Listo"];
+    private static readonly (string, string, string)[] Formatos = [("PDF", "bi-filetype-pdf", "#dc2626"), ("Excel", "bi-file-earmark-excel", "#16a34a")];
+    private static readonly (string, string)[] EstadosSesion = [("Realizada", "#16a34a"), ("Programada", "#0ea5e9"), ("Cancelada", "#94a3b8")];
+    private static readonly (string, string)[] EstadosReclamo = [("Pendiente", "#f59e0b"), ("Aprobado", "#16a34a"), ("Rechazado", "#dc2626")];
+
+    private static readonly (string, DateOnly, DateOnly)[] Rangos =
+    [
+        ("Octubre 2026", new(2026, 10, 1), new(2026, 10, 31)),
+        ("Septiembre 2026", new(2026, 9, 1), new(2026, 9, 30)),
+        ("Últimos 2 meses", new(2026, 9, 1), new(2026, 10, 31)),
+    ];
+
+    private static readonly List<Sesion> Sesiones =
+    [
+        new(new(2026, 9, 5), "Física 1", "Rosa Huamán", "Diego Paredes", "Realizada"),
+        new(new(2026, 9, 12), "Cálculo 1", "Andrés Villanueva", "Lucía Ramos", "Realizada"),
+        new(new(2026, 9, 19), "Química 1", "Jorge Salazar", "Camila Torres", "Cancelada"),
+        new(new(2026, 9, 26), "Programación 1", "Andrés Villanueva", "Diego Paredes", "Realizada"),
+        new(new(2026, 10, 2), "Cálculo 1", "Andrés Villanueva", "Lucía Ramos", "Realizada"),
+        new(new(2026, 10, 9), "Física 1", "Rosa Huamán", "Camila Torres", "Realizada"),
+        new(new(2026, 10, 16), "Programación 1", "Jorge Salazar", "Diego Paredes", "Cancelada"),
+        new(new(2026, 10, 21), "Química 1", "Jorge Salazar", "Camila Torres", "Realizada"),
+        new(new(2026, 10, 23), "Cálculo 1", "Andrés Villanueva", "Lucía Ramos", "Realizada"),
+        new(new(2026, 10, 30), "Cálculo 1", "Andrés Villanueva", "Lucía Ramos", "Programada"),
+    ];
+
+    private static readonly List<Reclamo> Reclamos =
+    [
+        new(5, new(2026, 9, 20), "Química 1 · 19/09", "Camila Torres", "Estudiante", "Rechazado"),
+        new(8, new(2026, 9, 27), "Programación 1 · 26/09", "Andrés Villanueva", "Tutor", "Aprobado"),
+        new(9, new(2026, 10, 10), "Física 1 · 09/10", "Rosa Huamán", "Tutor", "Pendiente"),
+        new(10, new(2026, 10, 17), "Programación 1 · 16/10", "Diego Paredes", "Estudiante", "Pendiente"),
+        new(11, new(2026, 10, 22), "Química 1 · 21/10", "Camila Torres", "Estudiante", "Pendiente"),
+        new(12, new(2026, 10, 24), "Cálculo 1 · 23/10", "Lucía Ramos", "Estudiante", "Pendiente"),
+    ];
+
+    private DateOnly desde = new(2026, 10, 1);
+    private DateOnly hasta = new(2026, 10, 31);
+
+    private Modal exportar = default!;
+    private readonly List<ToastMessage> avisos = [];
+    private int paso;
+    private bool incluirSesiones = true;
+    private bool incluirReclamos = true;
+    private string formato = "";
+    private bool generando;
+
+    private string ClaveRango => $"{desde}-{hasta}";
+    private string NombreArchivo => $"reporte_{desde:yyyyMMdd}_{hasta:yyyyMMdd}.{(formato == "PDF" ? "pdf" : "xlsx")}";
+
+    private List<Sesion> SesionesFiltradas => Sesiones.Where(s => s.Fecha >= desde && s.Fecha <= hasta).ToList();
+    private List<Reclamo> ReclamosFiltrados => Reclamos.Where(r => r.Fecha >= desde && r.Fecha <= hasta).ToList();
+
+    private List<Kpi> Kpis =>
+    [
+        new("Sesiones", SesionesFiltradas.Count, "bi-calendar-check", "#dbeafe", "#2563eb"),
+        new("Realizadas", SesionesFiltradas.Count(s => s.Estado == "Realizada"), "bi-check-circle", "#dcfce7", "#16a34a"),
+        new("Reclamos", ReclamosFiltrados.Count, "bi-flag", "#fee2e2", "#dc2626"),
+        new("Pendientes", ReclamosFiltrados.Count(r => r.Estado == "Pendiente"), "bi-hourglass-split", "#fef3c7", "#d97706"),
+    ];
+
+    private static int Porcentaje(int parte, int total) => total == 0 ? 0 : parte * 100 / total;
+
+    private static string ClaseSesion(string estado) => estado switch
+    {
+        "Realizada" => "text-bg-success",
+        "Programada" => "text-bg-info",
+        _ => "text-bg-secondary",
+    };
+
+    private static string ClaseReclamo(string estado) => estado switch
+    {
+        "Aprobado" => "text-bg-success",
+        "Rechazado" => "text-bg-danger",
+        _ => "text-bg-warning",
+    };
+
+    private async Task AbrirExportar()
+    {
+        paso = 0;
+        formato = "";
+        generando = false;
+        await exportar.ShowAsync();
+    }
+
+    private async Task Atras()
+    {
+        if (paso == 0) await exportar.HideAsync();
+        else paso--;
+    }
+
+    private async Task Siguiente()
+    {
+        paso++;
+        if (paso < 2) return;
+
+        // Generación simulada (Lab 9: solo visual).
+        generando = true;
+        StateHasChanged();
+        await Task.Delay(1400);
+        generando = false;
+        avisos.Add(new ToastMessage
+        {
+            Type = ToastType.Success,
+            Title = "Reporte exportado",
+            Message = $"Formato {formato} · {desde:dd/MM/yyyy} al {hasta:dd/MM/yyyy}",
+        });
+    }
+}
