@@ -1,6 +1,7 @@
 ﻿@page "/admin/temas"
+@inject AcademicoRestService Rest
 
-@* Requisito: RF007. Datos de prueba de script_tutorPUCP.sql *@
+@* Requisito: RF007. Los datos vienen de la BD a través del servicio REST (GestorAcademicoRecurso). *@
 
 <PageTitle>Temas</PageTitle>
 
@@ -17,138 +18,140 @@
     <a class="btn btn-outline-primary" href="/admin/cursos"><i class="bi bi-book me-1"></i>Ver cursos</a>
 </div>
 
-<div class="card mb-4 entrar" style="--i: 0;">
-    <div class="card-body">
-        <div class="row g-3 align-items-end">
-            <div class="col-md-6">
-                <label for="curso" class="form-label fw-semibold">Curso</label>
-                <Selector Id="curso" Icono="bi-book" Placeholder="Selecciona un curso"
-                          Opciones="OpcionesCursos" Valor="@cursoElegido" ValorChanged="ElegirCurso" />
-            </div>
-            <div class="col-md-6">
-                <label for="nuevoTema" class="form-label fw-semibold">Nuevo tema</label>
-                <div class="input-group">
-                    <input id="nuevoTema" type="text" class="form-control" maxlength="150" placeholder="Nombre del tema"
-                           disabled="@(!Curso.Activo)" @bind="nuevoTema" @bind:event="oninput" />
-                    <button type="button" class="btn btn-primary" disabled="@(!PuedeAgregar)" @onclick="Agregar">
-                        <i class="bi bi-plus-lg me-1"></i>Agregar
-                    </button>
+@if (cargando)
+{
+    <div class="card"><div class="estado-vacio">
+        <div class="spinner-border text-primary mb-2" role="status"></div>
+        <div class="fw-semibold">Cargando cursos y temas...</div>
+    </div></div>
+}
+else if (errorCarga is not null)
+{
+    <div class="card"><div class="estado-vacio">
+        <i class="bi bi-wifi-off"></i>
+        <div class="fw-semibold">No se pudieron cargar los temas</div>
+        <div class="small">@errorCarga</div>
+    </div></div>
+}
+else if (!cursos.Any())
+{
+    <div class="card"><div class="estado-vacio">
+        <i class="bi bi-book"></i>
+        <div class="fw-semibold">Todavía no hay cursos registrados</div>
+        <div class="small">Registra uno desde <a href="/admin/cursos">Cursos</a>.</div>
+    </div></div>
+}
+else
+{
+    <div class="card mb-4 entrar" style="--i: 0;">
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-6">
+                    <label for="curso" class="form-label fw-semibold">Curso</label>
+                    <Selector Id="curso" Icono="bi-book" Placeholder="Selecciona un curso"
+                              Opciones="OpcionesCursos" Valor="@cursoElegido" ValorChanged="ElegirCurso" />
+                </div>
+                <div class="col-md-6">
+                    <label for="nuevoTema" class="form-label fw-semibold">Nuevo tema</label>
+                    <div class="input-group">
+                        <input id="nuevoTema" type="text" class="form-control" maxlength="150" placeholder="Nombre del tema"
+                               disabled="@(!Curso.Activo)" @bind="nuevoTema" @bind:event="oninput" />
+                        <button type="button" class="btn btn-primary" disabled="@(!PuedeAgregar || ocupado)" @onclick="Agregar">
+                            <i class="bi bi-plus-lg me-1"></i>Agregar
+                        </button>
+                    </div>
                 </div>
             </div>
+            @if (!Curso.Activo)
+            {
+                <div class="nota small mt-3"><i class="bi bi-pause-circle me-1"></i>@Curso.Nombre está inactivo: no se le pueden agregar temas. Reactívalo desde <a href="/admin/cursos">Cursos</a>.</div>
+            }
+            else if (NombreRepetido(nuevoTema, null))
+            {
+                <div class="nota nota-error small mt-3"><i class="bi bi-exclamation-triangle me-1"></i>@Curso.Nombre ya tiene un tema con ese nombre.</div>
+            }
         </div>
-        @if (!Curso.Activo)
-        {
-            <div class="nota small mt-3"><i class="bi bi-pause-circle me-1"></i>@Curso.Nombre está inactivo: no se le pueden agregar temas. Reactívalo desde <a href="/admin/cursos">Cursos</a>.</div>
-        }
-        else if (NombreRepetido(nuevoTema, null))
-        {
-            <div class="nota nota-error small mt-3"><i class="bi bi-exclamation-triangle me-1"></i>@Curso.Nombre ya tiene un tema con ese nombre.</div>
-        }
-    </div>
-</div>
-
-<div class="card entrar" style="--i: 1;">
-    <div class="card-header py-3 d-flex align-items-center justify-content-between">
-        <h2 class="h5 mb-0">Temas de @Curso.Nombre</h2>
-        <span class="badge etiqueta">@Curso.Temas.Count @(Curso.Temas.Count == 1 ? "tema" : "temas")</span>
     </div>
 
-    @if (Curso.Temas.Any())
-    {
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-primary">
-                    <tr>
-                        <th class="ps-3">#</th>
-                        <th>Nombre</th>
-                        <th>Uso</th>
-                        <th class="text-end pe-3">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @{ var n = 0; }
-                    @foreach (var t in Curso.Temas)
-                    {
-                        <tr class="entrar @(saliendo == t ? "fila-saliendo" : "")" style="--i: @n;" @key="t">
-                            <td class="ps-3 fw-bold">@(++n)</td>
-                            <td>
-                                @if (editando == t)
-                                {
-                                    <input type="text" class="form-control form-control-sm" maxlength="150" aria-label="Nuevo nombre del tema"
-                                           @bind="nombreEditado" @bind:event="oninput" />
-                                    if (NombreRepetido(nombreEditado, t))
+    <div class="card entrar" style="--i: 1;">
+        <div class="card-header py-3 d-flex align-items-center justify-content-between">
+            <h2 class="h5 mb-0">Temas de @Curso.Nombre</h2>
+            <span class="badge etiqueta">@temas.Count @(temas.Count == 1 ? "tema" : "temas")</span>
+        </div>
+
+        @if (temas.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-primary">
+                        <tr>
+                            <th class="ps-3">#</th>
+                            <th>Nombre</th>
+                            <th class="text-end pe-3">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{ var n = 0; }
+                        @foreach (var t in temas)
+                        {
+                            <tr class="entrar @(saliendo == t ? "fila-saliendo" : "")" style="--i: @n;" @key="t.IdTema">
+                                <td class="ps-3 fw-bold">@(++n)</td>
+                                <td>
+                                    @if (editando == t)
                                     {
-                                        <small class="text-danger">Ya existe un tema con ese nombre.</small>
-                                    }
-                                }
-                                else
-                                {
-                                    <span class="fw-semibold">@t.Nombre</span>
-                                }
-                            </td>
-                            <td>
-                                @if (t.Sesiones > 0)
-                                {
-                                    <span class="badge etiqueta"><i class="bi bi-calendar-check me-1"></i>@t.Sesiones @(t.Sesiones == 1 ? "sesión" : "sesiones")</span>
-                                }
-                                else
-                                {
-                                    <small class="text-muted">Sin sesiones</small>
-                                }
-                            </td>
-                            <td class="text-end pe-3 text-nowrap">
-                                @if (editando == t)
-                                {
-                                    <button type="button" class="btn btn-primary btn-sm" disabled="@(!PuedeGuardarEdicion(t))" @onclick="GuardarEdicion">
-                                        <i class="bi bi-check2 me-1"></i>Guardar
-                                    </button>
-                                    <button type="button" class="btn btn-light btn-sm" @onclick="() => editando = null">Cancelar</button>
-                                }
-                                else
-                                {
-                                    <button type="button" class="btn btn-outline-primary btn-sm" @onclick="() => Editar(t)">
-                                        <i class="bi bi-pencil me-1"></i>Editar
-                                    </button>
-                                    if (t.Sesiones > 0)
-                                    {
-                                        <Tooltip Title="Ya se usó en sesiones: no se puede eliminar" Placement="TooltipPlacement.Left">
-                                            <span class="d-inline-block">
-                                                <button type="button" class="btn btn-outline-danger btn-sm" disabled>
-                                                    <i class="bi bi-lock me-1"></i>Eliminar
-                                                </button>
-                                            </span>
-                                        </Tooltip>
+                                        <input type="text" class="form-control form-control-sm" maxlength="150" aria-label="Nuevo nombre del tema"
+                                               @bind="nombreEditado" @bind:event="oninput" />
+                                        if (NombreRepetido(nombreEditado, t))
+                                        {
+                                            <small class="text-danger">Ya existe un tema con ese nombre.</small>
+                                        }
                                     }
                                     else
                                     {
+                                        <span class="fw-semibold">@t.Nombre</span>
+                                    }
+                                </td>
+                                <td class="text-end pe-3 text-nowrap">
+                                    @if (editando == t)
+                                    {
+                                        <button type="button" class="btn btn-primary btn-sm" disabled="@(!PuedeGuardarEdicion(t) || ocupado)" @onclick="GuardarEdicion">
+                                            <i class="bi bi-check2 me-1"></i>Guardar
+                                        </button>
+                                        <button type="button" class="btn btn-light btn-sm" @onclick="() => editando = null">Cancelar</button>
+                                    }
+                                    else
+                                    {
+                                        <button type="button" class="btn btn-outline-primary btn-sm" @onclick="() => Editar(t)">
+                                            <i class="bi bi-pencil me-1"></i>Editar
+                                        </button>
                                         <button type="button" class="btn btn-outline-danger btn-sm" @onclick="() => AbrirEliminar(t)">
                                             <i class="bi bi-trash me-1"></i>Eliminar
                                         </button>
                                     }
-                                }
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    }
-    else
-    {
-        <div class="estado-vacio">
-            <i class="bi bi-tags"></i>
-            <div class="fw-semibold">Este curso todavía no tiene temas</div>
-            @if (Curso.Activo)
-            {
-                <div class="small">Agrega el primero desde el campo de arriba.</div>
-            }
-        </div>
-    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="estado-vacio">
+                <i class="bi bi-tags"></i>
+                <div class="fw-semibold">Este curso todavía no tiene temas</div>
+                @if (Curso.Activo)
+                {
+                    <div class="small">Agrega el primero desde el campo de arriba.</div>
+                }
+            </div>
+        }
 
-    <div class="card-footer small text-muted">
-        <i class="bi bi-info-circle me-1"></i>Los temas que ya se usaron en alguna sesión no se pueden eliminar, para no perder el historial.
+        <div class="card-footer small text-muted">
+            <i class="bi bi-info-circle me-1"></i>Los temas que ya se usaron en alguna sesión no se pueden eliminar, para no perder el historial.
+        </div>
     </div>
-</div>
+}
 
 <Modal @ref="modalEliminar" Title="Eliminar tema" IsVerticallyCentered="true">
     <BodyTemplate>
@@ -160,120 +163,184 @@
     </BodyTemplate>
     <FooterTemplate>
         <button type="button" class="btn btn-outline-secondary" @onclick="() => modalEliminar.HideAsync()">Cancelar</button>
-        <button type="button" class="btn btn-danger" @onclick="Eliminar"><i class="bi bi-trash me-1"></i>Sí, eliminar</button>
+        <button type="button" class="btn btn-danger" disabled="@ocupado" @onclick="Eliminar"><i class="bi bi-trash me-1"></i>Sí, eliminar</button>
     </FooterTemplate>
 </Modal>
 
 @code {
-    private class Tema
-    {
-        public string Nombre { get; set; } = "";
-        public int Sesiones { get; set; }
-    }
-
-    private record CursoTemas(string Codigo, string Nombre, bool Activo, List<Tema> Temas);
-
     // Si se llega desde Cursos con ?curso=1MAT05, se abre ese curso.
     [SupplyParameterFromQuery(Name = "curso")] public string? CursoDesdeUrl { get; set; }
 
     private Modal modalEliminar = default!;
     private readonly List<ToastMessage> avisos = [];
 
-    private string cursoElegido = "1INF01";
+    // Cursos y temas de la BD, pedidos al servicio REST.
+    private List<CursoRestDTO> cursos = [];
+    private List<TemaRestDTO> temas = [];      // temas del curso elegido
+    private bool cargando = true;
+    private string? errorCarga;
+    private bool ocupado;   // evita mandar dos veces la misma operación
+
+    private string cursoElegido = "";
     private string nuevoTema = "";
-    private Tema? editando;
+    private TemaRestDTO? editando;
     private string nombreEditado = "";
-    private Tema? eliminando;
-    private Tema? saliendo;
+    private TemaRestDTO? eliminando;
+    private TemaRestDTO? saliendo;
 
-    // Cursos y temas de script_tutorPUCP.sql. "Sesiones" = en cuántas sesiones se usó el tema (tabla sesion_tema).
-    private readonly List<CursoTemas> cursos =
-    [
-        new("1INF01", "Fundamentos de Programacion", true,
-            [new() { Nombre = "Variables y tipos de datos", Sesiones = 1 },
-             new() { Nombre = "Estructuras condicionales", Sesiones = 1 },
-             new() { Nombre = "Estructuras repetitivas", Sesiones = 1 }]),
-        new("1MAT05", "Calculo Diferencial", true,
-            [new() { Nombre = "Limites", Sesiones = 1 },
-             new() { Nombre = "Derivadas", Sesiones = 2 },
-             new() { Nombre = "Regla de la cadena", Sesiones = 1 }]),
-        new("1FIS01", "Fisica 1", true,
-            [new() { Nombre = "Cinematica", Sesiones = 1 },
-             new() { Nombre = "Leyes de Newton", Sesiones = 0 }]),
-        new("1QUI01", "Quimica 1", false,
-            [new() { Nombre = "Estequiometria", Sesiones = 0 }]),
-    ];
+    private static readonly CursoRestDTO sinCurso = new();
 
-    private CursoTemas Curso => cursos.First(c => c.Codigo == cursoElegido);
+    private CursoRestDTO Curso => cursos.FirstOrDefault(c => c.Codigo == cursoElegido) ?? sinCurso;
 
     private Selector.Opcion[] OpcionesCursos => cursos
         .Select(c => new Selector.Opcion(c.Codigo, c.Nombre, Detalle: c.Activo ? c.Codigo : $"{c.Codigo} · inactivo"))
         .ToArray();
 
-    protected override void OnParametersSet()
+    protected override async Task OnInitializedAsync()
     {
-        if (!string.IsNullOrEmpty(CursoDesdeUrl) && cursos.Any(c => c.Codigo == CursoDesdeUrl))
+        try
         {
-            cursoElegido = CursoDesdeUrl;
+            cursos = await Rest.ListarCursosAsync();
+            cursoElegido = cursos.Any(c => c.Codigo == CursoDesdeUrl)
+                ? CursoDesdeUrl!
+                : cursos.FirstOrDefault()?.Codigo ?? "";
+            await CargarTemas();
+        }
+        catch (Exception ex)
+        {
+            errorCarga = AcademicoRestService.MensajeDeError(ex);
+        }
+        finally
+        {
+            cargando = false;
         }
     }
 
-    // Igual que el backend: no se repite el nombre dentro del mismo curso (sin importar mayúsculas).
-    private bool NombreRepetido(string nombre, Tema? excepto) =>
+    // GET /cursos/{id}/temas
+    private async Task CargarTemas()
+    {
+        if (Curso.IdCurso == 0)
+        {
+            temas = [];
+            return;
+        }
+        temas = await Rest.ListarTemasAsync(Curso.IdCurso);
+    }
+
+    // Aviso rápido en pantalla; igual el backend vuelve a validar que el nombre no se repita en el curso.
+    private bool NombreRepetido(string nombre, TemaRestDTO? excepto) =>
         !string.IsNullOrWhiteSpace(nombre)
-        && Curso.Temas.Any(t => t != excepto && t.Nombre.Equals(nombre.Trim(), StringComparison.OrdinalIgnoreCase));
+        && temas.Any(t => t.IdTema != excepto?.IdTema && t.Nombre.Equals(nombre.Trim(), StringComparison.OrdinalIgnoreCase));
 
     private bool PuedeAgregar => Curso.Activo && !string.IsNullOrWhiteSpace(nuevoTema) && !NombreRepetido(nuevoTema, null);
 
-    private bool PuedeGuardarEdicion(Tema t) => !string.IsNullOrWhiteSpace(nombreEditado) && !NombreRepetido(nombreEditado, t);
+    private bool PuedeGuardarEdicion(TemaRestDTO t) => !string.IsNullOrWhiteSpace(nombreEditado) && !NombreRepetido(nombreEditado, t);
 
-    private void ElegirCurso(string codigo)
+    private async Task ElegirCurso(string codigo)
     {
         cursoElegido = codigo;
         nuevoTema = "";
         editando = null;
+        try
+        {
+            await CargarTemas();
+        }
+        catch (Exception ex)
+        {
+            temas = [];
+            Avisar(ToastType.Danger, "No se pudieron cargar los temas", AcademicoRestService.MensajeDeError(ex));
+        }
     }
 
-    private void Agregar()
+    // POST /cursos/{id}/temas
+    private async Task Agregar()
     {
+        if (ocupado) return;
+        ocupado = true;
         var nombre = nuevoTema.Trim();
-        Curso.Temas.Add(new Tema { Nombre = nombre, Sesiones = 0 });
-        nuevoTema = "";
-        Avisar(ToastType.Success, "Tema agregado", $"{nombre} en {Curso.Nombre}.");
+        try
+        {
+            await Rest.RegistrarTemaAsync(Curso.IdCurso, new TemaFormulario { Nombre = nombre });
+            nuevoTema = "";
+            Avisar(ToastType.Success, "Tema agregado", $"{nombre} en {Curso.Nombre}.");
+            await CargarTemas();
+        }
+        catch (Exception ex)
+        {
+            Avisar(ToastType.Danger, "No se pudo agregar el tema", AcademicoRestService.MensajeDeError(ex));
+        }
+        finally
+        {
+            ocupado = false;
+        }
     }
 
-    private void Editar(Tema t)
+    private void Editar(TemaRestDTO t)
     {
         editando = t;
         nombreEditado = t.Nombre;
     }
 
-    private void GuardarEdicion()
+    // PUT /temas/{id}
+    private async Task GuardarEdicion()
     {
-        if (editando is null) return;
-        editando.Nombre = nombreEditado.Trim();
-        Avisar(ToastType.Success, "Tema modificado", $"Ahora se llama {editando.Nombre}.");
-        editando = null;
+        if (ocupado || editando is null) return;
+        ocupado = true;
+        var nombre = nombreEditado.Trim();
+        try
+        {
+            await Rest.ModificarTemaAsync(editando.IdTema, new TemaFormulario { Nombre = nombre });
+            editando = null;
+            Avisar(ToastType.Success, "Tema modificado", $"Ahora se llama {nombre}.");
+            await CargarTemas();
+        }
+        catch (Exception ex)
+        {
+            Avisar(ToastType.Danger, "No se pudo modificar el tema", AcademicoRestService.MensajeDeError(ex));
+        }
+        finally
+        {
+            ocupado = false;
+        }
     }
 
-    private async Task AbrirEliminar(Tema t)
+    private async Task AbrirEliminar(TemaRestDTO t)
     {
         eliminando = t;
         await modalEliminar.ShowAsync();
     }
 
+    // DELETE /temas/{id}
     private async Task Eliminar()
     {
-        var tema = eliminando!;
+        if (ocupado || eliminando is null) return;
+        ocupado = true;
+        var tema = eliminando;
         await modalEliminar.HideAsync();
+        try
+        {
+            await Rest.EliminarTemaAsync(tema.IdTema);
 
-        // La fila se desliza hacia afuera y luego se quita de la lista.
-        saliendo = tema;
-        StateHasChanged();
-        await Task.Delay(450);
-        Curso.Temas.Remove(tema);
-        saliendo = null;
-        Avisar(ToastType.Danger, "Tema eliminado", $"{tema.Nombre} ya no forma parte de {Curso.Nombre}.");
+            // La fila se desliza hacia afuera y luego se recarga la lista desde la BD.
+            saliendo = tema;
+            StateHasChanged();
+            await Task.Delay(450);
+            saliendo = null;
+            Avisar(ToastType.Danger, "Tema eliminado", $"{tema.Nombre} ya no forma parte de {Curso.Nombre}.");
+            await CargarTemas();
+        }
+        catch (Exception ex)
+        {
+            // Si el tema ya se usó en una sesión, la BL no deja borrarlo y el REST responde 400.
+            // El BL agrega el detalle técnico de SQL después de ": ", así que solo se muestra la primera parte.
+            var mensaje = AcademicoRestService.MensajeDeError(ex);
+            var corte = mensaje.IndexOf(": ", StringComparison.Ordinal);
+            Avisar(ToastType.Warning, "No se pudo eliminar el tema", corte > 0 ? mensaje[..corte] : mensaje);
+        }
+        finally
+        {
+            ocupado = false;
+        }
     }
 
     private void Avisar(ToastType tipo, string titulo, string mensaje) =>

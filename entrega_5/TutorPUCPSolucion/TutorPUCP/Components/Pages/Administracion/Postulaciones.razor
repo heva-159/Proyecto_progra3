@@ -1,6 +1,7 @@
 ﻿@page "/admin/postulaciones"
+@inject AcademicoRestService Rest
 
-@* Requisito: RF005. Datos de prueba de script_tutorPUCP.sql *@
+@* Requisito: RF005. Los datos vienen de la BD a través del servicio REST (GestorAcademicoRecurso). *@
 
 <PageTitle>Postulaciones</PageTitle>
 
@@ -52,7 +53,22 @@
         </div>
     </div>
 
-    @if (Filtradas.Any())
+    @if (cargando)
+    {
+        <div class="estado-vacio">
+            <div class="spinner-border text-primary mb-2" role="status"></div>
+            <div class="fw-semibold">Cargando postulaciones...</div>
+        </div>
+    }
+    else if (errorCarga is not null)
+    {
+        <div class="estado-vacio">
+            <i class="bi bi-wifi-off"></i>
+            <div class="fw-semibold">No se pudieron cargar las postulaciones</div>
+            <div class="small">@errorCarga</div>
+        </div>
+    }
+    else if (Filtradas.Any())
     {
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
@@ -70,31 +86,31 @@
                     @{ var i = 0; }
                     @foreach (var p in Filtradas)
                     {
-                        <tr class="entrar" style="--i: @(i++);" @key="p.Numero">
+                        <tr class="entrar" style="--i: @(i++);" @key="p.IdPostulacion">
                             <td class="ps-3">
                                 <div class="d-flex align-items-center gap-2">
                                     <Avatar Nombre="@p.Tutor" Tamano="sm" />
                                     <div class="lh-sm">
                                         <div class="fw-semibold">@p.Tutor</div>
-                                        <small class="text-muted">Código @p.Codigo</small>
+                                        <small class="text-muted">Código @p.CodigoPucp</small>
                                     </div>
                                 </div>
                             </td>
                             <td><div class="fw-semibold">@p.Curso</div><small class="text-muted">@p.CodigoCurso</small></td>
-                            <td>@p.Fecha</td>
-                            <td class="text-nowrap"><i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i><small>@p.Certificado</small></td>
-                            <td><span class="badge @ClaseEstado(p.Estado)">@p.Estado</span></td>
+                            <td>@p.FechaPostulacionTexto</td>
+                            <td class="text-nowrap"><i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i><small>@p.NombreCertificado</small></td>
+                            <td><span class="badge @ClaseEstado(p.EstadoTexto)">@p.EstadoTexto</span></td>
                             <td class="text-end pe-3 text-nowrap">
-                                @if (p.Estado == "Pendiente")
+                                @if (p.EsPendiente)
                                 {
-                                    <a class="btn btn-primary btn-sm" href="/admin/postulaciones/revisar">
+                                    <a class="btn btn-primary btn-sm" href="@($"/admin/postulaciones/revisar?id={p.IdPostulacion}")">
                                         <i class="bi bi-clipboard-check me-1"></i>Revisar
                                     </a>
                                 }
                                 else
                                 {
                                     <Tooltip Title="@($"{p.Resolucion} · {p.Revisor}")" Placement="TooltipPlacement.Left">
-                                        <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Resuelta el @p.FechaResolucion</small>
+                                        <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Resuelta el @p.FechaResolucionTexto</small>
                                     </Tooltip>
                                 }
                             </td>
@@ -123,41 +139,46 @@
 </div>
 
 @code {
-    private record Postulacion(int Numero, string Tutor, string Codigo, string CodigoCurso, string Curso, string Fecha,
-        string Certificado, string Estado, string FechaResolucion = "", string Resolucion = "", string Revisor = "");
-
     private string busqueda = "";
     private string filtro = "Pendientes";
 
-    // Las 5 postulaciones de script_tutorPUCP.sql.
-    private static readonly Postulacion[] postulaciones =
-    [
-        new(5, "Ana Lucia Quispe Huaman", "20201234", "1MAT05", "Calculo Diferencial", "20/09/2026", "20201234_1MAT05.pdf", "Pendiente"),
-        new(4, "Diego Ramirez Torres", "20211567", "1FIS01", "Fisica 1", "21/03/2026", "20211567_1FIS01.pdf", "Rechazada",
-            "23/03/2026", "El certificado no es legible", "Jorge Salas Vega"),
-        new(3, "Sofia Gutierrez Leon", "20190876", "1FIS01", "Fisica 1", "20/03/2026", "20190876_1FIS01.pdf", "Aprobada",
-            "22/03/2026", "Nota 16 en el curso", "Jorge Salas Vega"),
-        new(2, "Diego Ramirez Torres", "20211567", "1MAT05", "Calculo Diferencial", "16/03/2026", "20211567_1MAT05.pdf", "Aprobada",
-            "19/03/2026", "Nota 17 en el curso", "Carla Mendoza Rios"),
-        new(1, "Ana Lucia Quispe Huaman", "20201234", "1INF01", "Fundamentos de Programacion", "15/03/2026", "20201234_1INF01.pdf", "Aprobada",
-            "18/03/2026", "Nota 18 en el curso", "Carla Mendoza Rios"),
-    ];
+    // Postulaciones de la BD, pedidas al servicio REST (GET /postulaciones).
+    private List<PostulacionRestDTO> postulaciones = [];
+    private bool cargando = true;
+    private string? errorCarga;
 
-    private IEnumerable<Postulacion> Filtradas => postulaciones
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // De la más reciente a la más antigua.
+            postulaciones = (await Rest.ListarPostulacionesAsync())
+                .OrderByDescending(p => p.IdPostulacion)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            errorCarga = AcademicoRestService.MensajeDeError(ex);
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private IEnumerable<PostulacionRestDTO> Filtradas => postulaciones
         .Where(p => filtro switch
         {
-            "Pendientes" => p.Estado == "Pendiente",
-            "Aprobadas" => p.Estado == "Aprobada",
-            "Rechazadas" => p.Estado == "Rechazada",
+            "Pendientes" => p.EstadoTexto == "Pendiente",
+            "Aprobadas" => p.EstadoTexto == "Aprobada",
+            "Rechazadas" => p.EstadoTexto == "Rechazada",
             _ => true,
         })
         .Where(p => string.IsNullOrWhiteSpace(busqueda)
-                    || p.Tutor.Contains(busqueda, StringComparison.OrdinalIgnoreCase)
-                    || p.Codigo.Contains(busqueda, StringComparison.OrdinalIgnoreCase)
-                    || p.Curso.Contains(busqueda, StringComparison.OrdinalIgnoreCase)
-                    || p.CodigoCurso.Contains(busqueda, StringComparison.OrdinalIgnoreCase));
+                    || new[] { p.Tutor, p.CodigoPucp, p.Curso, p.CodigoCurso }
+                        .Any(texto => texto?.Contains(busqueda, StringComparison.OrdinalIgnoreCase) == true));
 
-    private static int Contar(string estado) => postulaciones.Count(p => p.Estado == estado);
+    private int Contar(string estado) => postulaciones.Count(p => p.EstadoTexto == estado);
 
     private static string ClaseEstado(string estado) => estado switch
     {
