@@ -128,21 +128,28 @@
     private bool cargando = true;
     private string? errorCarga;
 
+    // Se piden por separado: si una lista falla (por ejemplo, por un corte de conexión), la otra igual se muestra.
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            postulaciones = await Rest.ListarPostulacionesAsync();
             cursos = await Rest.ListarCursosAsync();
         }
         catch (Exception ex)
         {
             errorCarga = AcademicoRestService.MensajeDeError(ex);
         }
-        finally
+
+        try
         {
-            cargando = false;
+            postulaciones = await Rest.ListarPostulacionesAsync();
         }
+        catch (Exception ex)
+        {
+            errorCarga = AcademicoRestService.MensajeDeError(ex);
+        }
+
+        cargando = false;
     }
 
     // Las 5 más recientes.

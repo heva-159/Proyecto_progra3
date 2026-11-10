@@ -72,7 +72,11 @@ else
                     </dl>
 
                     <div class="small text-uppercase text-muted fw-bold mb-2">Otras postulaciones del tutor</div>
-                    @if (otras.Any())
+                    @if (otrasNoDisponibles)
+                    {
+                        <small class="text-muted">No se pudieron cargar sus otras postulaciones.</small>
+                    }
+                    else if (otras.Any())
                     {
                         <div class="d-grid gap-2">
                             @foreach (var o in otras)
@@ -211,6 +215,7 @@ else
     // Datos de la BD, pedidos al servicio REST.
     private PostulacionRestDTO? postulacion;
     private List<PostulacionRestDTO> otras = [];   // otras postulaciones del mismo tutor
+    private bool otrasNoDisponibles;               // true si esa lista no se pudo cargar
     private bool cargando = true;
     private string? errorCarga;
     private bool ocupado;   // evita mandar dos veces la misma resolución
@@ -234,14 +239,22 @@ else
                 postulacion = await Rest.ObtenerPostulacionAsync(Id.Value);
             }
 
+            // Dato extra: si esta lista falla, la postulación igual se puede revisar.
             var actual = postulacion;
             if (actual is not null && actual.IdTutor != 0)
             {
-                var todas = await Rest.ListarPostulacionesAsync();
-                otras = todas
-                    .Where(x => x.IdTutor == actual.IdTutor && x.IdPostulacion != actual.IdPostulacion)
-                    .OrderByDescending(x => x.IdPostulacion)
-                    .ToList();
+                try
+                {
+                    var todas = await Rest.ListarPostulacionesAsync();
+                    otras = todas
+                        .Where(x => x.IdTutor == actual.IdTutor && x.IdPostulacion != actual.IdPostulacion)
+                        .OrderByDescending(x => x.IdPostulacion)
+                        .ToList();
+                }
+                catch (Exception)
+                {
+                    otrasNoDisponibles = true;
+                }
             }
         }
         catch (Exception ex)
