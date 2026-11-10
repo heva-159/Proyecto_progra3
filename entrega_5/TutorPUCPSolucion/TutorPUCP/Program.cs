@@ -1,4 +1,4 @@
-using Radzen;
+    using Radzen;
 using TutorPUCP.Components;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +12,14 @@ System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = culturaPeru;
 builder.Services.AddBlazorBootstrap();
 builder.Services.AddRadzenComponents();
 builder.Services.AddScoped<TutorPUCP.Servicios.RolActual>();
+
+// Cliente del servicio REST de Java (GlassFish). La dirección está en appsettings.json -> Rest:BaseUrl.
+builder.Services.AddHttpClient<TutorPUCP.Servicios.AcademicoRestService>(cliente =>
+{
+    cliente.BaseAddress = new Uri(builder.Configuration.GetRequiredSection("Rest:BaseUrl").Value!);
+    cliente.Timeout = TimeSpan.FromSeconds(60);
+    cliente.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+});
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();

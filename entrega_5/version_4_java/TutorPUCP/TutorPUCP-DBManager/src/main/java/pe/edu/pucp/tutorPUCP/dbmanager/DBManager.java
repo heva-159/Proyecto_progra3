@@ -39,8 +39,22 @@ public class DBManager {
 
     public Connection getConnection() {
         try {
-            return DriverManager.getConnection(url, user, password);
+            // En GlassFish el driver de MySQL no se registra solo: hay que cargarlo.
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            Properties opciones = new Properties();
+            opciones.setProperty("user", user);
+            opciones.setProperty("password", password);
+
+            // Evita heredar el keystore de cliente de GlassFish.
+            opciones.setProperty("fallbackToSystemKeyStore", "false");
+
+            // Exige una conexión cifrada.
+            opciones.setProperty("sslMode", "REQUIRED");
+
+            return DriverManager.getConnection(url, opciones);
         } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
     }

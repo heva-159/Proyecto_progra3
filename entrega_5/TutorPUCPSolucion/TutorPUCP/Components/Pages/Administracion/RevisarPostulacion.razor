@@ -1,6 +1,8 @@
 ﻿@page "/admin/postulaciones/revisar"
+@inject AcademicoRestService Rest
 
-@* Requisito: RF005. Datos de prueba de script_tutorPUCP.sql (postulación 5) *@
+@* Requisito: RF005. Los datos vienen de la BD a través del servicio REST (GestorAcademicoRecurso).
+   Se abre con ?id=5; sin id, se abre la primera postulación pendiente. *@
 
 <PageTitle>Revisar postulación</PageTitle>
 
@@ -8,140 +10,180 @@
 
 <a href="/admin/postulaciones" class="small text-decoration-none"><i class="bi bi-arrow-left me-1"></i>Volver a postulaciones</a>
 
-<div class="titulo-pagina mt-2">
-    <div class="d-flex align-items-center gap-3">
-        <span class="icono-titulo" style="background:#fef3c7;color:#b45309;"><i class="bi bi-clipboard-check-fill"></i></span>
-        <div>
-            <div class="d-flex align-items-center gap-2">
-                <h1 class="h3 mb-0">Revisar postulación N.º 5</h1>
-                <span class="badge @ClaseEstado" @key="estado" style="animation: tpAparecer .4s ease both;">@estado</span>
-            </div>
-            <p>Enviada el 20/09/2026 por Ana Lucia Quispe Huaman</p>
-        </div>
-    </div>
-</div>
+@if (cargando)
+{
+    <div class="card mt-3"><div class="estado-vacio">
+        <div class="spinner-border text-primary mb-2" role="status"></div>
+        <div class="fw-semibold">Cargando postulación...</div>
+    </div></div>
+}
+else if (errorCarga is not null)
+{
+    <div class="card mt-3"><div class="estado-vacio">
+        <i class="bi bi-wifi-off"></i>
+        <div class="fw-semibold">No se pudo cargar la postulación</div>
+        <div class="small">@errorCarga</div>
+    </div></div>
+}
+else if (postulacion is null)
+{
+    <div class="card mt-3"><div class="estado-vacio">
+        <div class="exito-icono"><i class="bi bi-emoji-smile"></i></div>
+        <div class="fw-bold fs-5">¡Todo al día!</div>
+        <div class="small">No quedan postulaciones por revisar.</div>
+    </div></div>
+}
+else
+{
+    var p = postulacion;
 
-<div class="row g-4">
-    <div class="col-lg-6">
-        <div class="card mb-4 entrar" style="--i: 0;">
-            <div class="card-body">
-                <h2 class="h5 mb-3"><i class="bi bi-person-badge me-2 text-primary"></i>Tutor</h2>
-                <div class="d-flex align-items-center gap-3 mb-3">
-                    <Avatar Nombre="Ana Lucia Quispe Huaman" />
-                    <div class="lh-sm">
-                        <div class="fw-bold">Ana Lucia Quispe Huaman</div>
-                        <small class="text-muted">Código PUCP 20201234</small>
-                    </div>
+    <div class="titulo-pagina mt-2">
+        <div class="d-flex align-items-center gap-3">
+            <span class="icono-titulo" style="background:#fef3c7;color:#b45309;"><i class="bi bi-clipboard-check-fill"></i></span>
+            <div>
+                <div class="d-flex align-items-center gap-2">
+                    <h1 class="h3 mb-0">Revisar postulación N.º @p.IdPostulacion</h1>
+                    <span class="badge @ClaseEstado(p.EstadoTexto)" @key="p.Estado" style="animation: tpAparecer .4s ease both;">@p.EstadoTexto</span>
                 </div>
-                <dl class="row datos mb-3">
-                    <dt class="col-5">Correo</dt>
-                    <dd class="col-7">a20201234@pucp.edu.pe</dd>
-                    <dt class="col-5">Facultad</dt>
-                    <dd class="col-7">Ciencias e Ingenieria</dd>
-                    <dt class="col-5">Especialidad</dt>
-                    <dd class="col-7 mb-0">Ingenieria Informatica</dd>
-                </dl>
-
-                <div class="small text-uppercase text-muted fw-bold mb-2">Otras postulaciones del tutor</div>
-                <div class="d-flex align-items-center gap-2 p-2 rounded-4 caja-suave small">
-                    <i class="bi bi-book text-primary"></i>
-                    <span>1INF01 · Fundamentos de Programacion</span>
-                    <span class="badge text-bg-success ms-auto">Aprobada</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="card entrar" style="--i: 1;">
-            <div class="card-body">
-                <h2 class="h5 mb-3"><i class="bi bi-file-earmark-text me-2 text-primary"></i>Postulación</h2>
-                <dl class="row datos mb-3">
-                    <dt class="col-5">Curso</dt>
-                    <dd class="col-7">1MAT05 · Calculo Diferencial</dd>
-                    <dt class="col-5">Fecha de postulación</dt>
-                    <dd class="col-7">20/09/2026</dd>
-                    <dt class="col-5">Certificado</dt>
-                    <dd class="col-7 mb-0">certificados/20201234_1MAT05.pdf</dd>
-                </dl>
-                <div class="d-flex align-items-center gap-3 p-3 rounded-4 caja-suave">
-                    <i class="bi bi-file-earmark-pdf-fill text-danger fs-2"></i>
-                    <div class="lh-sm">
-                        <div class="fw-semibold">Certificado de notas</div>
-                        <small class="text-muted">PDF · máximo 5 MB</small>
-                    </div>
-                    <button type="button" class="btn btn-outline-primary btn-sm ms-auto"><i class="bi bi-eye me-1"></i>Ver certificado</button>
-                </div>
+                <p>Enviada el @p.FechaPostulacionTexto por @p.Tutor</p>
             </div>
         </div>
     </div>
 
-    <div class="col-lg-6">
-        <div class="card h-100 entrar" style="--i: 2;">
-            <div class="card-body">
-                @if (estado == "Pendiente")
-                {
-                    <Pasos Etapas="Etapas" Actual="@(decision == "" ? 1 : 2)" />
-
-                    <h2 class="h5 mb-3">Resolución</h2>
-
-                    <label class="form-label fw-semibold">Decisión</label>
-                    <div class="d-grid gap-2 mb-3">
-                        <button type="button" class="opcion-tarjeta aprobar @(decision == "Aprobada" ? "elegida" : "")" @onclick="@(() => decision = "Aprobada")">
-                            <span class="opcion-marca"><i class="bi bi-check"></i></span>
-                            <span class="lh-sm"><b class="text-success"><i class="bi bi-hand-thumbs-up me-1"></i>Aprobar postulación</b><br /><small class="text-muted">El tutor podrá dictar Calculo Diferencial</small></span>
-                        </button>
-                        <button type="button" class="opcion-tarjeta rechazar @(decision == "Rechazada" ? "elegida" : "")" @onclick="@(() => decision = "Rechazada")">
-                            <span class="opcion-marca"><i class="bi bi-check"></i></span>
-                            <span class="lh-sm"><b class="text-danger"><i class="bi bi-hand-thumbs-down me-1"></i>Rechazar postulación</b><br /><small class="text-muted">Se le informará el motivo al tutor</small></span>
-                        </button>
-                    </div>
-
-                    <label for="motivo" class="form-label fw-semibold">Motivo</label>
-                    <textarea id="motivo" class="form-control" rows="5" maxlength="255"
-                              placeholder="@(decision == "Rechazada" ? "Explica por qué se rechaza la postulación." : "Comentario opcional (por ejemplo, la nota del curso).")"
-                              @bind="motivo" @bind:event="oninput"></textarea>
-                    <div class="d-flex justify-content-between mt-1 mb-3">
-                        <small class="text-muted">@(decision == "Rechazada" ? "Obligatorio al rechazar." : "Opcional al aprobar.")</small>
-                        <small class="contador-caracteres @(motivo.Length > 220 ? "cerca" : "")">@motivo.Length / 255</small>
-                    </div>
-
-                    <p class="small text-muted"><i class="bi bi-info-circle me-1"></i>La fecha de revisión se registra automáticamente.</p>
-
-                    <div class="d-flex justify-content-end gap-2">
-                        <a class="btn btn-outline-secondary" href="/admin/postulaciones">Cancelar</a>
-                        <button type="button" class="btn btn-primary" disabled="@(!PuedeGuardar)" @onclick="() => confirmar.ShowAsync()">
-                            <i class="bi bi-save me-1"></i>Guardar resolución
-                        </button>
-                    </div>
-                }
-                else
-                {
-                    <div class="text-center py-4 paso-panel">
-                        <div class="exito-icono @(estado == "Rechazada" ? "rechazo" : "")">
-                            <i class="bi @(estado == "Aprobada" ? "bi-check-lg" : "bi-x-lg")"></i>
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card mb-4 entrar" style="--i: 0;">
+                <div class="card-body">
+                    <h2 class="h5 mb-3"><i class="bi bi-person-badge me-2 text-primary"></i>Tutor</h2>
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <Avatar Nombre="@p.Tutor" />
+                        <div class="lh-sm">
+                            <div class="fw-bold">@p.Tutor</div>
+                            <small class="text-muted">Código PUCP @p.CodigoPucp</small>
                         </div>
-                        <h2 class="h4">Postulación @estado.ToLower()</h2>
-                        <p class="text-muted">Revisada por Carla Mendoza Rios el @DateTime.Today.ToString("dd/MM/yyyy").</p>
-                        @if (!string.IsNullOrWhiteSpace(motivo))
-                        {
-                            <div class="text-start p-3 rounded-4 mb-4 caja-suave">
-                                <div class="small text-uppercase text-muted fw-bold mb-1">Motivo</div>
-                                @motivo
-                            </div>
-                        }
-                        <a class="btn btn-primary" href="/admin/postulaciones"><i class="bi bi-arrow-left me-1"></i>Volver a postulaciones</a>
                     </div>
-                }
+                    <dl class="row datos mb-3">
+                        <dt class="col-5">Correo</dt>
+                        <dd class="col-7">@p.Correo</dd>
+                        <dt class="col-5">Facultad</dt>
+                        <dd class="col-7">@p.Facultad</dd>
+                        <dt class="col-5">Especialidad</dt>
+                        <dd class="col-7 mb-0">@p.Especialidad</dd>
+                    </dl>
+
+                    <div class="small text-uppercase text-muted fw-bold mb-2">Otras postulaciones del tutor</div>
+                    @if (otras.Any())
+                    {
+                        <div class="d-grid gap-2">
+                            @foreach (var o in otras)
+                            {
+                                <div class="d-flex align-items-center gap-2 p-2 rounded-4 caja-suave small">
+                                    <i class="bi bi-book text-primary"></i>
+                                    <span>@o.CodigoCurso · @o.Curso</span>
+                                    <span class="badge @ClaseEstado(o.EstadoTexto) ms-auto">@o.EstadoTexto</span>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <small class="text-muted">Es su primera postulación.</small>
+                    }
+                </div>
+            </div>
+
+            <div class="card entrar" style="--i: 1;">
+                <div class="card-body">
+                    <h2 class="h5 mb-3"><i class="bi bi-file-earmark-text me-2 text-primary"></i>Postulación</h2>
+                    <dl class="row datos mb-3">
+                        <dt class="col-5">Curso</dt>
+                        <dd class="col-7">@p.CodigoCurso · @p.Curso</dd>
+                        <dt class="col-5">Fecha de postulación</dt>
+                        <dd class="col-7">@p.FechaPostulacionTexto</dd>
+                        <dt class="col-5">Certificado</dt>
+                        <dd class="col-7 mb-0">@p.ArchivoCertificadoUrl</dd>
+                    </dl>
+                    <div class="d-flex align-items-center gap-3 p-3 rounded-4 caja-suave">
+                        <i class="bi bi-file-earmark-pdf-fill text-danger fs-2"></i>
+                        <div class="lh-sm">
+                            <div class="fw-semibold">Certificado de notas</div>
+                            <small class="text-muted">PDF · máximo 5 MB</small>
+                        </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm ms-auto"><i class="bi bi-eye me-1"></i>Ver certificado</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card h-100 entrar" style="--i: 2;">
+                <div class="card-body">
+                    @if (p.EsPendiente)
+                    {
+                        <Pasos Etapas="Etapas" Actual="@(decision == "" ? 1 : 2)" />
+
+                        <h2 class="h5 mb-3">Resolución</h2>
+
+                        <label class="form-label fw-semibold">Decisión</label>
+                        <div class="d-grid gap-2 mb-3">
+                            <button type="button" class="opcion-tarjeta aprobar @(decision == "Aprobada" ? "elegida" : "")" @onclick="@(() => decision = "Aprobada")">
+                                <span class="opcion-marca"><i class="bi bi-check"></i></span>
+                                <span class="lh-sm"><b class="text-success"><i class="bi bi-hand-thumbs-up me-1"></i>Aprobar postulación</b><br /><small class="text-muted">El tutor podrá dictar @p.Curso</small></span>
+                            </button>
+                            <button type="button" class="opcion-tarjeta rechazar @(decision == "Rechazada" ? "elegida" : "")" @onclick="@(() => decision = "Rechazada")">
+                                <span class="opcion-marca"><i class="bi bi-check"></i></span>
+                                <span class="lh-sm"><b class="text-danger"><i class="bi bi-hand-thumbs-down me-1"></i>Rechazar postulación</b><br /><small class="text-muted">Se le informará el motivo al tutor</small></span>
+                            </button>
+                        </div>
+
+                        <label for="motivo" class="form-label fw-semibold">Motivo</label>
+                        <textarea id="motivo" class="form-control" rows="5" maxlength="255"
+                                  placeholder="@(decision == "Rechazada" ? "Explica por qué se rechaza la postulación." : "Comentario opcional (por ejemplo, la nota del curso).")"
+                                  @bind="motivo" @bind:event="oninput"></textarea>
+                        <div class="d-flex justify-content-between mt-1 mb-3">
+                            <small class="text-muted">@(decision == "Rechazada" ? "Obligatorio al rechazar." : "Opcional al aprobar.")</small>
+                            <small class="contador-caracteres @(motivo.Length > 220 ? "cerca" : "")">@motivo.Length / 255</small>
+                        </div>
+
+                        <p class="small text-muted"><i class="bi bi-info-circle me-1"></i>La fecha de revisión se registra automáticamente.</p>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a class="btn btn-outline-secondary" href="/admin/postulaciones">Cancelar</a>
+                            <button type="button" class="btn btn-primary" disabled="@(!PuedeGuardar || ocupado)" @onclick="() => confirmar.ShowAsync()">
+                                <i class="bi bi-save me-1"></i>Guardar resolución
+                            </button>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4 paso-panel">
+                            <div class="exito-icono @(p.EstadoTexto == "Rechazada" ? "rechazo" : "")">
+                                <i class="bi @(p.EstadoTexto == "Aprobada" ? "bi-check-lg" : "bi-x-lg")"></i>
+                            </div>
+                            <h2 class="h4">Postulación @p.EstadoTexto.ToLower()</h2>
+                            <p class="text-muted">Revisada por @p.Revisor el @p.FechaResolucionTexto.</p>
+                            @if (!string.IsNullOrWhiteSpace(p.Resolucion))
+                            {
+                                <div class="text-start p-3 rounded-4 mb-4 caja-suave">
+                                    <div class="small text-uppercase text-muted fw-bold mb-1">Motivo</div>
+                                    @p.Resolucion
+                                </div>
+                            }
+                            <a class="btn btn-primary" href="/admin/postulaciones"><i class="bi bi-arrow-left me-1"></i>Volver a postulaciones</a>
+                        </div>
+                    }
+                </div>
             </div>
         </div>
     </div>
-</div>
+}
 
 <Modal @ref="confirmar" Title="Confirmar resolución" IsVerticallyCentered="true">
     <BodyTemplate>
         <Pasos Etapas="Etapas" Actual="2" />
         <p class="mb-2">
             Vas a <b class="@(decision == "Aprobada" ? "text-success" : "text-danger")">@(decision == "Aprobada" ? "aprobar" : "rechazar")</b>
-            la postulación de Ana Lucia Quispe Huaman a Calculo Diferencial.
+            la postulación de @(postulacion?.Tutor) a @(postulacion?.Curso).
         </p>
         @if (!string.IsNullOrWhiteSpace(motivo))
         {
@@ -150,39 +192,113 @@
     </BodyTemplate>
     <FooterTemplate>
         <button type="button" class="btn btn-outline-secondary" @onclick="() => confirmar.HideAsync()">Revisar otra vez</button>
-        <button type="button" class="btn @(decision == "Aprobada" ? "btn-success" : "btn-danger")" @onclick="Guardar">Sí, guardar</button>
+        <button type="button" class="btn @(decision == "Aprobada" ? "btn-success" : "btn-danger")" disabled="@ocupado" @onclick="Guardar">Sí, guardar</button>
     </FooterTemplate>
 </Modal>
 
 @code {
+    // Viene en la URL: /admin/postulaciones/revisar?id=5
+    [SupplyParameterFromQuery(Name = "id")] public int? Id { get; set; }
+
+    // Administrador que revisa: Carla Mendoza Rios (id 1 en la BD), mientras no haya inicio de sesión.
+    private const int IdAdministrador = 1;
+
     private static readonly string[] Etapas = ["Revisar", "Decidir", "Confirmar"];
 
     private Modal confirmar = default!;
     private readonly List<ToastMessage> avisos = [];
 
-    private string estado = "Pendiente";
+    // Datos de la BD, pedidos al servicio REST.
+    private PostulacionRestDTO? postulacion;
+    private List<PostulacionRestDTO> otras = [];   // otras postulaciones del mismo tutor
+    private bool cargando = true;
+    private string? errorCarga;
+    private bool ocupado;   // evita mandar dos veces la misma resolución
+
     private string decision = "";
     private string motivo = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (Id is null or 0)
+            {
+                // Sin id: la primera postulación pendiente (GET /postulaciones?estado=PENDIENTE).
+                var pendientes = await Rest.ListarPostulacionesAsync("PENDIENTE");
+                postulacion = pendientes.OrderBy(x => x.IdPostulacion).FirstOrDefault();
+            }
+            else
+            {
+                // GET /postulaciones/{id}
+                postulacion = await Rest.ObtenerPostulacionAsync(Id.Value);
+            }
+
+            var actual = postulacion;
+            if (actual is not null && actual.IdTutor != 0)
+            {
+                var todas = await Rest.ListarPostulacionesAsync();
+                otras = todas
+                    .Where(x => x.IdTutor == actual.IdTutor && x.IdPostulacion != actual.IdPostulacion)
+                    .OrderByDescending(x => x.IdPostulacion)
+                    .ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorCarga = AcademicoRestService.MensajeDeError(ex);
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
 
     // Igual que la regla del backend: el motivo solo es obligatorio al rechazar.
     private bool PuedeGuardar => decision == "Aprobada" || (decision == "Rechazada" && !string.IsNullOrWhiteSpace(motivo));
 
-    private string ClaseEstado => estado switch
+    private static string ClaseEstado(string estado) => estado switch
     {
         "Aprobada" => "text-bg-success",
         "Rechazada" => "text-bg-danger",
         _ => "text-bg-warning",
     };
 
+    // PUT /postulaciones/{id}/resolucion. La fecha de revisión la pone el backend.
     private async Task Guardar()
     {
+        if (ocupado || postulacion is null) return;
+        ocupado = true;
         await confirmar.HideAsync();
-        estado = decision;
-        avisos.Add(new ToastMessage
+        try
         {
-            Type = estado == "Aprobada" ? ToastType.Success : ToastType.Danger,
-            Title = $"Postulación {estado.ToLower()}",
-            Message = "Se notificará la resolución a Ana Lucia Quispe Huaman.",
-        });
+            var formulario = new ResolucionFormulario
+            {
+                Aprobar = decision == "Aprobada",
+                Resolucion = string.IsNullOrWhiteSpace(motivo) ? null : motivo.Trim(),
+                IdAdministrador = IdAdministrador,
+            };
+            // El REST devuelve la postulación ya resuelta (estado, fecha y revisor).
+            postulacion = await Rest.ResolverPostulacionAsync(postulacion.IdPostulacion, formulario);
+            avisos.Add(new ToastMessage
+            {
+                Type = postulacion.EstadoTexto == "Aprobada" ? ToastType.Success : ToastType.Danger,
+                Title = $"Postulación {postulacion.EstadoTexto.ToLower()}",
+                Message = $"Se notificará la resolución a {postulacion.Tutor}.",
+            });
+        }
+        catch (Exception ex)
+        {
+            avisos.Add(new ToastMessage
+            {
+                Type = ToastType.Danger,
+                Title = "No se pudo guardar la resolución",
+                Message = AcademicoRestService.MensajeDeError(ex),
+            });
+        }
+        finally
+        {
+            ocupado = false;
+        }
     }
 }
