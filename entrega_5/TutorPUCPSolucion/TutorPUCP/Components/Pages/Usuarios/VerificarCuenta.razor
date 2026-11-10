@@ -26,7 +26,7 @@
     {
         var n = i;
         <input @ref="casillas[n]" inputmode="numeric" maxlength="6" autocomplete="@(n == 0 ? "one-time-code" : "off")"
-               aria-label="@($"Dígito {n + 1}")" value="@digitos[n]" @oninput="e => Escribir(n, e)" @onkeydown="e => Tecla(n, e)" />
+               aria-label="@($"Dígito {n + 1}")" @bind:get="digitos[n]" @bind:set="valor => Escribir(n, valor)" @bind:event="oninput" @onkeydown="e => Tecla(n, e)" />
     }
 </div>
 
@@ -95,11 +95,11 @@
         if (primera) await casillas[0].FocusAsync();
     }
 
-    // Acepta un dígito por casilla; si se pega el código completo, lo reparte en las seis.
-    private async Task Escribir(int i, ChangeEventArgs e)
+    // Acepta un dígito por casilla; si se pega el código completo, lo reparte en las seis. Con @bind (y no con value + @oninput) Blazor también borra del cuadro lo que no es dígito.
+    private async Task Escribir(int i, string? valor)
     {
         error = null;
-        var solo = new string((e.Value?.ToString() ?? "").Where(char.IsDigit).ToArray());
+        var solo = new string((valor ?? "").Where(char.IsAsciiDigit).ToArray());
         if (solo.Length >= 6)
         {
             for (var k = 0; k < 6; k++) digitos[k] = solo[k].ToString();

@@ -1,4 +1,5 @@
 ﻿@page "/tutor"
+@inject RolActual RolActual
 
 <PageTitle>Inicio Tutor - TutorPUCP</PageTitle>
 @* =============================================================================
@@ -9,7 +10,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
     <div>
         <h2 class="text-primary fw-bold mb-1">Panel del Tutor</h2>
-        <p class="text-muted mb-0">Bienvenido, gestiona tus cursos, tarifas y solicitudes académicas.</p>
+        <p class="text-muted mb-0">Hola, @RolActual.PrimerNombre. Gestiona tus cursos, tarifas y solicitudes académicas.</p>
     </div>
     <a href="/tutor/postular" class="btn btn-primary shadow-sm">
         + Postular a nuevo curso

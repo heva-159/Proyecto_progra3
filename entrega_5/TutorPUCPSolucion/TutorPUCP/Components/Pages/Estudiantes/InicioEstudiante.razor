@@ -120,7 +120,7 @@
         ("/reclamos/nuevo", "bi-flag", "Reclamos", "Si algo salió mal en una sesión"),
     ];
 
-    private string PrimerNombre => RolActual.NombreUsuario.Split(' ')[0];
+    private string PrimerNombre => RolActual.PrimerNombre;
 
     private (string, string, string, string)[] Resumen =>
     [

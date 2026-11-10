@@ -2,13 +2,13 @@
   <security-configurations>
     <authentication-service default="true" name="adminAuth" use-password-credential="true">
       <security-provider provider-name="adminSpc" name="spcrealm" type="LoginModule">
-        <login-module-config control-flag="sufficient" module-class="com.sun.enterprise.admin.util.AdminLoginModule" name="adminSpecialLM">
+        <login-module-config module-class="com.sun.enterprise.admin.util.AdminLoginModule" control-flag="sufficient" name="adminSpecialLM">
           <property name="config" value="server-config"/>
           <property name="auth-realm" value="admin-realm"/>
         </login-module-config>
       </security-provider>
       <security-provider provider-name="adminFile" name="filerealm" type="LoginModule">
-        <login-module-config control-flag="sufficient" module-class="com.sun.enterprise.security.auth.login.FileLoginModule" name="adminFileLM">
+        <login-module-config module-class="com.sun.enterprise.security.auth.login.FileLoginModule" control-flag="sufficient" name="adminFileLM">
           <property name="config" value="server-config"/>
           <property name="auth-realm" value="admin-realm"/>
         </login-module-config>
@@ -22,7 +22,7 @@
   </security-configurations>
   <managed-job-config/>
   <system-applications>
-    <application context-root="" object-type="system-admin" directory-deployed="true" name="__admingui" location="${com.sun.aas.installRootURI}/lib/install/applications/__admingui">
+    <application context-root="" object-type="system-admin" name="__admingui" directory-deployed="true" location="${com.sun.aas.installRootURI}/lib/install/applications/__admingui">
       <module name="__admingui">
         <engine sniffer="web"/>
         <engine sniffer="weld"/>
@@ -45,7 +45,7 @@
       <property name="DatabaseName" value="sun-appserv-samples"/>
       <property name="connectionAttributes" value=";create=true"/>
     </jdbc-connection-pool>
-    <connector-connection-pool max-pool-size="250" resource-adapter-name="jmsra" steady-pool-size="1" name="jms/__defaultConnectionFactory-Connection-Pool" connection-definition-name="jakarta.jms.ConnectionFactory"/>
+    <connector-connection-pool resource-adapter-name="jmsra" max-pool-size="250" steady-pool-size="1" name="jms/__defaultConnectionFactory-Connection-Pool" connection-definition-name="jakarta.jms.ConnectionFactory"/>
     <connector-resource pool-name="jms/__defaultConnectionFactory-Connection-Pool" object-type="system-all-req" jndi-name="jms/__defaultConnectionFactory"/>
     <managed-executor-service object-type="system-all" jndi-name="concurrent/__defaultManagedExecutorService"/>
     <managed-scheduled-executor-service object-type="system-all" jndi-name="concurrent/__defaultManagedScheduledExecutorService"/>
@@ -55,6 +55,7 @@
   <servers>
     <server config-ref="server-config" name="server">
       <application-ref ref="__admingui" virtual-servers="__asadmin"/>
+      <application-ref ref="TutorPUCP-REST-1.0-SNAPSHOT" virtual-servers="server"/>
       <resource-ref ref="jdbc/__TimerPool"/>
       <resource-ref ref="jdbc/__default"/>
       <resource-ref ref="jms/__defaultConnectionFactory"/>
@@ -97,7 +98,7 @@
       <transaction-service tx-log-dir="${com.sun.aas.instanceRoot}/logs"/>
       <batch-runtime-configuration/>
       <jms-service default-jms-host="default_JMS_host" type="EMBEDDED">
-        <jms-host port="${JMS_PROVIDER_PORT}" host="localhost" name="default_JMS_host"/>
+        <jms-host port="${JMS_PROVIDER_PORT}" name="default_JMS_host" host="localhost"/>
       </jms-service>
       <cdi-service/>
       <web-container>
@@ -250,7 +251,7 @@
         </transports>
       </network-config>
       <thread-pools>
-        <thread-pool name="admin-thread-pool" max-thread-pool-size="50" max-queue-size="256"/>
+        <thread-pool name="admin-thread-pool" max-queue-size="256" max-thread-pool-size="50"/>
         <thread-pool name="http-thread-pool"/>
         <thread-pool name="thread-pool-1" max-thread-pool-size="200"/>
       </thread-pools>
@@ -300,7 +301,7 @@
       </ejb-container>
       <mdb-container/>
       <jms-service addresslist-behavior="priority" default-jms-host="default_JMS_host" type="EMBEDDED">
-        <jms-host port="${JMS_PROVIDER_PORT}" name="default_JMS_host" host="localhost"/>
+        <jms-host port="${JMS_PROVIDER_PORT}" host="localhost" name="default_JMS_host"/>
       </jms-service>
       <log-service file="${com.sun.aas.instanceRoot}/logs/server.log" log-rotation-limit-in-bytes="2000000">
         <module-log-levels/>
@@ -453,7 +454,7 @@
       <thread-pools>
         <thread-pool name="http-thread-pool"/>
         <thread-pool name="thread-pool-1" max-thread-pool-size="200"/>
-        <thread-pool name="admin-thread-pool" max-queue-size="256" max-thread-pool-size="50"/>
+        <thread-pool name="admin-thread-pool" max-thread-pool-size="50" max-queue-size="256"/>
       </thread-pools>
       <group-management-service>
         <failure-detection/>
@@ -479,5 +480,16 @@
     <secure-admin-principal dn="CN=localhost-instance,OU=GlassFish,O=Eclipse Foundation"/>
   </secure-admin>
   <clusters/>
-  <applications/>
+  <applications>
+    <application context-root="/TutorPUCP-REST-1.0-SNAPSHOT" object-type="user" name="TutorPUCP-REST-1.0-SNAPSHOT" directory-deployed="true" location="file:/C:/Users/Helena%20Varona/Documents/PUCP/semestres/2026-2/progra3/Proyecto_progra3/entrega_5/version_4_java/TutorPUCP/TutorPUCP-REST/target/TutorPUCP-REST-1.0-SNAPSHOT/">
+      <property name="archiveType" value="war"/>
+      <property name="defaultAppName" value="TutorPUCP-REST-1.0-SNAPSHOT"/>
+      <property name="appLocation" value="file:/C:/Users/Helena%20Varona/Documents/PUCP/semestres/2026-2/progra3/Proyecto_progra3/entrega_5/version_4_java/TutorPUCP/TutorPUCP-REST/target/TutorPUCP-REST-1.0-SNAPSHOT/"/>
+      <module name="TutorPUCP-REST-1.0-SNAPSHOT">
+        <engine sniffer="security"/>
+        <engine sniffer="web"/>
+        <engine sniffer="weld"/>
+      </module>
+    </application>
+  </applications>
 </domain>
