@@ -175,7 +175,7 @@
         </message-security-config>
         <property name="default-digest-algorithm" value="SHA-256"/>
       </security-service>
-      <java-config classpath-suffix="" debug-options="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:9009" java-home="C:\Users\Helena Varona\.jdks\temurin-25.0.4.1" system-classpath="">
+      <java-config classpath-suffix="" debug-options="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:9009" java-home="C:\Program Files\Java\jdk-21.0.10" system-classpath="">
         <jvm-options>-Djava.util.logging.manager=org.glassfish.main.jul.GlassFishLogManager</jvm-options>
         <jvm-options>-Djava.util.logging.config.block=true</jvm-options>
         <jvm-options>-Djava.awt.headless=true</jvm-options>

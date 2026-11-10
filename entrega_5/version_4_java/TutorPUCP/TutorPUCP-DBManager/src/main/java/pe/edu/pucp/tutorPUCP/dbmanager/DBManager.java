@@ -26,7 +26,7 @@ public class DBManager {
         String host = properties.getProperty("host");
         String port = properties.getProperty("port");
         String database = properties.getProperty("database");
-        this.url = "jdbc:mysql://" + host + ":" + port + "/" + database;
+        this.url = "jdbc:mysql://" + host + ":" + port + "/" + database + "?sslMode=DISABLED&allowPublicKeyRetrieval=true";
         this.user = properties.getProperty("user");
         this.password = properties.getProperty("password");
     }
@@ -39,22 +39,9 @@ public class DBManager {
 
     public Connection getConnection() {
         try {
-            // En GlassFish el driver de MySQL no se registra solo: hay que cargarlo.
             Class.forName("com.mysql.cj.jdbc.Driver");
-            Properties opciones = new Properties();
-            opciones.setProperty("user", user);
-            opciones.setProperty("password", password);
-
-            // Evita heredar el keystore de cliente de GlassFish.
-            opciones.setProperty("fallbackToSystemKeyStore", "false");
-
-            // Exige una conexión cifrada.
-            opciones.setProperty("sslMode", "REQUIRED");
-
-            return DriverManager.getConnection(url, opciones);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        } catch (ClassNotFoundException e) {
+            return DriverManager.getConnection(url, user, password);
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException(e);
         }
     }
