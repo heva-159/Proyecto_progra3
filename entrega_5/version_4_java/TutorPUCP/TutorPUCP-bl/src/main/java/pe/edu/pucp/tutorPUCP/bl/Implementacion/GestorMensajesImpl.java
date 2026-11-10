@@ -62,4 +62,35 @@ public class GestorMensajesImpl implements GestorMensajes {
         // el filtro "entre ambos usuarios" lo hace el DAO por SQL, no hace falta comparar en memoria.
         return mensajeDAO.listarEntreUsuarios(usuario1, usuario2);
     }
+
+    @Override
+    public List<Mensaje> listarMensajesDeUsuario(Usuario usuario) {
+        int id = usuario.getIdUsuario();
+        return mensajeDAO.listAll().stream()
+                .filter(m -> m.getEmisor().getIdUsuario() == id || m.getReceptor().getIdUsuario() == id)
+                .toList();
+    }
+
+    @Override
+    public void marcarComoLeido(Mensaje mensaje, Usuario lector) {
+        if (mensaje.getReceptor().getIdUsuario() != lector.getIdUsuario()) {
+            throw new BL_exeption("Solo el receptor puede marcar el mensaje como leido");
+        }
+        if (mensaje.isLeido()) return;
+        mensaje.marcarComoLeido();
+        mensajeDAO.update(mensaje);
+    }
+
+    @Override
+    public int marcarConversacionComoLeida(Usuario lector, Usuario otro) {
+        int marcados = 0;
+        for (Mensaje mensaje : mensajeDAO.listarEntreUsuarios(lector, otro)) {
+            if (mensaje.getReceptor().getIdUsuario() == lector.getIdUsuario() && !mensaje.isLeido()) {
+                mensaje.marcarComoLeido();
+                mensajeDAO.update(mensaje);
+                marcados++;
+            }
+        }
+        return marcados;
+    }
 }

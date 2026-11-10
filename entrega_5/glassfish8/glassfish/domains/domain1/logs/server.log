@@ -4811,3 +4811,256 @@ java.net.ConnectException: Connection timed out: connect
 	at java.base/java.lang.Thread.run(Thread.java:1583)
 ]]
 
+[2026-11-10T15:53:19.206012-05:00] [] [INFO] [NCLS-GFLAUNCHER-00005] [jakarta.enterprise.launcher] [tid: _ThreadID=1 _ThreadName=main] [levelValue: 800] [[
+  JVM invocation command line:
+C:\Users\S_F_B_H\.jdks\ms-21.0.10\bin\java.exe
+--module-path
+D:\Otros\Programacion 3 - 2026-2\lab11\Proyecto_progra3\entrega_5\glassfish8\glassfish\lib\bootstrap
+--add-modules
+ALL-MODULE-PATH
+-DWALL_CLOCK_START=2026-11-10T20:53:18.666763900Z
+-XX:+UnlockDiagnosticVMOptions
+-XX:NewRatio=2
+-Xmx512m
+--add-opens=java.base/java.io=ALL-UNNAMED
+--add-opens=java.base/java.lang=ALL-UNNAMED
+--add-opens=java.base/java.util=ALL-UNNAMED
+--add-opens=java.base/sun.nio.fs=ALL-UNNAMED
+--add-opens=java.base/sun.net.www.protocol.jrt=ALL-UNNAMED
+--add-opens=java.naming/javax.naming.spi=org.glassfish.main.jdke
+--add-opens=java.rmi/sun.rmi.transport=ALL-UNNAMED
+--add-opens=jdk.management/com.sun.management.internal=ALL-UNNAMED
+--add-exports=java.naming/com.sun.jndi.ldap=ALL-UNNAMED
+--add-exports=java.base/jdk.internal.vm.annotation=ALL-UNNAMED
+--add-opens=java.base/jdk.internal.vm.annotation=ALL-UNNAMED
+--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED
+-javaagent:D:\Otros\Programacion 3 - 2026-2\lab11\Proyecto_progra3\entrega_5\glassfish8\glassfish\lib\monitor\flashlight-agent.jar
+-Djava.util.logging.manager=org.glassfish.main.jul.GlassFishLogManager
+-Djava.util.logging.config.block=true
+-Djava.awt.headless=true
+-Djdk.corba.allowOutputStreamSubclass=true
+-Djdk.tls.rejectClientInitiatedRenegotiation=true
+-Djdk.xml.totalEntitySizeLimit=50000000
+-Djavax.xml.accessExternalSchema=all
+-Djava.security.auth.login.config=D:\Otros\Programacion 3 - 2026-2\lab11\Proyecto_progra3\entrega_5\glassfish8\glassfish\domains\domain1/config/login.conf
+-Dcom.sun.enterprise.security.httpsOutboundKeyAlias=s1as
+-Djavax.net.ssl.keyStore=D:\Otros\Programacion 3 - 2026-2\lab11\Proyecto_progra3\entrega_5\glassfish8\glassfish\domains\domain1/config/keystore.p12
+-Djavax.net.ssl.trustStore=D:\Otros\Programacion 3 - 2026-2\lab11\Proyecto_progra3\entrega_5\glassfish8\glassfish\domains\domain1/config/cacerts.p12
+-Djdbc.drivers=org.apache.derby.jdbc.ClientDriver
+-DANTLR_USE_DIRECT_CLASS_LOADING=true
+-Dcom.sun.enterprise.config.config_environment_factory_class=com.sun.enterprise.config.serverbeans.AppserverConfigEnvironmentFactory
+-Dorg.glassfish.additionalOSGiBundlesToStart=org.apache.felix.shell,org.apache.felix.gogo.runtime,org.apache.felix.gogo.shell,org.apache.felix.gogo.command,org.apache.felix.shell.remote,org.apache.felix.fileinstall
+-Dosgi.shell.telnet.port=6666
+-Dosgi.shell.telnet.maxconn=1
+-Dosgi.shell.telnet.ip=127.0.0.1
+-Dgosh.args=--nointeractive
+-Dfelix.fileinstall.dir=D:\Otros\Programacion 3 - 2026-2\lab11\Proyecto_progra3\entrega_5\glassfish8\glassfish/modules/autostart/
+-Dfelix.fileinstall.poll=5000
+-Dfelix.fileinstall.log.level=2
+-Dfelix.fileinstall.bundles.new.start=true
+-Dfelix.fileinstall.bundles.startTransient=true
+-Dfelix.fileinstall.disableConfigSave=false
+-Dorg.glassfish.gmbal.no.multipleUpperBoundsException=true
+-Dcom.ctc.wstx.returnNullForDefaultNamespace=true
+-Djdk.attach.allowAttachSelf=true
+-Dcom.sun.aas.instanceRoot=D:\Otros\Programacion 3 - 2026-2\lab11\Proyecto_progra3\entrega_5\glassfish8\glassfish\domains\domain1
+-Dcom.sun.aas.installRoot=D:\Otros\Programacion 3 - 2026-2\lab11\Proyecto_progra3\entrega_5\glassfish8\glassfish
+-Djava.library.path=D:\Otros\Programacion 3 - 2026-2\lab11\Proyecto_progra3\entrega_5\glassfish8\glassfish\lib;C:\Users\S_F_B_H\.jdks\ms-21.0.10\bin;C:\Windows\Sun\Java\bin;C:\Windows\System32;C:\Windows;C:\Program Files\Java\jdk-25.0.2\bin;C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\Windows\System32\wbem;C:\Windows\System32\WindowsPowerShell\v1.0;C:\Windows\System32\OpenSSH;C:\Program Files\JetBrains\CLion 2025.2\bin\mingw\bin;C:\Program Files\JetBrains\CLion 2025.2\bin;C:\xampp\php;C:\ProgramData\ComposerSetup\bin;C:\Program Files\nodejs;C:\Program Files\Git\cmd;C:\Program Files\Microsoft SQL Server\170\Tools\Binn;C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\170\Tools\Binn;C:\Program Files\dotnet;C:\Program Files\WSL;C:\Users\S_F_B_H\AppData\Local\Microsoft\WindowsApps;C:\Users\S_F_B_H\AppData\Roaming\Composer\vendor\bin;C:\Users\S_F_B_H\AppData\Roaming\npm;C:\Program Files\JetBrains\PhpStorm 2025.2.5\bin;C:\apache-maven-3.9.15-bin\apache-maven-3.9.15\bin;D:\Microsoft VS Code\bin;C:\Users\S_F_B_H\.dotnet\tools;C:\Users\S_F_B_H\.local\bin;D:\Microsoft VS Code\bin\copilot-shim;D:\Otros\Programacion 3 - 2026-2\lab11\Proyecto_progra3\entrega_5\version_4_java\TutorPUCP
+com.sun.enterprise.glassfish.bootstrap.GlassFishMain
+-upgrade
+false
+-domaindir
+D:/Otros/Programacion 3 - 2026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/domains/domain1
+-read-stdin
+true
+-asadmin-args
+--host,,,localhost,,,--port,,,4848,,,--secure=false,,,--terse=false,,,--echo=false,,,--interactive=false,,,start-domain,,,--verbose=false,,,--watchdog=false,,,--debug=false,,,--domaindir,,,D:\Otros\Programacion 3 - 2026-2\lab11\Proyecto_progra3\entrega_5\glassfish8\glassfish\domains,,,domain1
+-domainname
+domain1
+-instancename
+server
+-type
+DAS
+-verbose
+false
+-asadmin-modulepath
+D:/Otros/Programacion 3 - 2026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/lib/bootstrap
+-asadmin-classpath
+D:/Otros/Programacion 3 - 2026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/appserver-cli.jar;D:/Otros/Programacion 3 - 2026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/admin-cli.jar;D:/Otros/Programacion 3 - 2026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/lib/asadmin/cli-optional.jar;D:/Otros/Programacion 3 - 2026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/lib/asadmin/cluster-cli.jar;D:/Otros/Programacion 3 - 2026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/lib/asadmin/osgi-cli-interactive.jar;D:/Otros/Programacion 3 - 2026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/lib/asadmin/server-mgmt.jar;D:/Otros/Programacion 3 - 2026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/modules/admin-util.jar;D:/Otros/Programacion 3 - 2026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/modules/backup.jar;D:/Otros/Programacion 3 - 2026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/modules/cluster-common.jar;D:/Otros/Programacion 3 - 2026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/modules/cluster-ssh.jar;D:/Otros/Programacion 3 - 2026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/modules/config-api.jar;D:/Otros/Programacion 3 - 2026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/modules/config-types.jar;D:/Otros/Programacion 3 - 2026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/modules/common-util.jar;D:/Otros/Programacion 3 - 2026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/modules/glassfish-api.jar;D:/Otros/Programacion 3 - 2026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/modules/hk2.jar;D:/Otros/Programacion 3 - 2026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/modules/hk2-config-generator.jar;D:/Otros/Programacion 3 - 2026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/modules/internal-api.jar;D:/Otros/Programacion 3 - 2026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/modules/jackson-core.jar;D:/Otros/Programacion 3 - 2026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/modules/jakarta.activation-api.jar;D:/Otros/Programacion 3 - 2026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/modules/jakarta.validation-api.jar;D:/Otros/Programacion 3 - 2026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/modules/jakarta.xml.bind-api.jar;D:/Otros/Programacion 3 - 2026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/modules/jaxb-osgi.jar;D:/Otros/Programacion 3 - 2026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/modules/jettison.jar;D:/Otros/Programacion 3 - 2026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/modules/jsch.jar;D:/Otros/Programacion 3 - 2026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/modules/launcher.jar;D:/Otros/Programacion 3 - 2026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/modules/mimepull.jar
+-debug
+false
+-asadmin-classname
+com.sun.enterprise.admin.cli.AdminMain]]
+
+[2026-11-10T15:53:42.688811-05:00] [GF 8.0.2] [INFO] [NCLS-BOOTSTRAP-00035] [jakarta.enterprise.bootstrap] [tid: _ThreadID=1 _ThreadName=main] [levelValue: 800] [[
+  Provisioning options have changed, recreating the framework with a clean OSGi storage(aka cache).]]
+
+[2026-11-10T15:54:15.104696-05:00] [GF 8.0.2] [INFO] [] [jakarta.enterprise.system.core] [tid: _ThreadID=1 _ThreadName=main] [levelValue: 800] [[
+  Loaded server named: server]]
+
+[2026-11-10T15:54:15.558093-05:00] [GF 8.0.2] [INFO] [] [com.sun.enterprise.server.logging.LogManagerService] [tid: _ThreadID=64 _ThreadName=RunLevelControllerThread-1794344055139] [levelValue: 800] [[
+  Using property file: D:\Otros\Programacion 3 - 2026-2\lab11\Proyecto_progra3\entrega_5\glassfish8\glassfish\domains\domain1\config\logging.properties]]
+
+[2026-11-10T15:54:15.648823-05:00] [GF 8.0.2] [INFO] [NCLS-LOGGING-00009] [com.sun.enterprise.server.logging.LogManagerService] [tid: _ThreadID=64 _ThreadName=RunLevelControllerThread-1794344055139] [levelValue: 800] [[
+  Running GlassFish Version: Eclipse GlassFish 8.0.2 (commit: 5225f2e584d7eff969cd39ca26aa67e5dd828736)]]
+
+[2026-11-10T15:54:15.852175-05:00] [GF 8.0.2] [INFO] [NCLS-SECURITY-01115] [jakarta.enterprise.system.core.security] [tid: _ThreadID=65 _ThreadName=RunLevelControllerThread-1794344055149] [levelValue: 800] [[
+  Realm [admin-realm] of classtype [com.sun.enterprise.security.auth.realm.file.FileRealm] successfully created.]]
+
+[2026-11-10T15:54:15.868298-05:00] [GF 8.0.2] [INFO] [NCLS-SECURITY-01115] [jakarta.enterprise.system.core.security] [tid: _ThreadID=65 _ThreadName=RunLevelControllerThread-1794344055149] [levelValue: 800] [[
+  Realm [file] of classtype [com.sun.enterprise.security.auth.realm.file.FileRealm] successfully created.]]
+
+[2026-11-10T15:54:15.877419-05:00] [GF 8.0.2] [INFO] [NCLS-SECURITY-01115] [jakarta.enterprise.system.core.security] [tid: _ThreadID=65 _ThreadName=RunLevelControllerThread-1794344055149] [levelValue: 800] [[
+  Realm [certificate] of classtype [com.sun.enterprise.security.auth.realm.certificate.CertificateRealm] successfully created.]]
+
+[2026-11-10T15:54:15.988658-05:00] [GF 8.0.2] [INFO] [] [org.glassfish.ha.store.spi.BackingStoreFactoryRegistry] [tid: _ThreadID=64 _ThreadName=RunLevelControllerThread-1794344055139] [levelValue: 800] [[
+  Registered org.glassfish.ha.store.adapter.cache.ShoalBackingStoreProxy for persistence-type = replicated in BackingStoreFactoryRegistry]]
+
+[2026-11-10T15:54:16.301236-05:00] [GF 8.0.2] [SEVERE] [NCLS-CORE-00043] [jakarta.enterprise.system.core] [tid: _ThreadID=66 _ThreadName=RunLevelControllerThread-1794344055150] [levelValue: 1000] [[
+  Application previously deployed is not at its original location any more: file:/C:/Users/Helena%20Varona/Documents/PUCP/semestres/2026-2/progra3/Proyecto_progra3/entrega_5/version_4_java/TutorPUCP/TutorPUCP-REST/target/TutorPUCP-REST-1.0-SNAPSHOT/]]
+
+[2026-11-10T15:54:16.379625-05:00] [GF 8.0.2] [INFO] [NCLS-CORE-00087] [jakarta.enterprise.system.core] [tid: _ThreadID=63 _ThreadName=RunLevelControllerThread-1794344055135] [levelValue: 800] [[
+  Grizzly Framework 5.0.1 started in: 69 ms - bound to [/0.0.0.0:8080]]]
+
+[2026-11-10T15:54:16.414915-05:00] [GF 8.0.2] [INFO] [NCLS-CORE-00087] [jakarta.enterprise.system.core] [tid: _ThreadID=63 _ThreadName=RunLevelControllerThread-1794344055135] [levelValue: 800] [[
+  Grizzly Framework 5.0.1 started in: 4 ms - bound to [/0.0.0.0:8181]]]
+
+[2026-11-10T15:54:16.423927-05:00] [GF 8.0.2] [INFO] [NCLS-CORE-00087] [jakarta.enterprise.system.core] [tid: _ThreadID=63 _ThreadName=RunLevelControllerThread-1794344055135] [levelValue: 800] [[
+  Grizzly Framework 5.0.1 started in: 3 ms - bound to [/0.0.0.0:4848]]]
+
+[2026-11-10T15:54:16.486109-05:00] [GF 8.0.2] [INFO] [SEC-SVCS-00100] [jakarta.enterprise.security.services] [tid: _ThreadID=63 _ThreadName=RunLevelControllerThread-1794344055135] [levelValue: 800] [[
+  Authorization Service has successfully initialized.]]
+
+[2026-11-10T15:54:16.537474-05:00] [GF 8.0.2] [INFO] [NCLS-CORE-00087] [jakarta.enterprise.system.core] [tid: _ThreadID=65 _ThreadName=RunLevelControllerThread-1794344055149] [levelValue: 800] [[
+  Grizzly Framework 5.0.1 started in: 6 ms - bound to [/0.0.0.0:3700]]]
+
+[2026-11-10T15:54:16.538461-05:00] [GF 8.0.2] [INFO] [NCLS-CORE-00017] [jakarta.enterprise.system.core] [tid: _ThreadID=1 _ThreadName=main] [levelValue: 800] [[
+  Eclipse GlassFish 8.0.2 (commit: 5225f2e584d7eff969cd39ca26aa67e5dd828736) startup time: Felix (55,551 ms), startup services (1,413 ms), total (56,964 ms)]]
+
+[2026-11-10T15:54:16.543464-05:00] [GF 8.0.2] [INFO] [NCLS-CORE-00018] [jakarta.enterprise.system.core] [tid: _ThreadID=1 _ThreadName=main] [levelValue: 800] [[
+  Total startup time including CLI: 57,875 ms]]
+
+[2026-11-10T15:54:16.722733-05:00] [GF 8.0.2] [INFO] [NCLS-CORE-00087] [jakarta.enterprise.system.core] [tid: _ThreadID=65 _ThreadName=RunLevelControllerThread-1794344055149] [levelValue: 800] [[
+  Grizzly Framework 5.0.1 started in: 4 ms - bound to [/0.0.0.0:7676]]]
+
+[2026-11-10T15:54:16.890703-05:00] [GF 8.0.2] [INFO] [] [jakarta.enterprise.logging.stdout] [tid: _ThreadID=52 _ThreadName=FelixStartLevel] [levelValue: 800] [[
+  D:\Otros\Programacion 3 - 2026-2\lab11\Proyecto_progra3\entrega_5\glassfish8\glassfish\domains\domain1\autodeploy\bundles does not exist, please create it.]]
+
+[2026-11-10T15:54:16.895233-05:00] [GF 8.0.2] [INFO] [] [jakarta.enterprise.logging.stdout] [tid: _ThreadID=52 _ThreadName=FelixStartLevel] [levelValue: 800] [[
+  Root path does not exist: D:\Otros\Programacion 3 - 2026-2\lab11\Proyecto_progra3\entrega_5\glassfish8\glassfish\domains\domain1\autodeploy\bundles]]
+
+[2026-11-10T15:54:16.942301-05:00] [GF 8.0.2] [INFO] [NCLS-JMX-00005] [jakarta.enterprise.system.jmx] [tid: _ThreadID=115 _ThreadName=Thread-15] [levelValue: 800] [[
+  JMXStartupService has started JMXConnector on JMXService URL service:jmx:rmi://DESKTOP-CMKGT3D:8686/jndi/rmi://DESKTOP-CMKGT3D:8686/jmxrmi]]
+
+[2026-11-10T15:54:46.993601-05:00] [GF 8.0.2] [INFO] [] [org.glassfish.admin.rest.adapter.RestAdapter] [tid: _ThreadID=104 _ThreadName=admin-listener(7)] [levelValue: 800] [[
+  Listening to REST requests at context: /command/domain.]]
+
+[2026-11-10T15:54:48.201678-05:00] [GF 8.0.2] [WARNING] [] [jakarta.enterprise.system.core] [tid: _ThreadID=109 _ThreadName=admin-listener(12)] [levelValue: 900] [[
+  Originally deployed application at C:\Users\Helena Varona\Documents\PUCP\semestres\2026-2\progra3\Proyecto_progra3\entrega_5\version_4_java\TutorPUCP\TutorPUCP-REST\target\TutorPUCP-REST-1.0-SNAPSHOT not found]]
+
+[2026-11-10T15:54:50.304379-05:00] [GF 8.0.2] [INFO] [NCLS-SECURITY-01143] [jakarta.enterprise.system.core.security] [tid: _ThreadID=109 _ThreadName=admin-listener(12)] [levelValue: 800] [[
+  Loading policy provider org.glassfish.exousia.modules.def.DefaultPolicy.]]
+
+[2026-11-10T15:54:50.313390-05:00] [GF 8.0.2] [INFO] [NCLS-SECURITY-01010] [jakarta.enterprise.system.core.security] [tid: _ThreadID=109 _ThreadName=admin-listener(12)] [levelValue: 800] [[
+  Entering Security Startup Service.]]
+
+[2026-11-10T15:54:50.325602-05:00] [GF 8.0.2] [INFO] [NCLS-SECURITY-01011] [jakarta.enterprise.system.core.security] [tid: _ThreadID=109 _ThreadName=admin-listener(12)] [levelValue: 800] [[
+  Security Service(s) started successfully.]]
+
+[2026-11-10T15:54:50.571124-05:00] [GF 8.0.2] [INFO] [AS-WEB-GLUE-00198] [jakarta.enterprise.web] [tid: _ThreadID=109 _ThreadName=admin-listener(12)] [levelValue: 800] [[
+  Created HTTP listener http-listener-1 on host/port 0.0.0.0:8080]]
+
+[2026-11-10T15:54:50.576630-05:00] [GF 8.0.2] [INFO] [AS-WEB-GLUE-00198] [jakarta.enterprise.web] [tid: _ThreadID=109 _ThreadName=admin-listener(12)] [levelValue: 800] [[
+  Created HTTP listener http-listener-2 on host/port 0.0.0.0:8181]]
+
+[2026-11-10T15:54:50.579636-05:00] [GF 8.0.2] [INFO] [AS-WEB-GLUE-00198] [jakarta.enterprise.web] [tid: _ThreadID=109 _ThreadName=admin-listener(12)] [levelValue: 800] [[
+  Created HTTP listener admin-listener on host/port 0.0.0.0:4848]]
+
+[2026-11-10T15:54:50.601752-05:00] [GF 8.0.2] [INFO] [AS-WEB-GLUE-00200] [jakarta.enterprise.web] [tid: _ThreadID=109 _ThreadName=admin-listener(12)] [levelValue: 800] [[
+  Created virtual server server]]
+
+[2026-11-10T15:54:50.603755-05:00] [GF 8.0.2] [INFO] [AS-WEB-GLUE-00200] [jakarta.enterprise.web] [tid: _ThreadID=109 _ThreadName=admin-listener(12)] [levelValue: 800] [[
+  Created virtual server __asadmin]]
+
+[2026-11-10T15:54:50.861630-05:00] [GF 8.0.2] [INFO] [AS-WEB-CORE-00306] [jakarta.enterprise.web.core] [tid: _ThreadID=109 _ThreadName=admin-listener(12)] [levelValue: 800] [[
+  Setting JAAS app name glassfish-web]]
+
+[2026-11-10T15:54:50.862602-05:00] [GF 8.0.2] [INFO] [AS-WEB-GLUE-00201] [jakarta.enterprise.web] [tid: _ThreadID=109 _ThreadName=admin-listener(12)] [levelValue: 800] [[
+  Virtual server server loaded default web module ]]
+
+[2026-11-10T15:54:51.518229-05:00] [GF 8.0.2] [INFO] [] [org.glassfish.web.loader.WebappClassLoader] [tid: _ThreadID=109 _ThreadName=admin-listener(12)] [levelValue: 800] [[
+  close(), this:
+org.glassfish.web.loader.WebappClassLoader@51012f2a[name=TutorPUCP-REST-1.0-SNAPSHOT], urls=[
+file:/D:/Otros/Programacion%203%20-%202026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/domains/domain1/applications/TutorPUCP-REST-1.0-SNAPSHOT/WEB-INF/classes/
+file:/D:/Otros/Programacion%203%20-%202026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/domains/domain1/applications/TutorPUCP-REST-1.0-SNAPSHOT/WEB-INF/lib/mysql-connector-j-9.6.0.jar
+file:/D:/Otros/Programacion%203%20-%202026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/domains/domain1/applications/TutorPUCP-REST-1.0-SNAPSHOT/WEB-INF/lib/protobuf-java-4.31.1.jar
+file:/D:/Otros/Programacion%203%20-%202026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/domains/domain1/applications/TutorPUCP-REST-1.0-SNAPSHOT/WEB-INF/lib/TutorPUCP-bl-1.0-SNAPSHOT.jar
+file:/D:/Otros/Programacion%203%20-%202026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/domains/domain1/applications/TutorPUCP-REST-1.0-SNAPSHOT/WEB-INF/lib/TutorPUCP-DAO-1.0-SNAPSHOT.jar
+file:/D:/Otros/Programacion%203%20-%202026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/domains/domain1/applications/TutorPUCP-REST-1.0-SNAPSHOT/WEB-INF/lib/TutorPUCP-DBManager-1.0-SNAPSHOT.jar
+file:/D:/Otros/Programacion%203%20-%202026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/domains/domain1/applications/TutorPUCP-REST-1.0-SNAPSHOT/WEB-INF/lib/TutorPUCP-model-1.0-SNAPSHOT.jar
+file:/D:/Otros/Programacion%203%20-%202026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/domains/domain1/generated/ejb/TutorPUCP-REST-1.0-SNAPSHOT/
+][delegate=true, context=TutorPUCP-REST-1.0-SNAPSHOT, status=RUNNING, antiJARLocking=false, repositories=RepositoryManager[WEB-INF/classes/], notFound.size=26, pathTimestamps.size=6, resourceEntryCache.size=0]]]
+
+[2026-11-10T15:54:51.623070-05:00] [GF 8.0.2] [INFO] [] [org.jboss.weld.Version] [tid: _ThreadID=109 _ThreadName=admin-listener(12)] [levelValue: 800] [[
+  WELD-000900: 6.0.4 (Final)]]
+
+[2026-11-10T15:54:51.933558-05:00] [GF 8.0.2] [INFO] [] [jakarta.enterprise.inject.spi] [tid: _ThreadID=109 _ThreadName=admin-listener(12)] [levelValue: 800] [[
+  Enabling Weld for ApplicationInfo[name=TutorPUCP-REST-1.0-SNAPSHOT]]]
+
+[2026-11-10T15:54:52.855377-05:00] [GF 8.0.2] [INFO] [] [org.jboss.weld.Event] [tid: _ThreadID=109 _ThreadName=admin-listener(12)] [levelValue: 800] [[
+  WELD-000411: Observer method [BackedAnnotatedMethod] public org.glassfish.jersey.ext.cdi1x.internal.ProcessAllAnnotatedTypes.processAnnotatedType(@Observes ProcessAnnotatedType<?>, BeanManager) receives events for all annotated types. Consider restricting events using @WithAnnotations or a generic type with bounds.]]
+
+[2026-11-10T15:54:53.594725-05:00] [GF 8.0.2] [INFO] [] [org.eclipse.jnosql.jakartapersistence.mapping.spi.JakartaPersistenceExtension] [tid: _ThreadID=109 _ThreadName=admin-listener(12)] [levelValue: 800] [[
+  Processing Jakarta Persistence extension. Found 0 standard repositories, 0 custom repositories.]]
+
+[2026-11-10T15:54:54.100467-05:00] [GF 8.0.2] [INFO] [] [org.eclipse.krazo.servlet.KrazoContainerInitializer] [tid: _ThreadID=109 _ThreadName=admin-listener(12)] [levelValue: 800] [[
+  Eclipse Krazo version 4.0.1 started]]
+
+[2026-11-10T15:54:54.224677-05:00] [GF 8.0.2] [INFO] [] [org.glassfish.soteria.servlet.SamRegistrationInstaller] [tid: _ThreadID=109 _ThreadName=admin-listener(12)] [levelValue: 800] [[
+  Initializing Soteria 4.0.2 for context '/TutorPUCP-REST-1.0-SNAPSHOT']]
+
+[2026-11-10T15:54:54.717923-05:00] [GF 8.0.2] [INFO] [AS-WEB-GLUE-00172] [jakarta.enterprise.web] [tid: _ThreadID=109 _ThreadName=admin-listener(12)] [levelValue: 800] [[
+  Loading application [TutorPUCP-REST-1.0-SNAPSHOT] at [/TutorPUCP-REST-1.0-SNAPSHOT]]]
+
+[2026-11-10T15:54:54.809772-05:00] [GF 8.0.2] [INFO] [] [jakarta.enterprise.system.core] [tid: _ThreadID=109 _ThreadName=admin-listener(12)] [levelValue: 800] [[
+  TutorPUCP-REST-1.0-SNAPSHOT was successfully deployed in 6,701 milliseconds.]]
+
+[2026-11-10T15:54:54.811790-05:00] [GF 8.0.2] [WARNING] [] [org.glassfish.jersey.internal.Errors] [tid: _ThreadID=109 _ThreadName=admin-listener(12)] [levelValue: 900] [[
+  The following warnings have been detected: WARNING: The (sub)resource method listar in pe.edu.pucp.tutorpucp.tutorpucprest.Implementacion.GestorUsuariosRecurso contains empty path annotation.
+]]
+
+[2026-11-10T16:50:55.970539-05:00] [GF 8.0.2] [INFO] [NCLS-CORE-00092] [jakarta.enterprise.system.core] [tid: _ThreadID=207 _ThreadName=Thread-34] [levelValue: 800] [[
+  Server shutdown initiated]]
+
+[2026-11-10T16:50:55.994532-05:00] [GF 8.0.2] [INFO] [] [jakarta.enterprise.logging.stdout] [tid: _ThreadID=207 _ThreadName=Thread-34] [levelValue: 800] [[
+  FileMonitoring shutdown]]
+
+[2026-11-10T16:50:56.008202-05:00] [GF 8.0.2] [INFO] [NCLS-JMX-00002] [jakarta.enterprise.system.jmx] [tid: _ThreadID=207 _ThreadName=Thread-34] [levelValue: 800] [[
+  JMXStartupService: Stopped JMXConnectorServer: null]]
+
+[2026-11-10T16:50:56.009197-05:00] [GF 8.0.2] [INFO] [NCLS-JMX-00001] [jakarta.enterprise.system.jmx] [tid: _ThreadID=207 _ThreadName=Thread-34] [levelValue: 800] [[
+  JMXStartupService and JMXConnectors have been shut down.]]
+
+[2026-11-10T16:50:56.124700-05:00] [GF 8.0.2] [INFO] [] [jakarta.enterprise.inject.spi] [tid: _ThreadID=210 _ThreadName=RunLevelControllerThread-1794347456015] [levelValue: 800] [[
+  Disabling Weld for ApplicationInfo[name=TutorPUCP-REST-1.0-SNAPSHOT]]]
+
+[2026-11-10T16:50:56.140771-05:00] [GF 8.0.2] [INFO] [] [org.glassfish.web.loader.WebappClassLoader] [tid: _ThreadID=210 _ThreadName=RunLevelControllerThread-1794347456015] [levelValue: 800] [[
+  close(), this:
+org.glassfish.web.loader.WebappClassLoader@11c62b79[name=/TutorPUCP-REST-1.0-SNAPSHOT], urls=[
+file:/D:/Otros/Programacion%203%20-%202026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/domains/domain1/applications/TutorPUCP-REST-1.0-SNAPSHOT/WEB-INF/classes/
+file:/D:/Otros/Programacion%203%20-%202026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/domains/domain1/applications/TutorPUCP-REST-1.0-SNAPSHOT/WEB-INF/lib/mysql-connector-j-9.6.0.jar
+file:/D:/Otros/Programacion%203%20-%202026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/domains/domain1/applications/TutorPUCP-REST-1.0-SNAPSHOT/WEB-INF/lib/protobuf-java-4.31.1.jar
+file:/D:/Otros/Programacion%203%20-%202026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/domains/domain1/applications/TutorPUCP-REST-1.0-SNAPSHOT/WEB-INF/lib/TutorPUCP-bl-1.0-SNAPSHOT.jar
+file:/D:/Otros/Programacion%203%20-%202026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/domains/domain1/applications/TutorPUCP-REST-1.0-SNAPSHOT/WEB-INF/lib/TutorPUCP-DAO-1.0-SNAPSHOT.jar
+file:/D:/Otros/Programacion%203%20-%202026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/domains/domain1/applications/TutorPUCP-REST-1.0-SNAPSHOT/WEB-INF/lib/TutorPUCP-DBManager-1.0-SNAPSHOT.jar
+file:/D:/Otros/Programacion%203%20-%202026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/domains/domain1/applications/TutorPUCP-REST-1.0-SNAPSHOT/WEB-INF/lib/TutorPUCP-model-1.0-SNAPSHOT.jar
+file:/D:/Otros/Programacion%203%20-%202026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/domains/domain1/generated/ejb/TutorPUCP-REST-1.0-SNAPSHOT/
+file:/D:/Otros/Programacion 3 - 2026-2/lab11/Proyecto_progra3/entrega_5/glassfish8/glassfish/domains/domain1/generated/TutorPUCP-REST-1.0-SNAPSHOT/
+][delegate=true, context=/TutorPUCP-REST-1.0-SNAPSHOT, status=RUNNING, antiJARLocking=false, repositories=RepositoryManager[WEB-INF/classes/], notFound.size=56, pathTimestamps.size=21, resourceEntryCache.size=384]]]
+
+[2026-11-10T16:50:56.255102-05:00] [GF 8.0.2] [INFO] [NCLS-CORE-00013] [jakarta.enterprise.system.core] [tid: _ThreadID=207 _ThreadName=Thread-34] [levelValue: 800] [[
+  Shutdown procedure finished]]
+
+[2026-11-10T16:50:56.260625-05:00] [GF 8.0.2] [INFO] [] [jakarta.enterprise.logging.stdout] [tid: _ThreadID=22 _ThreadName=GlassFish Shutdown Hook] [levelValue: 800] [[
+  Completed shutdown of GlassFish runtime]]
+
