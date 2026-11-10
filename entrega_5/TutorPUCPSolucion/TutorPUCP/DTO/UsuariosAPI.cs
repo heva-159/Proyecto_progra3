@@ -22,6 +22,8 @@ public class UsuariosApi(IHttpClientFactory fabrica)
         Enviar<List<UsuarioDto>>(HttpMethod.Get, "usuario");
     public Task<(UsuarioDto? Valor, string? Error)> IniciarSesionAsync(string correo, string password) =>
         Enviar<UsuarioDto>(HttpMethod.Post, "usuario/login", new Credenciales(correo, password));
+    public Task<string?> CambiarPasswordAsync(int idUsuario, string passwordActual, string passwordNueva) =>
+        EnviarSinValor(HttpMethod.Put, $"usuario/{idUsuario}/password", new CambioPassword(passwordActual, passwordNueva));
 
     // ---- Perfil tutor ----
     public Task<(PerfilDto? Valor, string? Error)> RegistrarTutorAsync(int idUsuario) =>
@@ -57,6 +59,8 @@ public class UsuariosApi(IHttpClientFactory fabrica)
         Enviar<List<AdministradorDto>>(HttpMethod.Get, "usuario/administradores");
     public Task<(AdministradorDto? Valor, string? Error)> IniciarSesionAdministradorAsync(string correo, string password) =>
         Enviar<AdministradorDto>(HttpMethod.Post, "usuario/administradores/login", new Credenciales(correo, password));
+    public Task<string?> CambiarPasswordAdministradorAsync(int id, string passwordActual, string passwordNueva) =>
+        EnviarSinValor(HttpMethod.Put, $"usuario/administradores/{id}/password", new CambioPassword(passwordActual, passwordNueva));
 
     // ---- Lo común: enviar, leer el JSON y traducir los errores ----
     private async Task<(T? Valor, string? Error)> Enviar<T>(HttpMethod metodo, string ruta, object? cuerpo = null)
@@ -84,7 +88,8 @@ public class UsuariosApi(IHttpClientFactory fabrica)
         }
     }
 
-    private async Task<string?> EnviarSinValor(HttpMethod metodo, string ruta) => (await Enviar<object>(metodo, ruta)).Error;
+    private async Task<string?> EnviarSinValor(HttpMethod metodo, string ruta, object? cuerpo = null) =>
+        (await Enviar<object>(metodo, ruta, cuerpo)).Error;
 }
 
 // Lo que se envía al REST (los nombres se convierten a camelCase, como espera Java)
@@ -93,3 +98,5 @@ public record RegistroUsuario(string Nombres, string Apellidos, string CodigoPuc
                               string? Especialidad, string CorreoInstitucional, string Password, string Rol);
 public record DatosUsuario(string Nombres, string Apellidos, string CodigoPucp, string Facultad,
                            string? Especialidad, string CorreoInstitucional);
+public record RegistroAdministrador(string Nombre, string Correo, string Password, string? NivelPermiso);
+public record CambioPassword(string PasswordActual, string PasswordNueva);

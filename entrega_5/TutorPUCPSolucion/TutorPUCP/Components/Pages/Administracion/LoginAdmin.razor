@@ -1,6 +1,8 @@
 ﻿@page "/login/administrador"
 @layout AuthLayout
 @inject NavigationManager Navigation
+@inject UsuariosApi Api
+@inject RolActual RolActual
 
 @* Acceso exclusivo del administrador, separado del de estudiantes y tutores.
    No enlaza al acceso de usuarios ni el acceso de usuarios enlaza aquí. *@
@@ -64,7 +66,14 @@
         if (error is not null) return;
 
         ingresando = true;
-        await Task.Delay(500); // Pantalla visual: aún no hay base de datos.
+        var (administrador, errorApi) = await Api.IniciarSesionAdministradorAsync(c, clave);
+        ingresando = false;
+        if (errorApi is not null)
+        {
+            error = errorApi;
+            return;
+        }
+        RolActual.Administrador = administrador;
         Navigation.NavigateTo("/admin");
     }
 }

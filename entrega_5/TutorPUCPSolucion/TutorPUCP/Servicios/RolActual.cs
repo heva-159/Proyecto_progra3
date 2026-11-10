@@ -19,6 +19,7 @@ public class RolActual
     // Administrador que inició sesión (lo devuelve el REST); null mientras no haya entrado
     public AdministradorDto? Administrador { get; set; }
 
+
     public void Cambiar(string rol)
     {
         if (rol == Rol) return;

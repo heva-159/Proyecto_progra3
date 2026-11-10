@@ -141,6 +141,20 @@ public class GestorUsuariosImpl implements GestorUsuarios {
         return usuario;
     }
 
+    @Override
+    public void cambiarPassword(int idUsuario, String passwordActual, String passwordNueva) {
+        Usuario usuario = usuarioDAO.load(idUsuario);
+        if (usuario == null) {
+            throw new BL_exeption("El usuario no existe");
+        }
+        if (usuario.getEstado() != EstadoCuenta.ACTIVA) {
+            throw new BL_exeption("La cuenta no esta activa");
+        }
+        validarCambioDePassword(passwordActual, passwordNueva, usuario.getPasswordHash());
+        usuario.setPasswordHash(PasswordHasher.hashear(passwordNueva));
+        usuarioDAO.update(usuario);
+    }
+
     // ---- Perfil Tutor ----
 
     @Override
@@ -306,5 +320,29 @@ public class GestorUsuariosImpl implements GestorUsuarios {
             return null;
         }
         return administrador;
+    }
+
+    @Override
+    public void cambiarPasswordAdministrador(int idAdministrador, String passwordActual, String passwordNueva) {
+        Administrador administrador = administradorDAO.load(idAdministrador);
+        if (administrador == null) {
+            throw new BL_exeption("El administrador no existe");
+        }
+        validarCambioDePassword(passwordActual, passwordNueva, administrador.getPasswordHash());
+        administrador.setPasswordHash(PasswordHasher.hashear(passwordNueva));
+        administradorDAO.update(administrador);
+    }
+
+    // La actual debe coincidir con la guardada; la nueva, tener 8 caracteres o mas y ser distinta de la actual.
+    private void validarCambioDePassword(String passwordActual, String passwordNueva, String hashGuardado) {
+        if (!PasswordHasher.coincide(passwordActual, hashGuardado)) {
+            throw new BL_exeption("La contrasena actual no es correcta");
+        }
+        if (passwordNueva == null || passwordNueva.length() < 8) {
+            throw new BL_exeption("La contrasena nueva debe tener al menos 8 caracteres");
+        }
+        if (passwordNueva.equals(passwordActual)) {
+            throw new BL_exeption("La contrasena nueva debe ser distinta de la actual");
+        }
     }
 }

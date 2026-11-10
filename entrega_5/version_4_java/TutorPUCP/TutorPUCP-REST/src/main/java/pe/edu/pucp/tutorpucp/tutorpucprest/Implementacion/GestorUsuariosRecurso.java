@@ -113,14 +113,31 @@ public class GestorUsuariosRecurso{
     @Path("/login")
     @Consumes(MediaType.APPLICATION_JSON) @Produces(MediaType.APPLICATION_JSON)
     public Response login(LoginRequest datos) {
-        if (datos.getCorreo() == null || datos.getPassword() == null) {
-            throw new BadRequestException("Faltan los datos del usuario");
+        if (datos == null) {
+            throw new BadRequestException("Faltan el correo y la contraseña");
         }
         Usuario usuario = gestorUsuariosBL.iniciarSesion(datos.getCorreo(), datos.getPassword());
         if (usuario == null) {
-            return Response.status(Response.Status.UNAUTHORIZED).entity(Map.of("error", "No existe el usuario " + datos.getCorreo())).build();
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(Map.of("error", "Correo o contraseña incorrectos")).build();
         }
         return Response.ok(new UsuarioDTO(usuario)).build();
+    }
+
+    @PUT
+    @Path("/{id}/password")
+    @Consumes(MediaType.APPLICATION_JSON) @Produces(MediaType.APPLICATION_JSON)
+    public Response cambiarPassword(@PathParam("id") Integer id, CambiarPasswordRequest datos) {
+        if (datos == null) {
+            throw new BadRequestException("Faltan la contraseña actual y la nueva");
+        }
+        try {
+            gestorUsuariosBL.cambiarPassword(id, datos.getPasswordActual(), datos.getPasswordNueva());
+            return Response.noContent().build();
+        } catch (BL_exeption e) {
+            // por ejemplo: "La contrasena actual no es correcta"
+            return Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", e.getMessage())).build();
+        }
     }
 
     @GET
@@ -350,6 +367,21 @@ public class GestorUsuariosRecurso{
         }
         try {
             gestorUsuariosBL.eliminarAdministrador(administrador);
+            return Response.noContent().build();
+        } catch (BL_exeption e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", e.getMessage())).build();
+        }
+    }
+
+    @PUT
+    @Path("/administradores/{id}/password")
+    @Consumes(MediaType.APPLICATION_JSON) @Produces(MediaType.APPLICATION_JSON)
+    public Response cambiarPasswordAdministrador(@PathParam("id") Integer id, CambiarPasswordRequest datos) {
+        if (datos == null) {
+            throw new BadRequestException("Faltan la contraseña actual y la nueva");
+        }
+        try {
+            gestorUsuariosBL.cambiarPasswordAdministrador(id, datos.getPasswordActual(), datos.getPasswordNueva());
             return Response.noContent().build();
         } catch (BL_exeption e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", e.getMessage())).build();

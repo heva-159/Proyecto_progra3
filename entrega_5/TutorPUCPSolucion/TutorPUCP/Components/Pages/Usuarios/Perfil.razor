@@ -3,6 +3,7 @@
 @implements IDisposable
 @inject RolActual RolActual
 @inject NavigationManager Navigation
+@inject UsuariosApi Api
 
 @* Mi perfil: se abre desde el menú del perfil en el sidebar. Lo de la PUCP (nombre, código, correo)
    no se edita; lo demás sí. Por RNF005 la presentación no puede llevar correos ni teléfonos. *@
@@ -36,9 +37,23 @@
                     <li class="d-flex align-items-center gap-2"><i class="bi bi-envelope text-primary"></i><span class="text-truncate">@Correo</span></li>
                     @if (!EsAdmin)
                     {
-                        <li class="d-flex align-items-center gap-2"><i class="bi bi-person-vcard text-primary"></i>Código PUCP: @RolActual.CodigoUsuario</li>
+                        <li class="d-flex align-items-center gap-2"><i class="bi bi-person-vcard text-primary"></i>Código PUCP: @Codigo</li>
                     }
-                    <li class="d-flex align-items-center gap-2"><i class="bi bi-shield-check text-success"></i>Cuenta verificada</li>
+                    else
+                    {
+                        <li class="d-flex align-items-center gap-2"><i class="bi bi-key text-primary"></i>Permisos: @(string.IsNullOrEmpty(Admin?.NivelPermiso) ? "—" : Admin!.NivelPermiso)</li>
+                    }
+                    @if (Real is { CorreoVerificado: false })
+                    {
+                        <li class="d-flex align-items-center gap-2">
+                            <i class="bi bi-exclamation-triangle text-warning"></i>
+                            <span>Correo sin verificar · <a href="/verificar-cuenta?correo=@Uri.EscapeDataString(Correo)">Verificar</a></span>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="d-flex align-items-center gap-2"><i class="bi bi-shield-check text-success"></i>Cuenta verificada</li>
+                    }
                 </ul>
                 <p class="text-muted small mt-3 mb-0">
                     <i class="bi bi-info-circle me-1"></i>Tu correo y teléfono nunca se muestran a otros usuarios.
@@ -90,9 +105,26 @@
                         @if (!EsAdmin)
                         {
                             <div class="col-md-6">
-                                <label class="form-label">Facultad / especialidad</label>
+                                <label class="form-label">Facultad</label>
+                                <select class="form-select" value="@facultad" @onchange="CambiarFacultad">
+                                    @if (facultad == "")
+                                    {
+                                        <option value="">Selecciona una facultad</option>
+                                    }
+                                    @foreach (var f in Facultades)
+                                    {
+                                        <option value="@f">@f</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Especialidad</label>
                                 <select class="form-select" @bind="especialidad">
-                                    @foreach (var e in Especialidades)
+                                    @if (especialidad == "")
+                                    {
+                                        <option value="">Selecciona una especialidad</option>
+                                    }
+                                    @foreach (var e in EspecialidadesDeFacultad)
                                     {
                                         <option value="@e">@e</option>
                                     }
@@ -142,7 +174,15 @@
                     <div class="d-flex justify-content-end gap-2 mt-4">
                         <button type="button" class="btn btn-light" disabled="@(!HayCambios)" @onclick="Descartar">Descartar</button>
                         <button type="button" class="btn btn-primary px-4" disabled="@(!PuedeGuardar)" @onclick="Guardar">
-                            <i class="bi bi-check2 me-1"></i>Guardar cambios
+                            @if (guardando)
+                            {
+                                <span class="spinner-border spinner-border-sm me-1"></span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-check2 me-1"></i>
+                            }
+                            Guardar cambios
                         </button>
                     </div>
                 </div>
@@ -214,6 +254,10 @@
                     <input class="form-control" type="@(verClave ? "text" : "password")" @bind="claveActual" @bind:event="oninput" />
                     <button class="btn btn-light" type="button" @onclick="() => verClave = !verClave"><i class="bi @(verClave ? "bi-eye-slash" : "bi-eye")"></i></button>
                 </div>
+                @if (errorClave is not null)
+                {
+                    <div class="alert alert-danger d-flex gap-2 mt-3 mb-0 small"><i class="bi bi-exclamation-circle"></i><div>@errorClave</div></div>
+                }
             }
             else if (pasoClave == 1)
             {
@@ -251,11 +295,17 @@
         }
         @if (pasoClave == 0)
         {
-            <button type="button" class="btn btn-primary" disabled="@(claveActual.Length == 0)" @onclick="() => pasoClave = 1">Continuar</button>
+            <button type="button" class="btn btn-primary" disabled="@(claveActual.Length == 0)" @onclick="() => { errorClave = null; pasoClave = 1; }">Continuar</button>
         }
         else if (pasoClave == 1)
         {
-            <button type="button" class="btn btn-primary" disabled="@(!ClaveValida)" @onclick="CambiarClave">Cambiar contraseña</button>
+            <button type="button" class="btn btn-primary" disabled="@(!ClaveValida || cambiandoClave)" @onclick="CambiarClave">
+                @if (cambiandoClave)
+                {
+                    <span class="spinner-border spinner-border-sm me-1"></span>
+                }
+                Cambiar contraseña
+            </button>
         }
         else
         {
@@ -268,9 +318,6 @@
     private const int MaxBio = 300;
     private static readonly string[] Pestanas = ["Datos", "Seguridad", "Preferencias"];
     private static readonly string[] EtapasClave = ["Actual", "Nueva", "Listo"];
-    private static readonly string[] Especialidades =
-        ["Ingeniería Informática", "Ingeniería Industrial", "Ingeniería Civil", "Ciencias e Ingeniería", "Estudios Generales Ciencias", "Estudios Generales Letras"];
-
     private readonly string[] cursosAprobados = ["Programación 3", "Cálculo 1", "Física 1"];
     private readonly List<ToastMessage> avisos = [];
     private Modal modalClave = default!;
@@ -278,8 +325,10 @@
     private string pestana = "Datos";
 
     // Valores guardados y valores que se están editando (para saber si hay cambios).
-    private string especialidad = "", modalidad = "", ciclo = "", area = "", bio = "";
-    private (string Esp, string Mod, string Ciclo, string Area, string Bio) guardado;
+    // Facultad y especialidad se guardan en la cuenta (REST); modalidad, ciclo, área y presentación solo viven en pantalla.
+    private string facultad = "", especialidad = "", modalidad = "", ciclo = "", area = "", bio = "";
+    private (string Fac, string Esp, string Mod, string Ciclo, string Area, string Bio) guardado;
+    private bool guardando;
 
     private bool avisoMensajes = true, avisoSesion = true, avisoReclamo = true;
 
@@ -287,18 +336,30 @@
     private bool verClave;
     private string claveActual = "", claveNueva = "", claveRepetida = "";
     private string ultimoCambio = "hace 2 meses";
+    private bool cambiandoClave;
+    private string? errorClave;
 
     private bool EsAdmin => Navigation.ToBaseRelativePath(Navigation.Uri).StartsWith("admin", StringComparison.OrdinalIgnoreCase);
     private bool EsTutor => !EsAdmin && RolActual.Rol == RolActual.Tutor;
-    private string Nombre => EsAdmin ? "Administrador" : RolActual.NombreUsuario;
-    private string Correo => EsAdmin ? "admin@pucp.edu.pe" : RolActual.CorreoUsuario;
+    // Con sesión real salen los datos del REST; si se entró directo a la pantalla, los de ejemplo.
+    private UsuarioDto? Real => EsAdmin ? null : RolActual.Usuario;
+    private AdministradorDto? Admin => EsAdmin ? RolActual.Administrador : null;
+    private string Nombre => EsAdmin
+        ? Admin?.Nombre ?? "Administrador"
+        : Real is { } u ? $"{u.Nombres} {u.Apellidos}".Trim() : RolActual.NombreUsuario;
+    private string Correo => EsAdmin
+        ? Admin?.Correo ?? "admin@pucp.edu.pe"
+        : Real?.CorreoInstitucional ?? RolActual.CorreoUsuario;
+    private string Codigo => Real?.CodigoPucp ?? RolActual.CodigoUsuario;
     private string RolTexto => EsAdmin ? "Administrador" : RolActual.Rol;
     private string Acento => "#2563eb";
     private string IconoRol => EsAdmin ? "bi-shield-lock-fill" : EsTutor ? "bi-person-workspace" : "bi-backpack2-fill";
 
     private bool BioConContacto => DatosContacto.Contiene(bio);
-    private bool HayCambios => (especialidad, modalidad, ciclo, area, bio) != guardado;
-    private bool PuedeGuardar => HayCambios && !BioConContacto;
+    private bool HayCambios => (facultad, especialidad, modalidad, ciclo, area, bio) != guardado;
+    private bool CambioEnCuenta => facultad != guardado.Fac || especialidad != guardado.Esp;
+    private bool PuedeGuardar => HayCambios && !BioConContacto && !guardando
+        && (!CambioEnCuenta || (facultad != "" && especialidad != ""));
 
     private (bool, string)[] Requisitos =>
     [
@@ -311,35 +372,87 @@
     private string ColorFuerza => Fuerza switch { <= 1 => "#ef4444", 2 => "#f59e0b", 3 => "#3b82f6", _ => "#10b981" };
     private bool ClaveValida => Fuerza == 4 && claveNueva == claveRepetida;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        CargarDatos();
         RolActual.Cambio += AlCambiarRol;
+
+        // Datos frescos del REST (por si cambiaron desde que se inició sesión); si falla, quedan los del inicio de sesión
+        if (EsAdmin && RolActual.Administrador is { } admin)
+        {
+            var (fresco, _) = await Api.ObtenerAdministradorAsync(admin.IdAdministrador);
+            if (fresco is not null) RolActual.Administrador = fresco;
+        }
+        else if (RolActual.Usuario is { } usuario)
+        {
+            var (fresco, _) = await Api.ObtenerUsuarioAsync(usuario.IdUsuario);
+            if (fresco is not null) RolActual.Usuario = fresco;
+        }
+
+        CargarDatos();
     }
 
-    // Datos de ejemplo según quién entra.
+    // Facultad y especialidad vienen de la cuenta (REST); lo demás son datos de ejemplo según quién entra.
     private void CargarDatos()
     {
-        especialidad = "Ingeniería Informática";
+        facultad = Real?.Facultad ?? "Ciencias e Ingeniería";
+        especialidad = Real?.Especialidad ?? "Ingeniería Informática";
         modalidad = "Virtual";
         ciclo = "5";
         area = "Coordinación académica";
         bio = EsAdmin ? ""
             : EsTutor ? "Me gusta explicar con ejemplos y ejercicios paso a paso. Fuerte en programación y matemáticas."
             : "Estoy reforzando Programación 3 y Cálculo.";
-        guardado = (especialidad, modalidad, ciclo, area, bio);
+        guardado = (facultad, especialidad, modalidad, ciclo, area, bio);
     }
 
-    private void Guardar()
+    private async Task Guardar()
     {
-        guardado = (especialidad, modalidad, ciclo, area, bio);
-        Avisar(ToastType.Success, "Perfil actualizado", "Tus cambios se guardaron.");
+        var cuenta = Real;
+        var guardarEnCuenta = CambioEnCuenta && cuenta is not null;
+        if (guardarEnCuenta)
+        {
+            guardando = true;
+            var (modificado, error) = await Api.ModificarUsuarioAsync(cuenta!.IdUsuario,
+                new DatosUsuario(cuenta.Nombres, cuenta.Apellidos, cuenta.CodigoPucp,
+                                 facultad, especialidad == "" ? null : especialidad, cuenta.CorreoInstitucional));
+            guardando = false;
+            if (error is not null)
+            {
+                Avisar(ToastType.Danger, "No se pudo guardar", error);
+                return;
+            }
+            RolActual.Usuario = modificado; // el resto de la aplicación ve los datos nuevos
+        }
+
+        guardado = (facultad, especialidad, modalidad, ciclo, area, bio);
+        Avisar(ToastType.Success, "Perfil actualizado",
+            guardarEnCuenta ? "Tu facultad y especialidad se guardaron en tu cuenta." : "Tus cambios se guardaron.");
     }
 
     private void Descartar()
     {
-        (especialidad, modalidad, ciclo, area, bio) = guardado;
+        (facultad, especialidad, modalidad, ciclo, area, bio) = guardado;
         Avisar(ToastType.Info, "Cambios descartados", "Volvimos a lo que tenías guardado.");
+    }
+
+    // ---------- Facultad y especialidad (las mismas listas de Registro) ----------
+    private IEnumerable<string> Facultades => ConActual(Carreras.PorFacultad.Keys, facultad);
+
+    private IEnumerable<string> EspecialidadesDeFacultad =>
+        ConActual(Carreras.PorFacultad.TryGetValue(facultad, out var lista) ? lista : Array.Empty<string>(), especialidad);
+
+    // Si el valor guardado no está en la lista (por ejemplo, escrito sin tildes), se agrega para no perderlo ni mostrar otro
+    private static IEnumerable<string> ConActual(IEnumerable<string> opciones, string actual) =>
+        actual == "" || opciones.Contains(actual) ? opciones : opciones.Prepend(actual);
+
+    private void CambiarFacultad(ChangeEventArgs e)
+    {
+        var nueva = e.Value?.ToString() ?? "";
+        if (nueva == facultad) return;
+        facultad = nueva;
+        // La especialidad anterior ya no aplica; si la facultad solo tiene una, se elige sola
+        var carreras = Carreras.PorFacultad.TryGetValue(nueva, out var lista) ? lista : Array.Empty<string>();
+        especialidad = carreras.Length == 1 ? carreras[0] : "";
     }
 
     private void GuardarPreferencias() =>
@@ -350,11 +463,30 @@
         pasoClave = 0;
         verClave = false;
         claveActual = claveNueva = claveRepetida = "";
+        errorClave = null;
         await modalClave.ShowAsync();
     }
 
-    private void CambiarClave()
+    private async Task CambiarClave()
     {
+        // Con sesión real la contraseña se cambia en el REST; sin sesión (se entró directo a la pantalla) queda de demostración
+        var idUsuario = Real?.IdUsuario;
+        var idAdministrador = EsAdmin ? RolActual.Administrador?.IdAdministrador : null;
+        if (idUsuario is not null || idAdministrador is not null)
+        {
+            cambiandoClave = true;
+            var error = idAdministrador is { } admin
+                ? await Api.CambiarPasswordAdministradorAsync(admin, claveActual, claveNueva)
+                : await Api.CambiarPasswordAsync(idUsuario!.Value, claveActual, claveNueva);
+            cambiandoClave = false;
+            if (error is not null)
+            {
+                errorClave = error;
+                pasoClave = 0; // lo más común es que la actual esté mal: se vuelve a pedir
+                return;
+            }
+        }
+
         pasoClave = 2;
         ultimoCambio = "hoy";
         Avisar(ToastType.Success, "Contraseña cambiada", "Se guardó cifrada.");
