@@ -18,6 +18,12 @@ public class GestorReclamosImpl implements GestorReclamos {
 
     @Override
     public Reclamo registrarReclamo(Sesion sesion, Usuario reclamante, Rol rolReclamante, String motivo) {
+        if (sesion == null || reclamante == null) {
+            throw new BL_exeption("La sesion y el reclamante son obligatorios");
+        }
+        if (motivo == null || motivo.isBlank()) {
+            throw new BL_exeption("El motivo del reclamo es obligatorio");
+        }
         if (rolReclamante == Rol.TUTOR) {
             if (sesion.getTutor().getUsuario().getIdUsuario() != reclamante.getIdUsuario()) {
                 throw new BL_exeption("El reclamante no es el tutor de esta sesion");
@@ -79,6 +85,13 @@ public class GestorReclamosImpl implements GestorReclamos {
     @Override
     public List<Reclamo> listarPendientes() {
         return reclamoDAO.listarPendientes();
+    }
+
+    @Override
+    public List<Reclamo> listarPorUsuario(Usuario usuario) {
+        return reclamoDAO.listAll().stream()
+                .filter(r -> r.getReclamante() != null && r.getReclamante().getIdUsuario() == usuario.getIdUsuario())
+                .toList();
     }
 
     @Override

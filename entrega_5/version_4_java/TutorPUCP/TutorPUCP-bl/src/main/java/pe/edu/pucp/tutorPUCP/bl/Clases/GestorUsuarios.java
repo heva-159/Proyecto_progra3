@@ -28,6 +28,9 @@ public interface GestorUsuarios {
     // Devuelve el usuario si el correo y la contrasena coinciden y la cuenta esta activa; si no, null.
     Usuario iniciarSesion(String correo, String password);
 
+    // Cambia la contrasena si la actual coincide (la cuenta debe estar activa). La nueva se guarda como hash.
+    void cambiarPassword(int idUsuario, String passwordActual, String passwordNueva);
+
     // ---- Perfil Tutor ----
 
     // Le agrega el perfil de tutor a un usuario que ya existe.
@@ -56,4 +59,7 @@ public interface GestorUsuarios {
     List<Administrador> listarAdministradores();
 
     Administrador iniciarSesionAdministrador(String correo, String password);
+
+    // Igual que cambiarPassword, para el administrador.
+    void cambiarPasswordAdministrador(int idAdministrador, String passwordActual, String passwordNueva);
 }

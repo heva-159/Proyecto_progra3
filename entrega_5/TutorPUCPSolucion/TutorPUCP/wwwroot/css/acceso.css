@@ -145,8 +145,8 @@
 .telefono .selector-boton { padding-left: .9rem; }
 
 /* ---------- Código de verificación ---------- */
-.codigo { display: grid; grid-template-columns: repeat(6, 1fr); gap: .5rem; }
-.codigo input { height: 56px; text-align: center; font-size: 1.4rem; font-weight: 700; border-radius: .4rem; border: 1px solid var(--tp-borde); background: var(--tp-superficie); color: var(--tp-texto); outline: none; transition: border-color .15s ease, box-shadow .15s ease; }
+.codigo { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: .5rem; } /* minmax(0, 1fr) y width/min-width en el input: sin esto cada casilla exige su ancho natural (~300px) y se sale de la pantalla */
+.codigo input { width: 100%; min-width: 0; padding: 0; height: 56px; text-align: center; font-size: 1.4rem; font-weight: 700; border-radius: .4rem; border: 1px solid var(--tp-borde); background: var(--tp-superficie); color: var(--tp-texto); outline: none; transition: border-color .15s ease, box-shadow .15s ease; }
 .codigo input:focus { border-color: var(--tp-azul); box-shadow: 0 0 0 4px rgba(37, 99, 235, .14); }
 
 /* ---------- Modo oscuro ---------- */

@@ -1,5 +1,6 @@
 ﻿@page "/admin"
 @inject AcademicoRestService Rest
+@inject RolActual RolActual
 
 @* Requisitos: RF005, RF006, RF007. Los datos vienen de la BD a través del servicio REST (GestorAcademicoRecurso). *@
 
@@ -10,7 +11,7 @@
         <span class="icono-titulo" style="background:#ffe4e6;color:#e11d48;"><i class="bi bi-speedometer2"></i></span>
         <div>
             <h1 class="h3">Panel del administrador</h1>
-            <p>Bienvenida, Carla Mendoza Rios. Revisa las postulaciones de tutores y gestiona el catálogo académico.</p>
+            <p>Hola, @RolActual.NombreAdministrador. Revisa las postulaciones de tutores y gestiona el catálogo académico.</p>
         </div>
     </div>
     <a class="btn btn-primary" href="/admin/postulaciones"><i class="bi bi-person-check me-1"></i>Revisar postulaciones</a>

@@ -136,9 +136,9 @@
 
     private string SeccionClave => EsAdmin ? "admin" : RolActual.Rol;
 
-    private string NombrePerfil => EsAdmin ? "Administrador" : RolActual.NombreUsuario;
+    private string NombrePerfil => EsAdmin ? RolActual.NombreCortoAdministrador : RolActual.NombreCorto;
 
-    private string CorreoPerfil => EsAdmin ? "admin@pucp.edu.pe" : RolActual.CorreoUsuario;
+    private string CorreoPerfil => EsAdmin ? RolActual.CorreoAdministrador : RolActual.CorreoMostrado;
 
     private string Acento => "#2563eb"; // un solo color de acento para todos los roles
 

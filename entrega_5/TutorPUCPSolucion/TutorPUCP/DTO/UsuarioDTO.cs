@@ -11,5 +11,6 @@
         public string CorreoInstitucional { get; set; } = "";
         public string Estado { get; set; } = "";
         public string Rol { get; set; } = "";
+        public bool CorreoVerificado { get; set; }
     }
 }

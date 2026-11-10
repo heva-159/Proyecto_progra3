@@ -14,6 +14,7 @@ public class UsuarioDTO {
     private String correoInstitucional;
     private EstadoCuenta estado;
     private Rol rol;
+    private boolean correoVerificado;
 
     public UsuarioDTO() {
     }
@@ -28,6 +29,7 @@ public class UsuarioDTO {
         this.correoInstitucional = usuario.getCorreoInstitucional();
         this.estado = usuario.getEstado();
         this.rol = usuario.getRol();
+        this.correoVerificado = usuario.isCorreoVerificado();
     }
 
     // getters y setters
@@ -102,5 +104,13 @@ public class UsuarioDTO {
 
     public void setRol(Rol rol) {
         this.rol = rol;
+    }
+
+    public boolean isCorreoVerificado() {
+        return correoVerificado;
+    }
+
+    public void setCorreoVerificado(boolean correoVerificado) {
+        this.correoVerificado = correoVerificado;
     }
 }
