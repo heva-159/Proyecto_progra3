@@ -5,7 +5,7 @@ using TutorPUCP.Modelos;
 namespace TutorPUCP.Servicios;
 
 // Cliente del servicio REST del administrador (RF005, RF006, RF007).
-// Llama a GestorAcademicoRecurso en GlassFish: {Rest:BaseUrl}academico/...
+// Llama a GestorAcademicoRecurso en GlassFish: {ApiRest:BaseUrl}academico/...
 // Mismo estilo que PlatoRestService del ejemplo del profesor.
 public class AcademicoRestService(HttpClient http)
 {
