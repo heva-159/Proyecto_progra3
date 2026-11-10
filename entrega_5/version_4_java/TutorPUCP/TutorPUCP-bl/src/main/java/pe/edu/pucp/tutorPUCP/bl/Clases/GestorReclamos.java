@@ -19,5 +19,7 @@ public interface GestorReclamos {
     List<Reclamo> listarReclamos();
     List<Reclamo> listarPendientes();
     List<Reclamo> listarPorSesion(Sesion sesion);
+    // Reclamos que registró el usuario (como tutor o como estudiante).
+    List<Reclamo> listarPorUsuario(Usuario usuario);
     void resolverReclamo(Reclamo reclamo, Administrador administrador, boolean aprobar, String resolucion);
 }

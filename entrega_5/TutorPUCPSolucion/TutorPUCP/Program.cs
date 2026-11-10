@@ -18,6 +18,8 @@ builder.Services.AddHttpClient("api", cliente =>
     cliente.BaseAddress = new Uri(builder.Configuration["ApiRest:BaseUrl"]!);
 });
 builder.Services.AddScoped<TutorPUCP.Servicios.UsuariosApi>();
+builder.Services.AddScoped<TutorPUCP.Servicios.MensajesApi>();
+builder.Services.AddScoped<TutorPUCP.Servicios.ReclamosApi>();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -31,7 +33,7 @@ if (!app.Environment.IsDevelopment())
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
-app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+app.UseStatusCodePagesWithReExecute("/not-found");
 app.UseHttpsRedirection();
 
 app.UseAntiforgery();

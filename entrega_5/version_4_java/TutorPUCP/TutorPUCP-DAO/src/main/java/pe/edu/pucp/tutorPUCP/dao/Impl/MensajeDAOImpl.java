@@ -13,7 +13,9 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MensajeDAOImpl implements MensajeDAO {
 
@@ -26,7 +28,7 @@ public class MensajeDAOImpl implements MensajeDAO {
             stmt.setInt(1, id);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                mensaje = leerMensaje(rs);
+                mensaje = leerMensaje(rs, new HashMap<>());
             }
         } catch (SQLException e) {
             System.out.println("Error al obtener mensaje: " + e.getMessage());
@@ -41,8 +43,10 @@ public class MensajeDAOImpl implements MensajeDAO {
         try (Connection connection = DBManager.getInstance().getConnection()) {
             CallableStatement stmt = connection.prepareCall(sql);
             ResultSet rs = stmt.executeQuery();
+            // cada usuario se busca una sola vez aunque aparezca en muchos mensajes
+            Map<Integer, Usuario> usuarios = new HashMap<>();
             while (rs.next()) {
-                mensajes.add(leerMensaje(rs));
+                mensajes.add(leerMensaje(rs, usuarios));
             }
         } catch (SQLException e) {
             System.out.println("Error al listar mensajes: " + e.getMessage());
@@ -172,12 +176,12 @@ public class MensajeDAOImpl implements MensajeDAO {
         }
     }
 
-    private Mensaje leerMensaje(ResultSet rs) throws SQLException {
+    private Mensaje leerMensaje(ResultSet rs, Map<Integer, Usuario> usuarios) throws SQLException {
         UsuarioDAOImpl usuarioDAO = new UsuarioDAOImpl();
         Mensaje mensaje = new Mensaje();
         mensaje.setIdMensaje(rs.getInt("id"));
-        mensaje.setEmisor(usuarioDAO.load(rs.getInt("id_usuario_emisor")));
-        mensaje.setReceptor(usuarioDAO.load(rs.getInt("id_usuario_receptor")));
+        mensaje.setEmisor(usuarios.computeIfAbsent(rs.getInt("id_usuario_emisor"), usuarioDAO::load));
+        mensaje.setReceptor(usuarios.computeIfAbsent(rs.getInt("id_usuario_receptor"), usuarioDAO::load));
         mensaje.setContenido(rs.getString("contenido"));
         mensaje.setFechaEnvio(rs.getObject("fecha_envio", LocalDateTime.class));
         mensaje.setLeido(rs.getBoolean("leido"));
