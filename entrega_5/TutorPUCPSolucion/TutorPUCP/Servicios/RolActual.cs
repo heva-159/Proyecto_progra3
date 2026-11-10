@@ -1,3 +1,5 @@
+using TutorPUCP.DTO;
+
 namespace TutorPUCP.Servicios;
 
 // Rol con el que el usuario navega (Estudiante o Tutor).
@@ -11,6 +13,11 @@ public class RolActual
     public string Rol { get; private set; } = Estudiante;
 
     public event Action? Cambio;
+
+    // Usuario que inició sesión (lo devuelve el REST); null mientras no haya entrado
+    public UsuarioDto? Usuario { get; set; }
+    // Administrador que inició sesión (lo devuelve el REST); null mientras no haya entrado
+    public AdministradorDto? Administrador { get; set; }
 
     public void Cambiar(string rol)
     {

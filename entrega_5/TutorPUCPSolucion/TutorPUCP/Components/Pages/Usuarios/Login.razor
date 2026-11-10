@@ -1,8 +1,10 @@
 ﻿@page "/login/usuario"
 @page "/login/usuarios"
+@using TutorPUCP.DTO
 @layout AuthLayout
 @inject RolActual RolActual
 @inject NavigationManager Navigation
+@inject IHttpClientFactory FabricaHttp
 
 @* Acceso de usuarios (RF002): solo correo y contraseña. La cuenta es una sola; si la persona es
    Estudiante y Tutor, cambia de rol dentro del sistema sin cerrar sesión (RF003).
@@ -79,9 +81,37 @@
         if (error is not null) return;
 
         ingresando = true;
-        await Task.Delay(500); // Pantalla visual: aún no hay base de datos.
-        RolActual.Cambiar(RolActual.Estudiante);
-        Navigation.NavigateTo("/estudiante");
+        try
+        {
+            var http = FabricaHttp.CreateClient("api");
+            var respuesta = await http.PostAsJsonAsync("usuario/login", new { correo = c, password = clave });
+
+            if (respuesta.IsSuccessStatusCode)
+            {
+                var usuario = await respuesta.Content.ReadFromJsonAsync<UsuarioDto>();
+                RolActual.Usuario = usuario;
+                // La cuenta es ESTUDIANTE, TUTOR o AMBOS: si es AMBOS entra como estudiante y cambia de rol en el menú
+                var rol = usuario?.Rol == "TUTOR" ? RolActual.Tutor : RolActual.Estudiante;
+                RolActual.Cambiar(rol);
+                Navigation.NavigateTo(rol == RolActual.Tutor ? "/tutor" : "/estudiante");
+            }
+            else if (respuesta.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                error = "Correo o contraseña incorrectos.";
+            }
+            else
+            {
+                error = "No se pudo iniciar sesión. Intenta de nuevo.";
+            }
+        }
+        catch (HttpRequestException)
+        {
+            error = "No se pudo conectar con el servidor. Revisa que GlassFish esté encendido.";
+        }
+        finally
+        {
+            ingresando = false;
+        }
     }
 
     private void AvisarRecuperar() =>

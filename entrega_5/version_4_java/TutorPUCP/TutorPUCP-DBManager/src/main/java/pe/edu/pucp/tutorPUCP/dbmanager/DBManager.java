@@ -26,7 +26,7 @@ public class DBManager {
         String host = properties.getProperty("host");
         String port = properties.getProperty("port");
         String database = properties.getProperty("database");
-        this.url = "jdbc:mysql://" + host + ":" + port + "/" + database;
+        this.url = "jdbc:mysql://" + host + ":" + port + "/" + database + "?sslMode=DISABLED&allowPublicKeyRetrieval=true";
         this.user = properties.getProperty("user");
         this.password = properties.getProperty("password");
     }
@@ -39,8 +39,9 @@ public class DBManager {
 
     public Connection getConnection() {
         try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
             return DriverManager.getConnection(url, user, password);
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException(e);
         }
     }

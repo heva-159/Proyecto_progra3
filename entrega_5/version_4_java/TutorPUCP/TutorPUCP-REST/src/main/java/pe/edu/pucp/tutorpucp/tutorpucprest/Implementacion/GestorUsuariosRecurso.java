@@ -99,6 +99,7 @@ public class GestorUsuariosRecurso{
     }
 
     @GET
+    @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
     public Response listar() {
         List<UsuarioDTO> usuarios = new ArrayList<>();
@@ -365,7 +366,7 @@ public class GestorUsuariosRecurso{
         Administrador administrador = gestorUsuariosBL.iniciarSesionAdministrador(datos.getCorreo(), datos.getPassword());
         if (administrador == null) {
             return Response.status(Response.Status.UNAUTHORIZED)
-                    .entity(Map.of("error", "Correo o contraseña incorrectos")).build();
+                    .entity(Map.of("error", "   Correo o contraseña incorrectos")).build();
         }
         return Response.ok(new AdministradorDTO(administrador)).build();
     }

@@ -13,6 +13,12 @@ builder.Services.AddBlazorBootstrap();
 builder.Services.AddRadzenComponents();
 builder.Services.AddScoped<TutorPUCP.Servicios.RolActual>();
 
+builder.Services.AddHttpClient("api", cliente =>
+{
+    cliente.BaseAddress = new Uri(builder.Configuration["ApiRest:BaseUrl"]!);
+});
+builder.Services.AddScoped<TutorPUCP.Servicios.UsuariosApi>();
+
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
@@ -33,5 +39,12 @@ app.UseAntiforgery();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+// Prueba temporal: bórrala cuando confirmes que funciona
+/*app.MapGet("/probar-api", async (IHttpClientFactory fabrica) =>
+{
+    var http = fabrica.CreateClient("api");
+    return Results.Content(await http.GetStringAsync("usuario"), "application/json");
+});*/
 
 app.Run();
