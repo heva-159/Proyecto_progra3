@@ -1,4 +1,7 @@
-﻿@page "/tutor/tarifas"
+@page "/tutor/tarifas"
+@using TutorPUCP.Servicios
+@inject AcademicoApi Api
+@inject RolActual EstadoSesion
 
 <PageTitle>Mis tarifas</PageTitle>
 
@@ -14,9 +17,9 @@
         ← Volver al Panel
     </a>
 </div>
+
 @* =============================================================================
    ALERTA INFORMATIVA DEL REQUERIMIENTO RF008
-   Aclara que solo los cursos aprobados pueden tener tarifa
    ============================================================================= *@
 <div class="alert alert-info shadow-sm border-0 d-flex align-items-center mb-4" role="alert">
     <i class="bi bi-info-circle-fill fs-4 me-3"></i>
@@ -27,41 +30,61 @@
         <a href="/tutor/postular" class="alert-link">enviar tu postulación aquí</a>.
     </div>
 </div>
+
 @* =============================================================================
-   ALERTA DE CONFIRMACIÓN SIMULADA
-   Aparece cuando el tutor hace clic en el botón "Guardar" de cualquier fila
+   ALERTAS DE CONFIRMACIÓN O ERROR (REST)
    ============================================================================= *@
 @if (tarifaActualizada)
 {
     <div class="alert alert-success alert-dismissible fade show shadow-sm border-0" role="alert">
-        <strong>¡Tarifa actualizada!</strong> Se guardó un precio de
+        <strong>¡Tarifa actualizada con éxito!</strong> Se guardó un precio de
         <strong>S/ @montoGuardado.ToString("0.00") por hora</strong> para el curso <strong>@cursoGuardado</strong>.
         <button type="button" class="btn-close" @onclick="() => tarifaActualizada = false"></button>
     </div>
 }
+
+@if (!string.IsNullOrEmpty(mensajeError))
+{
+    <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0" role="alert">
+        <i class="bi bi-exclamation-octagon-fill me-2"></i> @mensajeError
+        <button type="button" class="btn-close" @onclick="() => mensajeError = null"></button>
+    </div>
+}
+
 @* =============================================================================
    TABLA DE GESTIÓN DE TARIFAS
-   Muestra cada curso habilitado con un campo numérico para editar el precio
    ============================================================================= *@
 <div class="card shadow-sm border-0 mb-4">
     <div class="card-header bg-white py-3 border-0">
         <h5 class="fw-bold mb-0 text-dark">Catálogo de Cursos Habilitados</h5>
     </div>
     <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th class="ps-3" style="width: 35%;">Curso</th>
-                        <th style="width: 20%;">Acreditación</th>
-                        <th style="width: 30%;">Tarifa por Hora (S/)</th>
-                        <th style="width: 15%;" class="text-center">Acción</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @* Verificamos que la lista exista y la recorremos con foreach *@
-                    @if (listaTarifas != null && listaTarifas.Count > 0)
-                    {
+        @if (cargando)
+        {
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="text-muted mt-2 mb-0">Cargando tarifas...</p>
+            </div>
+        }
+        else if (listaTarifas == null || listaTarifas.Count == 0)
+        {
+            <div class="p-4 text-center text-muted">
+                No tienes cursos habilitados con postulación aprobada para registrar tarifas.
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3" style="width: 35%;">Curso</th>
+                            <th style="width: 20%;">Acreditación</th>
+                            <th style="width: 30%;">Tarifa por Hora (S/)</th>
+                            <th style="width: 15%;" class="text-center">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
                         @foreach (var item in listaTarifas)
                         {
                             <tr>
@@ -78,7 +101,6 @@
                                 <td>
                                     <div class="input-group" style="max-width: 220px;">
                                         <span class="input-group-text fw-bold">S/</span>
-                                        @* @bind conecta este input directamente con la variable C# item.MontoPorHora *@
                                         <input type="number"
                                                class="form-control"
                                                @bind="item.MontoPorHora"
@@ -97,12 +119,13 @@
                                 </td>
                             </tr>
                         }
-                    }
-                </tbody>
-            </table>
-        </div>
+                    </tbody>
+                </table>
+            </div>
+        }
     </div>
 </div>
+
 @* =============================================================================
    TARJETA DE CONSEJOS Y POLÍTICAS 
    ============================================================================= *@
@@ -111,45 +134,86 @@
     <ul class="mb-0 small text-muted">
         <li>El rango de precio sugerido por la facultad está entre <strong>S/ 25.00</strong> y <strong>S/ 45.00</strong> por hora.</li>
         <li>Los estudiantes verán este precio publicado cuando utilicen el buscador de tutores.</li>
-        <li>Cualquier cambio de tarifa se aplicará únicamente a las <strong>futuras reservas</strong>; las sesiones ya agendadas conservarán su precio pactado.</li>
+        
     </ul>
 </div>
+
 @* =============================================================================
-   LÓGICA EN C# 
+   LÓGICA EN C# (RF008)
    ============================================================================= *@
 @code {
-    // Bandera para mostrar la alerta verde de confirmación
     private bool tarifaActualizada = false;
     private string cursoGuardado = "";
-    private double montoGuardado = 0;
-    // Lista simulada de cursos aprobados con sus tarifas actuales
-    private List<TarifaItem> listaTarifas = new()
+    private decimal montoGuardado = 0;
+    private string? mensajeError = null;
+    private bool cargando = true;
+
+    // Lista real obtenida desde MySQL mediante REST
+    private List<TarifaItem> listaTarifas = new();
+
+    protected override async Task OnInitializedAsync()
     {
-        new TarifaItem
+        cargando = true;
+        // Obtenemos el ID del tutor logueado (o 1 por defecto para pruebas)
+        int idTutorActual = EstadoSesion.Usuario?.IdUsuario ?? 1;
+
+        var (tarifas, error) = await Api.ListarTarifasPorTutorAsync(idTutorActual);
+
+        if (error != null)
         {
-            CursoCodigo = "1INF30",
-            CursoNombre = "Programación 3",
-            MontoPorHora = 35.00
-        },
-        new TarifaItem
-        {
-            CursoCodigo = "1INF01",
-            CursoNombre = "Algoritmia",
-            MontoPorHora = 30.00
+            mensajeError = error;
         }
-    };
-    // Método que se ejecuta al presionar "Guardar" en cualquier fila
-    private void GuardarTarifa(TarifaItem item)
-    {
-        cursoGuardado = $"{item.CursoCodigo} - {item.CursoNombre}";
-        montoGuardado = item.MontoPorHora;
-        tarifaActualizada = true;
+        else if (tarifas != null && tarifas.Count > 0)
+        {
+            listaTarifas = tarifas.Select(t => new TarifaItem
+            {
+                IdTarifa = t.IdTarifa,
+                IdCurso = t.IdCurso,
+                CursoCodigo = t.CursoCodigo,
+                CursoNombre = t.CursoNombre,
+                MontoPorHora = t.MontoPorHora
+            }).ToList();
+        }
+        else
+        {
+            // Si el tutor aún no tiene tarifas en BD, cargamos los cursos predeterminados
+            listaTarifas = new()
+            {
+                new TarifaItem { IdCurso = 1, CursoCodigo = "1INF30", CursoNombre = "Programación 3", MontoPorHora = 35.00m },
+                new TarifaItem { IdCurso = 2, CursoCodigo = "1INF01", CursoNombre = "Algoritmia", MontoPorHora = 30.00m }
+            };
+        }
+        cargando = false;
     }
-    // Clase que representa cada fila de la tabla
+
+    private async Task GuardarTarifa(TarifaItem item)
+    {
+        tarifaActualizada = false;
+        mensajeError = null;
+
+        int idTutorActual = EstadoSesion.Usuario?.IdUsuario ?? 1;
+        var peticion = new GuardarTarifaDto(idTutorActual, item.IdCurso, item.MontoPorHora);
+
+        var (resultado, error) = await Api.GuardarTarifaAsync(peticion);
+
+        if (error != null)
+        {
+            mensajeError = error;
+        }
+        else
+        {
+            cursoGuardado = $"{item.CursoCodigo} - {item.CursoNombre}";
+            montoGuardado = item.MontoPorHora;
+            tarifaActualizada = true;
+        }
+    }
+
     public class TarifaItem
     {
+        public int IdTarifa { get; set; }
+        public int IdCurso { get; set; }
         public string CursoCodigo { get; set; } = "";
         public string CursoNombre { get; set; } = "";
-        public double MontoPorHora { get; set; }
+        public decimal MontoPorHora { get; set; }
     }
 }

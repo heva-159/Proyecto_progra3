@@ -20,6 +20,7 @@ builder.Services.AddHttpClient("api", cliente =>
 builder.Services.AddScoped<TutorPUCP.Servicios.UsuariosApi>();
 builder.Services.AddScoped<TutorPUCP.Servicios.MensajesApi>();
 builder.Services.AddScoped<TutorPUCP.Servicios.ReclamosApi>();
+builder.Services.AddScoped<TutorPUCP.Servicios.AcademicoApi>();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();

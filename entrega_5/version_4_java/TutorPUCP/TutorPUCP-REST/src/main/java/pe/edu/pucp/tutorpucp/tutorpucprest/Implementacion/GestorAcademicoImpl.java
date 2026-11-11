@@ -1,4 +1,4 @@
-package pe.edu.pucp.tutorPUCP.bl.Implementacion;
+package pe.edu.pucp.tutorpucp.tutorpucprest.Implementacion;
 
 import pe.edu.pucp.tutorPUCP.dao.DAOs.CursoDAO;
 import pe.edu.pucp.tutorPUCP.dao.DAOs.PostulacionDAO;
