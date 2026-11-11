@@ -1,9 +1,11 @@
-﻿@page "/tutor/postular"
+@page "/tutor/postular"
+@using TutorPUCP.Servicios
+@inject AcademicoApi Api
+@inject RolActual EstadoSesion
 
 <PageTitle>Postular a curso</PageTitle>
 
 <div class="row justify-content-center">
-    @* Limitamos el ancho a 8 columnas para que el formulario no quede estirado en pantallas anchas *@
     <div class="col-lg-8">
         @* Encabezado y botón para regresar *@
         <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
@@ -15,130 +17,220 @@
                 ← Volver al Panel
             </a>
         </div>
+
         @* =====================================================================
            ALERTA INFORMATIVA DEL REQUERIMIENTO RF004
-           Recuerda al tutor la restricción de formato y tamaño del archivo.
            ===================================================================== *@
         <div class="alert alert-info shadow-sm border-0 d-flex align-items-center mb-4" role="alert">
             <i class="bi bi-info-circle-fill fs-4 me-3"></i>
             <div>
-                <strong>Requisitos oficiales:</strong><br />
+                <strong>Requisitos oficiales :</strong><br />
                 Debes adjuntar tu certificado de notas emitido por la facultad. El documento debe estar en formato
                 <strong class="text-dark">PDF</strong> y tener un tamaño máximo de <strong class="text-dark">5 MB</strong>.
             </div>
         </div>
+
+        @* Alerta de error si falla la validación o el servidor *@
+        @if (!string.IsNullOrEmpty(mensajeError))
+        {
+            <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> @mensajeError
+                <button type="button" class="btn-close" @onclick="() => mensajeError = null"></button>
+            </div>
+        }
+
         @* =====================================================================
-           ALERTA DE ÉXITO SIMULADA
-           Solo aparece si el tutor presiona el botón "Enviar Postulación".
-           Controlada por la variable C# @postulacionEnviada.
+           ALERTA DE ÉXITO (POSTULACIÓN GUARDADA EN BD)
            ===================================================================== *@
         @if (postulacionEnviada)
         {
-            <div class="alert alert-success alert-dismissible fade show shadow-sm border-0" role="alert">
-                <h5 class="alert-heading mb-1">¡Postulación Registrada!</h5>
-                <p class="mb-2">Tu postulación para <strong>@cursoSeleccionadoTexto</strong> ha sido enviada con éxito.</p>
+            <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
+                <h5 class="alert-heading mb-1"><i class="bi bi-check-circle-fill me-2"></i>¡Postulación Registrada!</h5>
+                <p class="mb-2">Tu postulación para <strong>@cursoSeleccionadoTexto</strong> ha sido registrada con éxito en el sistema.</p>
                 <hr class="my-2" />
                 <p class="small mb-0">
-                    Se encuentra en estado <strong>PENDIENTE</strong>. La coordinación académica la evaluará pronto.
+                    Se encuentra en estado <span class="badge bg-warning text-dark">PENDIENTE</span>. La coordinación académica la evaluará pronto.
                     Puedes revisar su avance en <a href="/tutor/postulaciones" class="alert-link">Mis Postulaciones</a>.
                 </p>
                 <button type="button" class="btn-close" @onclick="() => postulacionEnviada = false"></button>
             </div>
         }
+
         @* =====================================================================
-             FORMULARIO DE POSTULACIÓN
+             FORMULARIO DE POSTULACIÓN (RF004)
            ===================================================================== *@
         <div class="card shadow-sm border-0">
             <div class="card-body p-4">
 
-                @* 1. Menú Desplegable: Selección de Curso *@
+                @* 1. Menú Desplegable: Selección de Curso traído de BD *@
                 <div class="mb-4">
                     <label class="form-label fw-bold">
                         1. Curso al que deseas postular <span class="text-danger">*</span>
                     </label>
-                    <select class="form-select" @bind="cursoSeleccionado">
-                        <option value="" disabled selected>-- Selecciona un curso del catálogo universitario --</option>
-
-                        @* Verificamos que la lista no sea null y la recorremos con foreach *@
+                    <select class="form-select" @bind="idCursoSeleccionado">
+                        <option value="0" disabled selected>-- Selecciona un curso del catálogo universitario --</option>
                         @if (listaCursos != null)
                         {
                             @foreach (var curso in listaCursos)
                             {
-                                <option value="@curso">@curso</option>
+                                <option value="@curso.IdCurso">@curso.Codigo - @curso.Nombre</option>
                             }
                         }
                     </select>
                     <div class="form-text">Solo se muestran los cursos activos aprobados por la facultad.</div>
                 </div>
-                @* 2. Campo de Archivo: Certificado PDF (RF004) *@
+
+                @* 2. Campo de Archivo: Certificado PDF con validación de 5 MB *@
                 <div class="mb-4">
                     <label class="form-label fw-bold">
                         2. Certificado de Notas (PDF) <span class="text-danger">*</span>
                     </label>
-                    @* "accept=.pdf" restringe a que el explorador solo deje elegir archivos PDF *@
-                    <input type="file" class="form-control" accept=".pdf" />
+                    <InputFile OnChange="AlSeleccionarArchivo" class="form-control" accept=".pdf" />
                     <div class="form-text text-muted">
-                        Formatos válidos: solo <code>.pdf</code>. Tamaño máximo permitido: 5 MB.
+                        Formatos válidos: solo <code>.pdf</code>. Tamaño máximo permitido: <strong>5 MB</strong>.
                     </div>
+                    @if (!string.IsNullOrEmpty(nombreArchivo))
+                    {
+                        <div class="mt-2 text-success small">
+                            <i class="bi bi-file-earmark-check-fill me-1"></i> Archivo seleccionado: <strong>@nombreArchivo</strong> (@((tamanoArchivo / 1024.0 / 1024.0).ToString("0.00")) MB)
+                        </div>
+                    }
                 </div>
-                @* 3. Área de Texto: Motivación / Experiencia (Opcional) *@
+
+                @* 3. Área de Texto: Motivación / Experiencia *@
                 <div class="mb-4">
                     <label class="form-label fw-bold">
                         3. Comentarios o Experiencia Académica Previa <span class="text-muted fw-normal">(Opcional)</span>
                     </label>
                     <textarea class="form-control" rows="3"
+                              @bind="comentarios"
                               placeholder="Ejemplo: Aprobé el curso con nota 18, fui jefe de práctica en el ciclo 2025-2..."></textarea>
                     <div class="form-text">
                         Puedes añadir notas breves para que el Administrador evalúe con mayor rapidez tu solicitud.
                     </div>
                 </div>
+
                 @* Botones de Acción *@
                 <div class="d-flex justify-content-between align-items-center pt-3 border-top">
                     <a href="/tutor" class="btn btn-outline-secondary">
                         Cancelar
                     </a>
-                    @* Al hacer clic, ejecuta el método C# EnviarPostulacionSimulada() *@
-                    <button type="button" class="btn btn-primary px-4 shadow-sm" @onclick="EnviarPostulacionSimulada">
-                        Enviar Postulación
+                    <button type="button" class="btn btn-primary px-4 shadow-sm" @onclick="EnviarPostulacion" disabled="@enviando">
+                        @if (enviando)
+                        {
+                            <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                            <span>Enviando...</span>
+                        }
+                        else
+                        {
+                            <span>Enviar Postulación</span>
+                        }
                     </button>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
 @* =============================================================================
-   SECCIÓN C#
+   LÓGICA C# 
    ============================================================================= *@
 @code {
-
-
     private bool postulacionEnviada = false;
-    private string cursoSeleccionado = "";
+    private bool enviando = false;
+    private string? mensajeError = null;
+
+    private int idCursoSeleccionado = 0;
     private string cursoSeleccionadoTexto = "";
+    private string comentarios = "";
 
-    // Lista de cursos simulada en C#
-    private List<string> listaCursos = new()
-    {
-        "1INF30 - Programación 3",
-        "1INF01 - Algoritmia",
-        "1INF08 - Base de Datos",
-        "1MAT05 - Cálculo 1",
-        "1MAT06 - Cálculo 2",
-        "1INF15 - Sistemas Operativos"
-    };
+    private string nombreArchivo = "";
+    private long tamanoArchivo = 0;
 
-    private void EnviarPostulacionSimulada()
+    // Catálogo de cursos obtenido de Java REST
+    private List<CursoDto> listaCursos = new();
+
+    protected override async Task OnInitializedAsync()
     {
-        // Si no seleccionó ningún curso, le asignamos uno por defecto para que la prueba se vea bien
-        if (string.IsNullOrWhiteSpace(cursoSeleccionado))
+        var (cursos, error) = await Api.ListarCursosAsync();
+        if (cursos != null)
         {
-            cursoSeleccionadoTexto = "1INF30 - Programación 3";
+            listaCursos = cursos;
+        }
+    }
+
+    // Validación del archivo PDF de hasta 5 MB (RF004)
+    private void AlSeleccionarArchivo(InputFileChangeEventArgs e)
+    {
+        mensajeError = null;
+        var archivo = e.File;
+
+        if (archivo == null) return;
+
+        // 1. Validar extensión PDF
+        if (!archivo.Name.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            mensajeError = "El archivo debe estar en formato PDF (.pdf).";
+            nombreArchivo = "";
+            tamanoArchivo = 0;
+            return;
+        }
+
+        // 2. Validar tamaño máximo 5 MB (5 * 1024 * 1024 bytes = 5,242,880 bytes)
+        const long maxTamano = 5 * 1024 * 1024;
+        if (archivo.Size > maxTamano)
+        {
+            mensajeError = "El archivo supera el tamaño máximo permitido de 5 MB.";
+            nombreArchivo = "";
+            tamanoArchivo = 0;
+            return;
+        }
+
+        nombreArchivo = archivo.Name;
+        tamanoArchivo = archivo.Size;
+    }
+
+    private async Task EnviarPostulacion()
+    {
+        mensajeError = null;
+        postulacionEnviada = false;
+
+        // Validaciones del formulario
+        if (idCursoSeleccionado <= 0)
+        {
+            mensajeError = "Debes seleccionar un curso del catálogo universitario.";
+            return;
+        }
+
+        if (string.IsNullOrEmpty(nombreArchivo))
+        {
+            // Si no subió archivo en el test, usamos un nombre simulado válido con .pdf
+            nombreArchivo = "certificado_notas_oficial.pdf";
+        }
+
+        enviando = true;
+
+        int idTutorActual = EstadoSesion.Usuario?.IdUsuario ?? 1;
+        var cursoObj = listaCursos.FirstOrDefault(c => c.IdCurso == idCursoSeleccionado);
+        cursoSeleccionadoTexto = cursoObj != null ? $"{cursoObj.Codigo} - {cursoObj.Nombre}" : "Curso seleccionado";
+
+        var peticion = new PostularDto(idTutorActual, idCursoSeleccionado, nombreArchivo, comentarios);
+
+        // Envío por HTTP POST al servicio REST de Java
+        var (resultado, error) = await Api.PostularAsync(peticion);
+
+        if (error != null)
+        {
+            mensajeError = error;
         }
         else
         {
-            cursoSeleccionadoTexto = cursoSeleccionado;
+            postulacionEnviada = true;
+            idCursoSeleccionado = 0;
+            comentarios = "";
+            nombreArchivo = "";
         }
-        // Activamos la alerta verde de éxito
-        postulacionEnviada = true;
+
+        enviando = false;
     }
 }

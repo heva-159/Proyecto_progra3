@@ -20,6 +20,7 @@ builder.Services.AddHttpClient("api", cliente =>
 builder.Services.AddScoped<TutorPUCP.Servicios.UsuariosApi>();
 builder.Services.AddScoped<TutorPUCP.Servicios.MensajesApi>();
 builder.Services.AddScoped<TutorPUCP.Servicios.ReclamosApi>();
+builder.Services.AddScoped<TutorPUCP.Servicios.AcademicoApi>();
 
 // Cliente REST del administrador (RF005-RF007). Usa la misma dirección: ApiRest:BaseUrl.
 builder.Services.AddHttpClient<TutorPUCP.Servicios.AcademicoRestService>(cliente =>

@@ -14,11 +14,18 @@ public class CursoDTO {
     public CursoDTO() {
     }
 
+    // Para las pantallas que no necesitan el conteo de temas (cantidadTemas queda en 0)
+    public CursoDTO(Curso curso) {
+        this(curso, 0);
+    }
+
     public CursoDTO(Curso curso, int cantidadTemas) {
-        this.idCurso = curso.getIdCurso();
-        this.codigo = curso.getCodigo();
-        this.nombre = curso.getNombre();
-        this.activo = curso.isActivo();
+        if (curso != null) {
+            this.idCurso = curso.getIdCurso();
+            this.codigo = curso.getCodigo();
+            this.nombre = curso.getNombre();
+            this.activo = curso.isActivo();
+        }
         this.cantidadTemas = cantidadTemas;
     }
 

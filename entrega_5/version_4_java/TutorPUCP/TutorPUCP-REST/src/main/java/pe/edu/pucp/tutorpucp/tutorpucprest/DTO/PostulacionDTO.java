@@ -7,6 +7,11 @@ import pe.edu.pucp.tutorPUCP.modelo.usuario.Usuario;
 // Lo que viaja en JSON de una postulación: los datos del tutor, del curso y del revisor ya "aplanados",
 // así la pantalla no necesita otras llamadas y no se forman ciclos (Tutor -> postulaciones -> Tutor...).
 // Las fechas van como texto ISO (2026-09-20).
+//
+// El nombre del curso viaja con dos juegos de nombres porque dos pantallas lo leen distinto:
+//   codigoCurso / curso        -> pantallas del administrador (RF005)
+//   cursoCodigo / cursoNombre  -> pantallas del tutor (RF004)
+// Los dos juegos llevan el mismo valor.
 public class PostulacionDTO {
     private int idPostulacion;
     private int idTutor;
@@ -18,6 +23,8 @@ public class PostulacionDTO {
     private int idCurso;
     private String codigoCurso;
     private String curso;
+    private String cursoCodigo;
+    private String cursoNombre;
     private String archivoCertificadoUrl;
     private String fechaPostulacion;
     private String estado;
@@ -29,6 +36,9 @@ public class PostulacionDTO {
     }
 
     public PostulacionDTO(Postulacion postulacion) {
+        if (postulacion == null) {
+            return;
+        }
         this.idPostulacion = postulacion.getIdPostulacion();
         Usuario usuario = postulacion.getTutor() != null ? postulacion.getTutor().getUsuario() : null;
         if (usuario != null) {
@@ -44,10 +54,12 @@ public class PostulacionDTO {
             this.idCurso = c.getIdCurso();
             this.codigoCurso = c.getCodigo();
             this.curso = c.getNombre();
+            this.cursoCodigo = c.getCodigo();
+            this.cursoNombre = c.getNombre();
         }
         this.archivoCertificadoUrl = postulacion.getArchivoCertificadoUrl();
         this.fechaPostulacion = postulacion.getFechaPostulacion() != null ? postulacion.getFechaPostulacion().toString() : null;
-        this.estado = postulacion.getEstado() != null ? postulacion.getEstado().name() : null;
+        this.estado = postulacion.getEstado() != null ? postulacion.getEstado().name() : "PENDIENTE";
         this.fechaResolucion = postulacion.getFechaResolucion() != null ? postulacion.getFechaResolucion().toString() : null;
         this.resolucion = postulacion.getResolucion();
         this.revisor = postulacion.getAdministradorRevisor() != null ? postulacion.getAdministradorRevisor().getNombre() : null;
@@ -132,6 +144,22 @@ public class PostulacionDTO {
 
     public void setCurso(String curso) {
         this.curso = curso;
+    }
+
+    public String getCursoCodigo() {
+        return cursoCodigo;
+    }
+
+    public void setCursoCodigo(String cursoCodigo) {
+        this.cursoCodigo = cursoCodigo;
+    }
+
+    public String getCursoNombre() {
+        return cursoNombre;
+    }
+
+    public void setCursoNombre(String cursoNombre) {
+        this.cursoNombre = cursoNombre;
     }
 
     public String getArchivoCertificadoUrl() {
