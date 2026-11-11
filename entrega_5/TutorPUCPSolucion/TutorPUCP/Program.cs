@@ -29,6 +29,14 @@ builder.Services.AddHttpClient<TutorPUCP.Servicios.AcademicoRestService>(cliente
     cliente.DefaultRequestHeaders.Accept.ParseAdd("application/json");
 });
 
+// Cliente REST de sesiones (RF011-RF013). Usa la misma dirección: ApiRest:BaseUrl.
+builder.Services.AddHttpClient<TutorPUCP.Servicios.SesionRestService>(cliente =>
+{
+    cliente.BaseAddress = new Uri(builder.Configuration["ApiRest:BaseUrl"]!);
+    cliente.Timeout = TimeSpan.FromSeconds(60);
+    cliente.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+});
+
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
