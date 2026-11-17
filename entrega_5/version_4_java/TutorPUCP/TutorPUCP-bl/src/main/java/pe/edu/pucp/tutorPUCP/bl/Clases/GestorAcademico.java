@@ -9,6 +9,7 @@ import pe.edu.pucp.tutorPUCP.modelo.usuario.Tutor;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 public interface GestorAcademico {
     // ---- Curso ----
@@ -37,6 +38,9 @@ public interface GestorAcademico {
     Tema obtenerTemaPorId(int idTema);
     List<Tema> listarTemas();
     List<Tema> listarTemasPorCurso(Curso curso);
+
+    // cuantos temas tiene cada curso (id del curso -> cantidad) en una sola consulta; los cursos sin temas no aparecen
+    Map<Integer, Integer> contarTemasPorCurso();
 
     // ---- Postulacion ----
     Postulacion postular(Tutor tutor, Curso curso, String archivoCertificadoUrl);

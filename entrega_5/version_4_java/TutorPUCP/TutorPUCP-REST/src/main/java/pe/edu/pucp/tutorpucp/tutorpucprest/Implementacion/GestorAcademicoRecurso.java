@@ -264,8 +264,10 @@ public class GestorAcademicoRecurso {
     @Path("/cursos")
     public Response listarCursos() {
         try {
+            // 2 consultas en total (los cursos y el conteo de temas); antes era 1 + una por cada curso
+            Map<Integer, Integer> temasPorCurso = gestorAcademicoBL.contarTemasPorCurso();
             List<CursoDTO> cursos = gestorAcademicoBL.listarCursos().stream()
-                    .map(c -> new CursoDTO(c, gestorAcademicoBL.listarTemasPorCurso(c).size()))
+                    .map(c -> new CursoDTO(c, temasPorCurso.getOrDefault(c.getIdCurso(), 0)))
                     .toList();
             return Response.ok(cursos).build();
         } catch (Exception e) {

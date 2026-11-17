@@ -8,7 +8,8 @@ public class TransactionContext implements AutoCloseable{
     private boolean completado;
 
     public TransactionContext() throws SQLException{
-        this.connection = DBManager.getInstance().getConnection();
+        // conexion propia (no compartida con otras consultas del hilo): aqui se cambia el autocommit
+        this.connection = DBManager.getInstance().getConnectionExclusiva();
         this.connection.setAutoCommit(false);
         this.completado = false;
     }

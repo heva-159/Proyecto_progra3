@@ -1,6 +1,7 @@
 package pe.edu.pucp.tutorPUCP.dao.Impl;
 
 import pe.edu.pucp.tutorPUCP.dao.DAOs.UsuarioDAO;
+import pe.edu.pucp.tutorPUCP.dbmanager.CacheLectura;
 import pe.edu.pucp.tutorPUCP.dbmanager.DBManager;
 import pe.edu.pucp.tutorPUCP.dbmanager.TransactionContext;
 import pe.edu.pucp.tutorPUCP.modelo.enums.EstadoCuenta;
@@ -22,6 +23,11 @@ public class UsuarioDAOImpl implements UsuarioDAO {
 
     @Override
     public Usuario load(Integer id) {
+        // dentro de un GET, si este registro ya se cargo no se vuelve a pedir a la base (ver CacheLectura)
+        return CacheLectura.obtener("usuario", id, () -> cargarDeLaBase(id));
+    }
+
+    private Usuario cargarDeLaBase(Integer id) {
         Usuario usuario = null;
         String sql = "{CALL buscar_usuario_por_id(?)}";
         try (Connection connection = DBManager.getInstance().getConnection()) {

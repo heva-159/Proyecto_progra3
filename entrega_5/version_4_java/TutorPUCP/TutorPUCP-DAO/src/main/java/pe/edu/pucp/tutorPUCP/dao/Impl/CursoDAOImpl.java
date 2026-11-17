@@ -1,6 +1,7 @@
 package pe.edu.pucp.tutorPUCP.dao.Impl;
 
 import pe.edu.pucp.tutorPUCP.dao.DAOs.CursoDAO;
+import pe.edu.pucp.tutorPUCP.dbmanager.CacheLectura;
 import pe.edu.pucp.tutorPUCP.dbmanager.DBManager;
 import pe.edu.pucp.tutorPUCP.dbmanager.TransactionContext;
 import pe.edu.pucp.tutorPUCP.modelo.academico.Curso;
@@ -18,6 +19,11 @@ public class CursoDAOImpl implements CursoDAO {
 
     @Override
     public Curso load(Integer id) {
+        // dentro de un GET, si este registro ya se cargo no se vuelve a pedir a la base (ver CacheLectura)
+        return CacheLectura.obtener("curso", id, () -> cargarDeLaBase(id));
+    }
+
+    private Curso cargarDeLaBase(Integer id) {
         Curso curso = null;
         String sql = "{CALL buscar_curso_por_id(?)}";
         try (Connection connection = DBManager.getInstance().getConnection()) {

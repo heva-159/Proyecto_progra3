@@ -8,11 +8,14 @@ import pe.edu.pucp.tutorPUCP.modelo.academico.Tema;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class TemaDAOImpl implements TemaDAO {
 
@@ -86,6 +89,23 @@ public class TemaDAOImpl implements TemaDAO {
             System.out.println("Error al listar temas del curso: " + e.getMessage());
         }
         return temas;
+    }
+
+    // una sola consulta para todos los cursos (en vez de una por curso); los cursos sin temas no salen en el mapa
+    @Override
+    public Map<Integer, Integer> contarPorCurso() {
+        Map<Integer, Integer> cantidades = new HashMap<>();
+        String sql = "SELECT id_curso, COUNT(*) AS cantidad FROM tema GROUP BY id_curso";
+        try (Connection connection = DBManager.getInstance().getConnection();
+             PreparedStatement stmt = connection.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                cantidades.put(rs.getInt("id_curso"), rs.getInt("cantidad"));
+            }
+        } catch (SQLException e) {
+            System.out.println("Error al contar los temas por curso: " + e.getMessage());
+        }
+        return cantidades;
     }
 
     @Override

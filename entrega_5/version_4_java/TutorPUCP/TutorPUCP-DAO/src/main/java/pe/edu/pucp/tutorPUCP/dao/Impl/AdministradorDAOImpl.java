@@ -1,6 +1,7 @@
 package pe.edu.pucp.tutorPUCP.dao.Impl;
 
 import pe.edu.pucp.tutorPUCP.dao.DAOs.AdministradorDAO;
+import pe.edu.pucp.tutorPUCP.dbmanager.CacheLectura;
 import pe.edu.pucp.tutorPUCP.dbmanager.DBManager;
 import pe.edu.pucp.tutorPUCP.dbmanager.TransactionContext;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Administrador;
@@ -18,6 +19,11 @@ public class AdministradorDAOImpl implements AdministradorDAO {
 
     @Override
     public Administrador load(Integer id) {
+        // dentro de un GET, si este registro ya se cargo no se vuelve a pedir a la base (ver CacheLectura)
+        return CacheLectura.obtener("administrador", id, () -> cargarDeLaBase(id));
+    }
+
+    private Administrador cargarDeLaBase(Integer id) {
         Administrador administrador = null;
         String sql = "{CALL buscar_administrador_por_id(?)}";
         try (Connection connection = DBManager.getInstance().getConnection()) {

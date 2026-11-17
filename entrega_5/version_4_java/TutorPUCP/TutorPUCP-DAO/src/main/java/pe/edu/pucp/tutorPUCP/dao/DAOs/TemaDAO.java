@@ -6,6 +6,7 @@ import pe.edu.pucp.tutorPUCP.modelo.academico.Tema;
 import pe.edu.pucp.tutorPUCP.modelo.academico.Curso;
 
 import java.util.List;
+import java.util.Map;
 
 public interface TemaDAO extends BaseDAO<Tema, Integer> {
     Tema load(Integer id);
@@ -19,4 +20,7 @@ public interface TemaDAO extends BaseDAO<Tema, Integer> {
     void remove(Tema tema, TransactionContext transactionContext);
 
     List<Tema> listarPorCurso(Curso curso);
+
+    // cuantos temas tiene cada curso (id del curso -> cantidad), en una sola consulta; los cursos sin temas no aparecen
+    Map<Integer, Integer> contarPorCurso();
 }

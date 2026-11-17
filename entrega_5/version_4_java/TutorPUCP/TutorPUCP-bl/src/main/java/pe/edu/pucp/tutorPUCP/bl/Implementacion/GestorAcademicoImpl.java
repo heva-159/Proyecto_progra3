@@ -24,6 +24,7 @@ import java.math.RoundingMode;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class GestorAcademicoImpl implements GestorAcademico {
     // tarifa.monto_por_hora es decimal(6,2)
@@ -152,6 +153,11 @@ public class GestorAcademicoImpl implements GestorAcademico {
     @Override
     public List<Tema> listarTemasPorCurso(Curso curso) {
         return temaDAO.listarPorCurso(curso);
+    }
+
+    @Override
+    public Map<Integer, Integer> contarTemasPorCurso() {
+        return temaDAO.contarPorCurso();
     }
 
     // el tema debe traer su curso (los de listarTemasPorCurso ya lo traen)

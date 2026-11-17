@@ -1,6 +1,7 @@
 package pe.edu.pucp.tutorPUCP.dao.Impl;
 
 import pe.edu.pucp.tutorPUCP.dao.DAOs.SesionDAO;
+import pe.edu.pucp.tutorPUCP.dbmanager.CacheLectura;
 import pe.edu.pucp.tutorPUCP.dbmanager.DBManager;
 import pe.edu.pucp.tutorPUCP.dbmanager.TransactionContext;
 import pe.edu.pucp.tutorPUCP.modelo.enums.EstadoSesion;
@@ -20,6 +21,11 @@ public class SesionDAOImpl implements SesionDAO {
 
     @Override
     public Sesion load(Integer id) {
+        // dentro de un GET, si este registro ya se cargo no se vuelve a pedir a la base (ver CacheLectura)
+        return CacheLectura.obtener("sesion", id, () -> cargarDeLaBase(id));
+    }
+
+    private Sesion cargarDeLaBase(Integer id) {
         Sesion sesion = null;
         String sql = "{CALL buscar_sesion_por_id(?)}";
         try (Connection connection = DBManager.getInstance().getConnection()) {
