@@ -227,4 +227,91 @@ public class GestorAcademicoRecurso {
                     .entity(Map.of("error", e.getMessage())).build();
         }
     }
+
+
+    // =========================================================================
+    // REQUERIMIENTO RF017: REPORTE DE TUTORÍAS DEL TUTOR POR RANGO DE FECHAS
+    // =========================================================================
+    @GET
+    @Path("/tutores/{idTutor}/reporte")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response obtenerReporteTutor(
+            @PathParam("idTutor") Integer idTutor,
+            @QueryParam("desde") String desde,
+            @QueryParam("hasta") String hasta) {
+        if (idTutor == null) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", "El ID del tutor es requerido")).build();
+        }
+        StringBuilder sql = new StringBuilder(
+                "SELECT s.id, s.fecha_hora_inicio, s.estado, s.puntaje, s.comentario, " +
+                        "c.codigo AS curso_codigo, c.nombre AS curso_nombre, " +
+                        "u.nombres, u.apellidos " +
+                        "FROM sesion s " +
+                        "JOIN curso c ON c.id = s.id_curso " +
+                        "JOIN usuario u ON u.id = s.id_estudiante " +
+                        "WHERE s.id_tutor = ?"
+        );
+        boolean tieneDesde = (desde != null && !desde.isBlank());
+        boolean tieneHasta = (hasta != null && !hasta.isBlank());
+        if (tieneDesde) sql.append(" AND DATE(s.fecha_hora_inicio) >= ?");
+        if (tieneHasta) sql.append(" AND DATE(s.fecha_hora_inicio) <= ?");
+        sql.append(" ORDER BY s.fecha_hora_inicio DESC");
+
+
+        List<SesionReporteItemDTO> lista = new ArrayList<>();
+        int totalDictadas = 0;
+        int sumaCalificaciones = 0;
+        int countCalificadas = 0;
+        java.time.format.DateTimeFormatter dtf = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        try (Connection conn = DBManager.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            int idx = 1;
+            ps.setInt(idx++, idTutor);
+            if (tieneDesde) ps.setString(idx++, desde);
+            if (tieneHasta) ps.setString(idx++, hasta);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    SesionReporteItemDTO item = new SesionReporteItemDTO();
+                    item.setIdSesion(rs.getInt("id"));
+                    java.sql.Timestamp ts = rs.getTimestamp("fecha_hora_inicio");
+                    if (ts != null) {
+                        item.setFecha(ts.toLocalDateTime().format(dtf));
+                    }
+                    item.setEstado(rs.getString("estado"));
+                    item.setCursoCodigo(rs.getString("curso_codigo"));
+                    item.setCursoNombre(rs.getString("curso_nombre"));
+                    String nom = rs.getString("nombres");
+                    String ape = rs.getString("apellidos");
+                    item.setEstudianteNombre(((nom != null ? nom : "") + " " + (ape != null ? ape : "")).trim());
+                    int puntaje = rs.getInt("puntaje");
+                    if (!rs.wasNull()) {
+                        item.setCalificacion(puntaje);
+                        sumaCalificaciones += puntaje;
+                        countCalificadas++;
+                    }
+                    item.setComentario(rs.getString("comentario"));
+                    if ("REALIZADA".equalsIgnoreCase(item.getEstado())) {
+                        totalDictadas++;
+                    }
+                    lista.add(item);
+                }
+            }
+            Double calificacionPromedio = countCalificadas > 0
+                    ? Math.round((double) sumaCalificaciones / countCalificadas * 10.0) / 10.0
+                    : null;
+            ReporteTutorDTO reporte = new ReporteTutorDTO(totalDictadas, calificacionPromedio, lista);
+            return Response.ok(reporte).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(Map.of("error", "Error al generar reporte: " + e.getMessage())).build();
+        }
+    }
+
+
+
+
+
 }
