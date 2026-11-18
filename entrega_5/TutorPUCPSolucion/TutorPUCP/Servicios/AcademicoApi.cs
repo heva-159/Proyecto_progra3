@@ -38,7 +38,31 @@ public class AcademicoApi(IHttpClientFactory fabrica) : ClienteRest(fabrica)
         Enviar<List<TutorBusquedaDto>>(HttpMethod.Get, idCurso.HasValue && idCurso.Value > 0
             ? $"academico/tutores/buscar?idCurso={idCurso.Value}"
             : "academico/tutores/buscar");
+
+
+    // =========================================================================
+    // REQUERIMIENTO RF017: REPORTE DE TUTORÍAS POR RANGO DE FECHAS
+    // =========================================================================
+
+    public Task<(ReporteTutorDto? Valor, string? Error)> ObtenerReporteTutorAsync(int idTutor, DateOnly desde, DateOnly hasta) =>
+        Enviar<ReporteTutorDto>(HttpMethod.Get, $"academico/tutores/{idTutor}/reporte?desde={desde:yyyy-MM-dd}&hasta={hasta:yyyy-MM-dd}");
+
 }
+
+// RF017
+public record ReporteTutorDto(
+    int TotalDictadas,
+    double? CalificacionPromedio,
+    List<SesionReporteItemDto> Sesiones);
+public record SesionReporteItemDto(
+    int IdSesion,
+    string Fecha,
+    string CursoCodigo,
+    string CursoNombre,
+    string EstudianteNombre,
+    string Estado,
+    int? Calificacion,
+    string? Comentario);
 
 
 

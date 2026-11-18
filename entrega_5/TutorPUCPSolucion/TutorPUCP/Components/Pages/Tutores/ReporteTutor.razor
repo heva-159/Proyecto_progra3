@@ -1,76 +1,203 @@
-@page "/tutor/reportes"
-@inject RolActual RolActual
-
-@* Requisito: RF017 (reporte de tutorías del tutor por rango de fechas) *@
+﻿@page "/tutor/reportes"
+@using TutorPUCP.Servicios
+@inject AcademicoApi Api
+@inject RolActual EstadoSesion
+@inject IJSRuntime JS
 
 <PageTitle>Reporte de tutorías</PageTitle>
 
-<EncabezadoPagina Icono="bi-file-earmark-bar-graph-fill" Titulo="Reporte de tutorías"
-                  Subtitulo="Descarga en PDF las tutorías que dictaste dentro de un rango de fechas, con su estado y calificación." />
+<h1 class="h3 mb-1">Reporte de tutorías</h1>
+<p class="text-muted mb-4">Consulta las tutorías que dictaste dentro de un rango de fechas.</p>
 
-@if (RolActual.Usuario is null)
-{
-    <div class="alert alert-warning d-flex gap-2"><i class="bi bi-person-lock"></i><div>Inicia sesión como tutor para descargar tu reporte.</div></div>
-}
-else if (!RolActual.TieneRol(RolActual.Tutor))
-{
-    <div class="alert alert-warning d-flex gap-2"><i class="bi bi-person-lock"></i><div>Tu cuenta no tiene el perfil de tutor.</div></div>
-}
-else
-{
-    <div class="row g-4">
-        <div class="col-lg-8">
-            @* GET normal (sin Blazor): el navegador descarga el PDF que devuelve /reportes/tutor/descargar *@
-            <form method="get" action="reportes/tutor/descargar" class="card tarjeta-form" data-enhance="false">
-                <input type="hidden" name="idTutor" value="@RolActual.Usuario.IdUsuario" />
-                <input type="hidden" name="desde" value="@Iso(desde)" />
-                <input type="hidden" name="hasta" value="@Iso(hasta)" />
-                <div class="card-header cabecera">
-                    <h2 class="card-titulo"><i class="bi bi-funnel me-2 text-primary"></i>Rango de fechas</h2>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-sm-6">
-                            <label for="desde" class="form-label">Desde</label>
-                            <RadzenDatePicker TValue="DateOnly" @bind-Value="desde" DateFormat="dd/MM/yyyy" Max="@hasta.ToDateTime(TimeOnly.MinValue)" Culture="@Peru" class="tp-fecha" />
-                        </div>
-                        <div class="col-sm-6">
-                            <label for="hasta" class="form-label">Hasta</label>
-                            <RadzenDatePicker TValue="DateOnly" @bind-Value="hasta" DateFormat="dd/MM/yyyy" Min="@desde.ToDateTime(TimeOnly.MinValue)" Culture="@Peru" class="tp-fecha" />
-                        </div>
-                    </div>
-                    @if (desde > hasta)
-                    {
-                        <div class="alert alert-warning py-2 small mt-3 mb-0"><i class="bi bi-exclamation-triangle me-1"></i>La fecha «Desde» no puede ser posterior a «Hasta».</div>
-                    }
-                    <div class="acciones-form">
-                        <small class="text-muted me-auto">Periodo: @desde.ToString("dd/MM/yyyy", Peru) al @hasta.ToString("dd/MM/yyyy", Peru)</small>
-                        <button type="submit" class="btn btn-primary px-4" disabled="@(desde > hasta)"><i class="bi bi-filetype-pdf me-1"></i>Descargar PDF</button>
-                    </div>
-                </div>
-            </form>
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label for="desde" class="form-label">Desde</label>
+                <RadzenDatePicker TValue="DateOnly" @bind-Value="desde" Name="desde" DateFormat="dd/MM/yyyy" Max="@hasta.ToDateTime(TimeOnly.MinValue)" Culture="@Peru" class="tp-fecha" />
+            </div>
+            <div class="col-md-4">
+                <label for="hasta" class="form-label">Hasta</label>
+                <RadzenDatePicker TValue="DateOnly" @bind-Value="hasta" Name="hasta" DateFormat="dd/MM/yyyy" Min="@desde.ToDateTime(TimeOnly.MinValue)" Culture="@Peru" class="tp-fecha" />
+            </div>
+            <div class="col-md-4 d-flex gap-2">
+                <button type="button" class="btn btn-primary flex-grow-1" @onclick="GenerarReporte" disabled="@cargando">
+                    @(cargando ? "Cargando..." : "Generar reporte")
+                </button>
+                <button type="button" class="btn btn-outline-danger" @onclick="DescargarPdf" disabled="@(cargando || reporte == null || reporte.Sesiones.Count == 0)" title="Descargar reporte en formato PDF">
+                    <i class="bi bi-file-earmark-pdf"></i> PDF
+                </button>
+            </div>
         </div>
+    </div>
+</div>
 
-        <div class="col-lg-4">
-            <div class="nota aviso-info" role="note">
-                <i class="bi bi-info-circle-fill"></i>
-                <div>
-                    <strong>¿Qué incluye el reporte?</strong><br />
-                    Las tutorías que dictaste entre las dos fechas elegidas, con su estado y su calificación.
-                    Por defecto se propone desde el primer día del mes hasta hoy.
+@if (!string.IsNullOrEmpty(mensajeError))
+{
+    <div class="alert alert-danger shadow-sm border-0 mb-4" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> @mensajeError
+    </div>
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small text-uppercase">Tutorías dictadas</div>
+                <div class="display-6 fw-semibold text-primary">@(reporte?.TotalDictadas ?? 0)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small text-uppercase">Calificación promedio</div>
+                <div class="display-6 fw-semibold text-success">
+                    @(reporte?.CalificacionPromedio.HasValue == true ? reporte.CalificacionPromedio.Value.ToString("0.0") : "—")
+                    <span class="fs-6 text-muted">/ 5</span>
                 </div>
             </div>
         </div>
     </div>
-}
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h2 class="h5 mb-3">Detalle de sesiones</h2>
+
+        @if (cargando)
+        {
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="text-muted mt-2 mb-0">Cargando reporte...</p>
+            </div>
+        }
+        else if (reporte == null || reporte.Sesiones.Count == 0)
+        {
+            <div class="p-4 text-center text-muted">
+                No se encontraron tutorías dictadas dentro del rango de fechas seleccionado.
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle mb-0">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Curso</th>
+                            <th>Estudiante</th>
+                            <th>Estado</th>
+                            <th class="text-end">Calificación</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var sesion in reporte.Sesiones)
+                        {
+                            <tr>
+                                <td>@sesion.Fecha</td>
+                                <td>
+                                    <strong>@sesion.CursoNombre</strong>
+                                    <small class="text-muted d-block">@sesion.CursoCodigo</small>
+                                </td>
+                                <td>@sesion.EstudianteNombre</td>
+                                <td>
+                                    <span class="badge @ObtenerColorBadge(sesion.Estado)">
+                                        @ObtenerTextoEstado(sesion.Estado)
+                                    </span>
+                                </td>
+                                <td class="text-end fw-semibold">
+                                    @(sesion.Calificacion.HasValue ? sesion.Calificacion.Value.ToString() : "—")
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
 
 @code {
     private static readonly System.Globalization.CultureInfo Peru = new("es-PE");
+    private DateOnly desde = new(2026, 1, 1);
+    private DateOnly hasta = new(2026, 12, 31);
+    private bool cargando = false;
+    private string? mensajeError = null;
+    private ReporteTutorDto? reporte = null;
 
-    // por defecto, del primer día del mes hasta hoy
-    private DateOnly desde = new(DateTime.Today.Year, DateTime.Today.Month, 1);
-    private DateOnly hasta = DateOnly.FromDateTime(DateTime.Today);
+    protected override async Task OnInitializedAsync()
+    {
+        await GenerarReporte();
+    }
 
-    // Java recibe las fechas como yyyy-MM-dd
-    private static string Iso(DateOnly fecha) => fecha.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+    private async Task GenerarReporte()
+    {
+        cargando = true;
+        mensajeError = null;
+
+        int idTutorActual = EstadoSesion.Usuario?.IdUsuario ?? 1;
+        var (resultado, error) = await Api.ObtenerReporteTutorAsync(idTutorActual, desde, hasta);
+
+        if (error != null)
+        {
+            mensajeError = error;
+        }
+        else
+        {
+            reporte = resultado;
+        }
+
+        cargando = false;
+    }
+
+    private async Task DescargarPdf()
+    {
+        if (reporte == null || reporte.Sesiones.Count == 0) return;
+
+        var columnas = new[] { "Fecha", "Curso", "Estudiante", "Estado", "Calificación" };
+
+        var filas = reporte.Sesiones.Select(s => new[]
+        {
+            s.Fecha,
+            $"{s.CursoCodigo} - {s.CursoNombre}",
+            s.EstudianteNombre,
+            ObtenerTextoEstado(s.Estado),
+            s.Calificacion.HasValue ? s.Calificacion.Value.ToString() : "—"
+        });
+
+        var tabla = new Exportador.Tabla("Detalle de Sesiones Dictadas", columnas, filas);
+
+        string promedioStr = reporte.CalificacionPromedio.HasValue ? reporte.CalificacionPromedio.Value.ToString("0.0") : "—";
+        string subtitulo = $"Periodo: {desde:dd/MM/yyyy} al {hasta:dd/MM/yyyy} · Total dictadas: {reporte.TotalDictadas} · Calificación promedio: {promedioStr}/5";
+
+        await Exportador.DescargarAsync(
+            JS,
+            $"reporte_tutor_{desde:yyyyMMdd}_{hasta:yyyyMMdd}",
+            "PDF",
+            "Reporte de Tutorías - TutorPUCP",
+            subtitulo,
+            tabla
+        );
+    }
+
+    private string ObtenerColorBadge(string estado) => estado switch
+    {
+        "REALIZADA" => "text-bg-success",
+        "PROGRAMADA" => "text-bg-warning text-dark",
+        "EN_CURSO" => "text-bg-info text-dark",
+        "CANCELADA_INASISTENCIA" => "text-bg-danger",
+        "CANCELADA" => "text-bg-secondary",
+        _ => "text-bg-secondary"
+    };
+
+    private string ObtenerTextoEstado(string estado) => estado switch
+    {
+        "REALIZADA" => "Realizada",
+        "PROGRAMADA" => "Programada",
+        "EN_CURSO" => "En curso",
+        "CANCELADA_INASISTENCIA" => "Cancelada por inasistencia",
+        "CANCELADA" => "Cancelada",
+        _ => estado
+    };
 }

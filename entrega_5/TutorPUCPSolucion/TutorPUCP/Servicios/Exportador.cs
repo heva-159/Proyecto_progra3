@@ -6,10 +6,7 @@ using QuestPDF.Infrastructure;
 
 namespace TutorPUCP.Servicios;
 
-/// <summary>
-/// Arma un reporte en PDF (QuestPDF) o Excel (ClosedXML) con lo que se ve en pantalla
-/// y lo descarga en el navegador. No consulta ninguna base de datos.
-/// </summary>
+
 public static class Exportador
 {
     public record Tabla(string Titulo, string[] Columnas, IEnumerable<string[]> Filas);
