@@ -177,6 +177,12 @@ public class Main {
             Usuario usuarioNuevoEnBD = gestorUsuarios.obtenerUsuarioPorId(usuarioNuevo.getIdUsuario());
             verificar("Usuario con perfiles: se guardo el usuario y sus perfiles tutor y estudiante",
                     usuarioNuevoEnBD != null && usuarioNuevoEnBD.getRol() == Rol.AMBOS);
+            // RF001: hasta verificar el correo no puede ingresar
+            verificarRechazo("RF001: el usuario nuevo no ingresa sin verificar su correo",
+                    () -> gestorUsuarios.iniciarSesion(usuarioNuevo.getCorreoInstitucional(), "clave123"));
+            verificarRechazo("RF001: un codigo de verificacion incorrecto es rechazado",
+                    () -> gestorUsuarios.verificarCorreo(usuarioNuevo.getCorreoInstitucional(), "000000x"));
+            gestorUsuarios.verificarCorreo(usuarioNuevo.getCorreoInstitucional(), usuarioNuevo.getCodigoVerificacion());
             verificar("El usuario nuevo puede iniciar sesion con la contrasena que eligio",
                     gestorUsuarios.iniciarSesion(usuarioNuevo.getCorreoInstitucional(), "clave123") != null);
 

@@ -1,0 +1,32 @@
+@* Encabezado común de las pantallas (título, subtítulo y acciones a la derecha).
+   Uso:  <EncabezadoPagina Icono="bi-cash-coin" Titulo="Mis tarifas" Subtitulo="...">
+             <a class="btn btn-primary" href="...">Acción</a>
+         </EncabezadoPagina> *@
+
+<header class="titulo-pagina encabezado">
+    <div class="encabezado-texto">
+        @if (!string.IsNullOrEmpty(Icono))
+        {
+            <span class="icono-titulo" aria-hidden="true"><i class="bi @Icono"></i></span>
+        }
+        <div class="min-w-0">
+            <h1 class="encabezado-titulo">@Titulo</h1>
+            @if (!string.IsNullOrEmpty(Subtitulo))
+            {
+                <p class="encabezado-sub">@Subtitulo</p>
+            }
+        </div>
+    </div>
+    @if (ChildContent is not null)
+    {
+        <div class="encabezado-acciones">@ChildContent</div>
+    }
+</header>
+
+@code {
+    [Parameter, EditorRequired] public string Titulo { get; set; } = "";
+    [Parameter] public string? Subtitulo { get; set; }
+    [Parameter] public string? Icono { get; set; }
+    // Botones o enlaces que van a la derecha del título
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

@@ -30,12 +30,13 @@ builder.Services.AddHttpClient<TutorPUCP.Servicios.AcademicoRestService>(cliente
     cliente.DefaultRequestHeaders.Accept.ParseAdd("application/json");
 });
 
-// Cliente REST de sesiones (RF011-RF013). Usa la misma dirección: ApiRest:BaseUrl.
+// Cliente REST de sesiones (RF011-RF014) y de los reportes en PDF (RF017, RF018). Usa la misma dirección: ApiRest:BaseUrl.
 builder.Services.AddHttpClient<TutorPUCP.Servicios.SesionRestService>(cliente =>
 {
     cliente.BaseAddress = new Uri(builder.Configuration["ApiRest:BaseUrl"]!);
     cliente.Timeout = TimeSpan.FromSeconds(60);
     cliente.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+    cliente.DefaultRequestHeaders.Accept.ParseAdd("application/pdf");
 });
 
 builder.Services.AddRazorComponents()
@@ -56,6 +57,13 @@ app.UseHttpsRedirection();
 app.UseAntiforgery();
 
 app.MapStaticAssets();
+
+// Reportes en PDF (RF017, RF018): el formulario de la página hace un GET normal a estas rutas,
+// que piden el PDF a Java y lo devuelven como descarga (igual que el ejemplo del profesor).
+app.MapGet("/reportes/tutor/descargar", DescargarReporteTutor);
+app.MapGet("/reportes/sesiones/descargar", DescargarReporteSesiones);
+app.MapGet("/reportes/reclamos/descargar", DescargarReporteReclamos);
+
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
@@ -67,3 +75,63 @@ app.MapRazorComponents<App>()
 });*/
 
 app.Run();
+
+static async Task<IResult> DescargarReporteTutor(int idTutor, DateOnly desde, DateOnly hasta,
+    TutorPUCP.Servicios.SesionRestService cliente, HttpContext contexto, ILoggerFactory loggerFactory, CancellationToken ct)
+{
+    if (desde > hasta)
+        return Results.BadRequest("La fecha «Desde» no puede ser posterior a «Hasta».");
+
+    try
+    {
+        byte[] pdf = await cliente.DescargarReporteTutorAsync(idTutor, desde, hasta, ct);
+        contexto.Response.Headers.CacheControl = "no-store";
+        return Results.File(pdf, "application/pdf", "reporte-tutorias.pdf");
+    }
+    catch (Exception ex) when (!ct.IsCancellationRequested)
+    {
+        loggerFactory.CreateLogger("ReporteTutor").LogError(ex, "No se pudo obtener el PDF desde Java");
+        return Results.Problem("No se pudo descargar el reporte. Revisa el servicio REST y vuelve a intentar.",
+            statusCode: StatusCodes.Status502BadGateway);
+    }
+}
+
+static async Task<IResult> DescargarReporteSesiones(DateOnly desde, DateOnly hasta,
+    TutorPUCP.Servicios.SesionRestService cliente, HttpContext contexto, ILoggerFactory loggerFactory, CancellationToken ct)
+{
+    if (desde > hasta)
+        return Results.BadRequest("La fecha «Desde» no puede ser posterior a «Hasta».");
+
+    try
+    {
+        byte[] pdf = await cliente.DescargarReporteSesionesAsync(desde, hasta, ct);
+        contexto.Response.Headers.CacheControl = "no-store";
+        return Results.File(pdf, "application/pdf", "reporte-sesiones.pdf");
+    }
+    catch (Exception ex) when (!ct.IsCancellationRequested)
+    {
+        loggerFactory.CreateLogger("ReporteSesiones").LogError(ex, "No se pudo obtener el PDF desde Java");
+        return Results.Problem("No se pudo descargar el reporte. Revisa el servicio REST y vuelve a intentar.",
+            statusCode: StatusCodes.Status502BadGateway);
+    }
+}
+
+static async Task<IResult> DescargarReporteReclamos(DateOnly desde, DateOnly hasta,
+    TutorPUCP.Servicios.SesionRestService cliente, HttpContext contexto, ILoggerFactory loggerFactory, CancellationToken ct)
+{
+    if (desde > hasta)
+        return Results.BadRequest("La fecha «Desde» no puede ser posterior a «Hasta».");
+
+    try
+    {
+        byte[] pdf = await cliente.DescargarReporteReclamosAsync(desde, hasta, ct);
+        contexto.Response.Headers.CacheControl = "no-store";
+        return Results.File(pdf, "application/pdf", "reporte-reclamos.pdf");
+    }
+    catch (Exception ex) when (!ct.IsCancellationRequested)
+    {
+        loggerFactory.CreateLogger("ReporteReclamos").LogError(ex, "No se pudo obtener el PDF desde Java");
+        return Results.Problem("No se pudo descargar el reporte. Revisa el servicio REST y vuelve a intentar.",
+            statusCode: StatusCodes.Status502BadGateway);
+    }
+}

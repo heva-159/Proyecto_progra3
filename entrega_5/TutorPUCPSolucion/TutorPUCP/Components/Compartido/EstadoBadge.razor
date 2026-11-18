@@ -1,0 +1,41 @@
+@* Etiqueta de estado con el mismo color en todas las pantallas.
+   Acepta el texto tal como llega (APROBADA, Programada, CANCELADA_INASISTENCIA...).
+   Uso:  <EstadoBadge Estado="@post.Estado" /> *@
+
+<span class="badge estado-badge estado-@Tono">@TextoVisible</span>
+
+@code {
+    [Parameter, EditorRequired] public string? Estado { get; set; }
+    // Texto a mostrar si es distinto del estado (opcional)
+    [Parameter] public string? Texto { get; set; }
+
+    private string Normalizado => Quitar((Estado ?? "").Replace('_', ' ').Trim().ToUpperInvariant());
+
+    private string Tono
+    {
+        get
+        {
+            var e = Normalizado;
+            if (e.Contains("CANCEL") || e.Contains("RECHAZ") || e.Contains("INASIST") || e.Contains("BLOQUE")) return "peligro";
+            if (e.Contains("APROB") || e.Contains("REALIZ") || e == "ACTIVA" || e == "ACTIVO") return "exito";
+            if (e.Contains("PENDIENTE") || e.Contains("EN CURSO") || e.Contains("REVISION")) return "aviso";
+            if (e.Contains("PROGRAM")) return "info";
+            return "neutro";
+        }
+    }
+
+    // "APROBADA" -> "Aprobada"; "CANCELADA_INASISTENCIA" -> "Cancelada inasistencia"
+    private string TextoVisible
+    {
+        get
+        {
+            if (!string.IsNullOrWhiteSpace(Texto)) return Texto;
+            var t = (Estado ?? "").Replace('_', ' ').Trim().ToLower(System.Globalization.CultureInfo.GetCultureInfo("es-PE"));
+            return t.Length == 0 ? "—" : char.ToUpper(t[0]) + t[1..];
+        }
+    }
+
+    private static string Quitar(string s) => string.Concat(
+        s.Normalize(System.Text.NormalizationForm.FormD)
+         .Where(c => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.NonSpacingMark));
+}

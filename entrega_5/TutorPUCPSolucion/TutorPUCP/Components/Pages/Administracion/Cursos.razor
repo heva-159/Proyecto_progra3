@@ -6,6 +6,7 @@
 <PageTitle>Cursos</PageTitle>
 
 <Toasts class="p-3" Messages="avisos" AutoHide="true" Delay="4500" Placement="ToastsPlacement.TopRight" />
+<ModalListo @ref="listo" />
 
 <div class="titulo-pagina">
     <div class="d-flex align-items-center gap-3">
@@ -201,6 +202,7 @@
 @code {
     private Modal modalCurso = default!;
     private Modal modalEstado = default!;
+    private ModalListo listo = default!;
     private readonly List<ToastMessage> avisos = [];
 
     private string busqueda = "";
@@ -280,14 +282,14 @@
                     .ToList();
                 var nuevo = await Rest.RegistrarCursoAsync(formulario);
                 await modalCurso.HideAsync();
-                Avisar(ToastType.Success, "Curso registrado",
+                await listo.MostrarAsync("Curso registrado",
                     $"{nuevo.Codigo} · {nuevo.Nombre} con {nuevo.CantidadTemas} {(nuevo.CantidadTemas == 1 ? "tema" : "temas")}.");
             }
             else
             {
                 await Rest.ModificarCursoAsync(editando.IdCurso, formulario);
                 await modalCurso.HideAsync();
-                Avisar(ToastType.Success, "Curso modificado", $"Se guardaron los cambios de {formulario.Codigo}.");
+                await listo.MostrarAsync("Curso modificado", $"Se guardaron los cambios de {formulario.Codigo}.");
             }
             await Recargar();
         }
@@ -320,10 +322,11 @@
             if (curso.Activo) await Rest.DesactivarCursoAsync(curso.IdCurso);
             else await Rest.ReactivarCursoAsync(curso.IdCurso);
 
-            Avisar(curso.Activo ? ToastType.Danger : ToastType.Success,
-                curso.Activo ? "Curso desactivado" : "Curso reactivado",
-                $"{curso.Codigo} · {curso.Nombre}");
             await Recargar();
+            if (curso.Activo)
+                await listo.MostrarAsync("Curso desactivado", $"{curso.Codigo} · {curso.Nombre}", "bi-pause-circle", rojo: true);
+            else
+                await listo.MostrarAsync("Curso reactivado", $"{curso.Codigo} · {curso.Nombre}");
         }
         catch (Exception ex)
         {

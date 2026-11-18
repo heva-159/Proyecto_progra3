@@ -1,4 +1,4 @@
-﻿@page "/verificar-cuenta"
+@page "/verificar-cuenta"
 @layout AuthLayout
 @implements IDisposable
 @inject NavigationManager Navigation
@@ -134,6 +134,9 @@
         }
     }
 
+    // correo que llegó en ?correo=; null si se abrió la página sin él
+    private string? CorreoReal => Correo == "tu correo PUCP" ? null : Correo;
+
     private Task Reenviar() => EnviarCodigoNuevo(alAbrir: false);
 
     // alAbrir = true: se llamó solo por entrar desde Perfil (nadie pulsó «Reenviar código»). Si el REST contesta
@@ -143,9 +146,14 @@
         if (reenviando) return;
         error = null;
         aviso = null;
+        if (CorreoReal is null)
+        {
+            error = "No sabemos a qué correo enviar el código. Vuelve al registro o inicia sesión.";
+            return;
+        }
         reenviando = true;
         if (alAbrir) StateHasChanged(); // se llama desde OnAfterRenderAsync: ahí la pantalla no se actualiza sola
-        var fallo = await Api.ReenviarCodigoAsync(Correo);
+        var fallo = await Api.ReenviarCodigoAsync(CorreoReal);
         reenviando = false;
         if (fallo is not null)
         {
@@ -166,6 +174,11 @@
     {
         aviso = null;
         error = null;
+        if (CorreoReal is null)
+        {
+            error = "No sabemos qué correo verificar. Vuelve al registro o inicia sesión.";
+            return;
+        }
         if (Vencido)
         {
             error = "El código venció. Pide uno nuevo con «Reenviar código».";

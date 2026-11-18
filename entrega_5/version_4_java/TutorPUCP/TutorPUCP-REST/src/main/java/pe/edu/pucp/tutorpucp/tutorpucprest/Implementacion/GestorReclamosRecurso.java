@@ -20,18 +20,26 @@ import pe.edu.pucp.tutorpucp.tutorpucprest.DTO.ReclamoDTO;
 import pe.edu.pucp.tutorpucp.tutorpucprest.DTO.RegistrarReclamoRequest;
 import pe.edu.pucp.tutorpucp.tutorpucprest.DTO.ResolverReclamoRequest;
 import pe.edu.pucp.tutorpucp.tutorpucprest.DTO.SesionReclamableDTO;
+import pe.edu.pucp.tutorpucp.tutorpucprest.reportes.FilaReclamoReporte;
+import pe.edu.pucp.tutorpucp.tutorpucprest.reportes.GeneradorReportes;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 // RF015: registrar reclamos asociados a sesiones.
 // RF016: el administrador consulta y resuelve los reclamos.
 @Path("/reclamo")
 public class GestorReclamosRecurso {
+    private static final Logger LOG = Logger.getLogger(GestorReclamosRecurso.class.getName());
+
+    private final GeneradorReportes generador = new GeneradorReportes();
     private final GestorReclamos gestorReclamosBL = new GestorReclamosImpl();
     private final GestorSesiones gestorSesionesBL = new GestorSesionesImpl();
     private final GestorUsuarios gestorUsuariosBL = new GestorUsuariosImpl();
@@ -74,6 +82,37 @@ public class GestorReclamosRecurso {
     @Produces(MediaType.APPLICATION_JSON)
     public Response listar() {
         return Response.ok(aDTO(gestorReclamosBL.listarReclamos())).build();
+    }
+
+    // RF018: PDF de los reclamos registrados entre desde y hasta (incluidas). Ej: /reclamo/reportes?desde=2026-10-01&hasta=2026-10-31
+    @GET
+    @Path("/reportes")
+    @Produces("application/pdf")
+    public Response reporteReclamos(@QueryParam("desde") String desde, @QueryParam("hasta") String hasta) {
+        String problema = GeneradorReportes.validarRango(desde, hasta);
+        if (problema != null) {
+            return Response.status(Response.Status.BAD_REQUEST).type(MediaType.APPLICATION_JSON)
+                    .entity(Map.of("error", problema)).build();
+        }
+        try {
+            LocalDate inicio = LocalDate.parse(desde.trim());
+            LocalDate fin = LocalDate.parse(hasta.trim());
+            List<FilaReclamoReporte> filas = gestorReclamosBL.listarReclamos().stream()
+                    .filter(r -> r.getFechaReclamo() != null
+                            && !r.getFechaReclamo().isBefore(inicio) && !r.getFechaReclamo().isAfter(fin))
+                    .sorted(Comparator.comparing(Reclamo::getFechaReclamo).thenComparing(Reclamo::getIdReclamo))
+                    .map(FilaReclamoReporte::new)
+                    .toList();
+            byte[] pdf = generador.generarReclamos(filas, inicio, fin);
+            return Response.ok(pdf, "application/pdf")
+                    .header("Content-Disposition", "attachment; filename=\"reporte-reclamos.pdf\"")
+                    .header("Cache-Control", "no-store")
+                    .build();
+        } catch (Exception e) {
+            LOG.log(Level.SEVERE, "Error al generar el reporte de reclamos", e);
+            return Response.serverError().type(MediaType.APPLICATION_JSON)
+                    .entity(Map.of("error", "No se pudo generar el reporte")).build();
+        }
     }
 
     @GET

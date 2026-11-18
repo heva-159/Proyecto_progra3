@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport name="ReporteSesiones" language="java" pageWidth="595" pageHeight="842"
+ columnWidth="515" leftMargin="40" rightMargin="40" topMargin="42" bottomMargin="42"
+ whenNoDataType="NoDataSection" uuid="76ae6b04-ed92-47f3-823f-e15f6dcaf528">
+    <property name="net.sf.jasperreports.compiler.java" value="net.sf.jasperreports.jdt.JRJdtCompiler"/>
+    <style name="Base" default="true" fontName="DejaVu Sans" fontSize="9.0" forecolor="#163653"/>
+    <parameter name="DESDE" class="java.lang.String"/>
+    <parameter name="HASTA" class="java.lang.String"/>
+    <field name="idSesion" class="java.lang.Integer"/>
+    <field name="fecha" class="java.lang.String"/>
+    <field name="curso" class="java.lang.String"/>
+    <field name="tutor" class="java.lang.String"/>
+    <field name="estudiante" class="java.lang.String"/>
+    <field name="estado" class="java.lang.String"/>
+    <title height="86">
+        <element kind="staticText" uuid="874c17d0-bdcc-429a-bb90-c25061bd0bf9" x="0" y="0" width="515" height="20" fontSize="10.0" bold="true"><text><![CDATA[TUTORPUCP · ADMINISTRACIÓN]]></text></element>
+
+        <element kind="staticText" uuid="65fcf5e4-98a1-4415-ab2a-36572e4823f6" x="0" y="22" width="515" height="32" fontSize="23.0" bold="true"><text><![CDATA[Reporte de sesiones]]></text></element>
+
+        <element kind="textField" uuid="91e2a8be-4f16-40aa-a062-da2818653762" x="0" y="57" width="515" height="21" fontSize="10.0"><expression><![CDATA["Del " + $P{DESDE} + " al " + $P{HASTA}]]></expression></element>
+
+    </title>
+    <columnHeader height="23"><element kind="staticText" uuid="97b88d55-9a54-46b4-a106-7bf83e6005d5" x="0" y="0" width="35" height="23" mode="Opaque" backcolor="#163653" forecolor="#FFFFFF" bold="true" vTextAlign="Middle"><text><![CDATA[N.º]]></text></element>
+<element kind="staticText" uuid="21bf25e9-8476-43c3-9013-77b51a83c8a6" x="35" y="0" width="85" height="23" mode="Opaque" backcolor="#163653" forecolor="#FFFFFF" bold="true" vTextAlign="Middle"><text><![CDATA[Fecha]]></text></element>
+<element kind="staticText" uuid="955ad223-5c6c-47aa-872d-dc11c672a49f" x="120" y="0" width="135" height="23" mode="Opaque" backcolor="#163653" forecolor="#FFFFFF" bold="true" vTextAlign="Middle"><text><![CDATA[Curso]]></text></element>
+<element kind="staticText" uuid="0b16c96b-0424-44ed-9c78-6ad6583d0e55" x="255" y="0" width="95" height="23" mode="Opaque" backcolor="#163653" forecolor="#FFFFFF" bold="true" vTextAlign="Middle"><text><![CDATA[Tutor]]></text></element>
+<element kind="staticText" uuid="2ef46622-894e-403a-9449-0cdf3bc427c7" x="350" y="0" width="95" height="23" mode="Opaque" backcolor="#163653" forecolor="#FFFFFF" bold="true" vTextAlign="Middle"><text><![CDATA[Estudiante]]></text></element>
+<element kind="staticText" uuid="b5211fe3-ff56-4127-a107-2977ca53206a" x="445" y="0" width="70" height="23" mode="Opaque" backcolor="#163653" forecolor="#FFFFFF" bold="true" vTextAlign="Middle"><text><![CDATA[Estado]]></text></element>
+</columnHeader>
+    <detail><band height="22" splitType="Stretch"><element kind="textField" uuid="6f7a096b-2781-4d90-bcd5-0c59ea444ef6" x="0" y="1" width="35" height="19" ><expression><![CDATA[$F{idSesion}]]></expression></element>
+<element kind="textField" uuid="2218ad00-077e-4ab0-8d3a-de3859867c43" x="35" y="1" width="85" height="19" ><expression><![CDATA[$F{fecha}]]></expression></element>
+<element kind="textField" uuid="f29b9cde-2d18-4825-aa59-ee6736366936" x="120" y="1" width="135" height="19" textAdjust="StretchHeight"><expression><![CDATA[$F{curso}]]></expression></element>
+<element kind="textField" uuid="e9ac3492-eaa7-4a96-9a51-f47070e1d34e" x="255" y="1" width="95" height="19" textAdjust="StretchHeight"><expression><![CDATA[$F{tutor}]]></expression></element>
+<element kind="textField" uuid="7c66d486-41b0-4760-bf08-aed651462ae5" x="350" y="1" width="95" height="19" textAdjust="StretchHeight"><expression><![CDATA[$F{estudiante}]]></expression></element>
+<element kind="textField" uuid="d5203229-5306-4e02-9c5d-3fcb0a16b628" x="445" y="1" width="70" height="19" textAdjust="StretchHeight"><expression><![CDATA[$F{estado}]]></expression></element>
+</band></detail>
+    <pageFooter height="24"><element kind="textField" uuid="dfc46cef-fb01-4bf3-802f-0dccae300492" x="0" y="2" width="515" height="18" hTextAlign="Right"><expression><![CDATA["Página " + $V{PAGE_NUMBER}]]></expression></element>
+</pageFooter>
+    <summary height="32"><element kind="textField" uuid="63aa7643-7642-4653-9e6b-499d00e49230" x="0" y="10" width="515" height="20" fontSize="10.0" bold="true"><expression><![CDATA["Total de sesiones: " + $V{REPORT_COUNT}]]></expression></element>
+</summary>
+    <noData height="105">
+        <element kind="staticText" uuid="6957e59e-7513-40e0-a8dd-b3921d08ec3b" x="0" y="0" width="515" height="30" fontSize="23.0" bold="true"><text><![CDATA[Reporte de sesiones]]></text></element>
+
+        <element kind="textField" uuid="5b6cb707-7f7c-4267-89a5-7c72645c0825" x="0" y="40" width="515" height="20" fontSize="10.0"><expression><![CDATA["Del " + $P{DESDE} + " al " + $P{HASTA}]]></expression></element>
+
+        <element kind="staticText" uuid="413e0876-e9a6-4141-9f6d-69dae0e5b73d" x="0" y="70" width="515" height="20" fontSize="10.0"><text><![CDATA[No hay sesiones en este rango de fechas.]]></text></element>
+
+    </noData>
+</jasperReport>

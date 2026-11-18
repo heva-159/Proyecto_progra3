@@ -20,23 +20,30 @@ public interface GestorUsuarios {
     // Eliminacion logica: la cuenta queda BLOQUEADA.
     void eliminarUsuario(Usuario usuario);
 
+    // RF019: el administrador bloquea la cuenta (no podra iniciar sesion). Lanza BL_exeption si ya esta bloqueada.
+    Usuario bloquearUsuario(int idUsuario);
+
+    // RF019: el administrador reactiva una cuenta bloqueada. Lanza BL_exeption si ya esta activa.
+    Usuario reactivarUsuario(int idUsuario);
+
     // Devuelve null si no existe.
     Usuario obtenerUsuarioPorId(int idUsuario);
 
     List<Usuario> listarUsuarios();
 
     // Devuelve el usuario si el correo y la contrasena coinciden y la cuenta esta activa; si no, null.
+    // Si la contrasena es correcta pero el correo no esta verificado, lanza BL_exeption.
     Usuario iniciarSesion(String correo, String password);
 
     // Cambia la contrasena si la actual coincide (la cuenta debe estar activa). La nueva se guarda como hash.
     void cambiarPassword(int idUsuario, String passwordActual, String passwordNueva);
 
-    // Verifica el correo con el codigo de 6 digitos que se envio al registrarse. Falla si no hay un codigo
+    // RF001: verifica el correo con el codigo de 6 digitos que se envio al registrarse. Falla si no hay un codigo
     // pendiente, si vencio o si es incorrecto; con 5 intentos fallidos el codigo se invalida y hay que pedir otro.
     // Si el correo ya estaba verificado no hace nada. Devuelve el usuario ya verificado.
     Usuario verificarCorreo(String correo, String codigo);
 
-    // Genera un codigo nuevo (el anterior deja de servir) y lo envia al correo. Hay que esperar 30 segundos
+    // RF001: genera un codigo nuevo (el anterior deja de servir) y lo envia al correo. Hay que esperar 30 segundos
     // entre un envio y otro.
     void reenviarCodigo(String correo);
 

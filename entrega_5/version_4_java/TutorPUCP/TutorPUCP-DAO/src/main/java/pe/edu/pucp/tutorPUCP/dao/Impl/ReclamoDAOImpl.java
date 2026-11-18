@@ -7,6 +7,8 @@ import pe.edu.pucp.tutorPUCP.modelo.enums.EstadoAprobacion;
 import pe.edu.pucp.tutorPUCP.modelo.enums.Rol;
 import pe.edu.pucp.tutorPUCP.modelo.tutoria.Reclamo;
 import pe.edu.pucp.tutorPUCP.modelo.tutoria.Sesion;
+import pe.edu.pucp.tutorPUCP.modelo.usuario.Administrador;
+import pe.edu.pucp.tutorPUCP.modelo.usuario.Usuario;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -15,7 +17,9 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ReclamoDAOImpl implements ReclamoDAO {
 
@@ -28,7 +32,7 @@ public class ReclamoDAOImpl implements ReclamoDAO {
             stmt.setInt(1, id);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                reclamo = leerReclamo(rs);
+                reclamo = leerReclamo(rs, new HashMap<>(), new HashMap<>(), new HashMap<>());
             }
         } catch (SQLException e) {
             System.out.println("Error al obtener reclamo: " + e.getMessage());
@@ -65,8 +69,12 @@ public class ReclamoDAOImpl implements ReclamoDAO {
                 stmt.setInt(1, idSesion);
             }
             ResultSet rs = stmt.executeQuery();
+            // cada sesion, usuario y administrador se busca una sola vez aunque aparezca en muchos reclamos
+            Map<Integer, Sesion> sesiones = new HashMap<>();
+            Map<Integer, Usuario> usuarios = new HashMap<>();
+            Map<Integer, Administrador> administradores = new HashMap<>();
             while (rs.next()) {
-                reclamos.add(leerReclamo(rs));
+                reclamos.add(leerReclamo(rs, sesiones, usuarios, administradores));
             }
         } catch (SQLException e) {
             System.out.println("Error al listar reclamos: " + e.getMessage());
@@ -173,11 +181,15 @@ public class ReclamoDAOImpl implements ReclamoDAO {
         }
     }
 
-    private Reclamo leerReclamo(ResultSet rs) throws SQLException {
+    private Reclamo leerReclamo(ResultSet rs, Map<Integer, Sesion> sesiones, Map<Integer, Usuario> usuarios,
+                                Map<Integer, Administrador> administradores) throws SQLException {
+        SesionDAOImpl sesionDAO = new SesionDAOImpl();
+        UsuarioDAOImpl usuarioDAO = new UsuarioDAOImpl();
+        AdministradorDAOImpl administradorDAO = new AdministradorDAOImpl();
         Reclamo reclamo = new Reclamo();
         reclamo.setIdReclamo(rs.getInt("id"));
-        reclamo.setSesion(new SesionDAOImpl().load(rs.getInt("id_sesion")));
-        reclamo.setReclamante(new UsuarioDAOImpl().load(rs.getInt("id_usuario_reclamante")));
+        reclamo.setSesion(sesiones.computeIfAbsent(rs.getInt("id_sesion"), sesionDAO::load));
+        reclamo.setReclamante(usuarios.computeIfAbsent(rs.getInt("id_usuario_reclamante"), usuarioDAO::load));
         reclamo.setRolReclamante(Rol.valueOf(rs.getString("rol_reclamante")));
         reclamo.setMotivo(rs.getString("motivo"));
         reclamo.setFechaReclamo(rs.getObject("fecha_reclamo", LocalDate.class));
@@ -185,7 +197,7 @@ public class ReclamoDAOImpl implements ReclamoDAO {
         reclamo.setResolucion(rs.getString("resolucion"));
         Integer idAdministrador = rs.getObject("id_administrador_resuelve", Integer.class);
         if (idAdministrador != null) {
-            reclamo.setAdministradorResuelve(new AdministradorDAOImpl().load(idAdministrador));
+            reclamo.setAdministradorResuelve(administradores.computeIfAbsent(idAdministrador, administradorDAO::load));
         }
         reclamo.setFechaResolucion(rs.getObject("fecha_resolucion", LocalDate.class));
         return reclamo;

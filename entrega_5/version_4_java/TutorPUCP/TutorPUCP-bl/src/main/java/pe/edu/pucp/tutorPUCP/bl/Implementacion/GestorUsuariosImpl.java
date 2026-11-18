@@ -15,6 +15,7 @@ import pe.edu.pucp.tutorPUCP.dao.Impl.UsuarioDAOImpl;
 import pe.edu.pucp.tutorPUCP.dbmanager.TransactionContext;
 import pe.edu.pucp.tutorPUCP.modelo.enums.EstadoCuenta;
 import pe.edu.pucp.tutorPUCP.modelo.enums.Rol;
+import pe.edu.pucp.tutorPUCP.modelo.interfaces.IServicioCorreo;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Administrador;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Estudiante;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Tutor;
@@ -24,7 +25,6 @@ import java.security.SecureRandom;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -48,7 +48,9 @@ public class GestorUsuariosImpl implements GestorUsuarios {
     private final TutorDAO tutorDAO = new TutorDAOImpl();
     private final EstudianteDAO estudianteDAO = new EstudianteDAOImpl();
     private final AdministradorDAO administradorDAO = new AdministradorDAOImpl();
-    private final EnviadorCorreo enviadorCorreo = new EnviadorCorreo();
+    // el envio de correos va detras de la interfaz del proyecto: EnviadorCorreo manda por SMTP, o escribe en la consola
+    // (ServicioCorreoConsola) si no hay cuenta configurada
+    private final IServicioCorreo servicioCorreo = new EnviadorCorreo();
 
     // ---- Usuario ----
 
@@ -152,6 +154,31 @@ public class GestorUsuariosImpl implements GestorUsuarios {
         usuarioDAO.remove(usuario);
     }
 
+    // RF019: bloqueo de cuenta por el administrador
+    @Override
+    public Usuario bloquearUsuario(int idUsuario) {
+        return cambiarEstado(idUsuario, EstadoCuenta.BLOQUEADA, "La cuenta ya esta bloqueada");
+    }
+
+    // RF019: reactivacion de una cuenta bloqueada
+    @Override
+    public Usuario reactivarUsuario(int idUsuario) {
+        return cambiarEstado(idUsuario, EstadoCuenta.ACTIVA, "La cuenta ya esta activa");
+    }
+
+    private Usuario cambiarEstado(int idUsuario, EstadoCuenta nuevo, String mensajeSiIgual) {
+        Usuario usuario = usuarioDAO.load(idUsuario);
+        if (usuario == null) {
+            throw new BL_exeption("El usuario no existe");
+        }
+        if (usuario.getEstado() == nuevo) {
+            throw new BL_exeption(mensajeSiIgual);
+        }
+        usuario.setEstado(nuevo);
+        usuarioDAO.update(usuario);
+        return usuario;
+    }
+
     @Override
     public Usuario obtenerUsuarioPorId(int idUsuario) {
         return usuarioDAO.load(idUsuario);
@@ -165,10 +192,15 @@ public class GestorUsuariosImpl implements GestorUsuarios {
     @Override
     public Usuario iniciarSesion(String correo, String password) {
         Usuario usuario = usuarioDAO.buscarPorCorreo(correo);
-        if (usuario == null
-                || usuario.getEstado() != EstadoCuenta.ACTIVA
-                || !PasswordHasher.coincide(password, usuario.getPasswordHash())) {
+        if (usuario == null || !PasswordHasher.coincide(password, usuario.getPasswordHash())) {
             return null;
+        }
+        // RF019: con la contrasena correcta se avisa que la cuenta fue bloqueada por el administrador
+        if (usuario.getEstado() != EstadoCuenta.ACTIVA) {
+            throw new BL_exeption("Tu cuenta esta bloqueada. Comunicate con el administrador");
+        }
+        if (!usuario.isCorreoVerificado()) {
+            throw new BL_exeption("Verifica tu correo antes de iniciar sesion");
         }
         return usuario;
     }
@@ -277,15 +309,19 @@ public class GestorUsuariosImpl implements GestorUsuarios {
         usuario.setFechaExpiracionCodigo(ahora().plusMinutes(MINUTOS_VIGENCIA_CODIGO));
     }
 
-    // La hora del vencimiento se guarda en UTC, igual que la hora del servidor de la BD (que va 5 horas adelantada
-    // respecto a Lima): asi no depende de la zona horaria de la maquina donde corra GlassFish.
+    // Hora de Peru, la misma que usa la BD en esta conexion (DBManager fija time_zone = -05:00).
     private static LocalDateTime ahora() {
-        return LocalDateTime.now(ZoneOffset.UTC);
+        return LocalDateTime.now();
     }
 
+    // El texto del correo (texto plano, que es lo que menos filtra el spam).
     private void enviarCodigo(Usuario usuario) {
-        enviadorCorreo.enviarCodigoVerificacion(usuario.getCorreoInstitucional(), usuario.getNombres(),
-                usuario.getCodigoVerificacion(), MINUTOS_VIGENCIA_CODIGO);
+        String contenido = "Hola " + usuario.getNombres() + ",\n\n"
+                + "Tu código de verificación de TutorPUCP es:\n\n"
+                + "    " + usuario.getCodigoVerificacion() + "\n\n"
+                + "Vence en " + MINUTOS_VIGENCIA_CODIGO + " minutos. "
+                + "Si no creaste una cuenta en TutorPUCP, ignora este mensaje.\n";
+        servicioCorreo.enviar(usuario.getCorreoInstitucional(), "Tu código de verificación de TutorPUCP", contenido);
     }
 
     // ---- Perfil Tutor ----

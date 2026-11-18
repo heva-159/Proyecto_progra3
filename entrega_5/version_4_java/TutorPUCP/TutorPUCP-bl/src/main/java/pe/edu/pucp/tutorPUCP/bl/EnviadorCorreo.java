@@ -9,6 +9,7 @@ import jakarta.mail.Transport;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import pe.edu.pucp.tutorPUCP.bl.Exeptions.BL_exeption;
+import pe.edu.pucp.tutorPUCP.modelo.interfaces.IServicioCorreo;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,42 +27,42 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 
-// Usa un servidor SMTP (gmail). Los datos de la cuenta van en correo.properties
-// Si ese archivo no existe, trabaja en "modo consola": no envia nada y escribe el codigo en el log del servidor,
-// asi se puede probar el registro sin tener ninguna cuenta de correo configurada.
-public class EnviadorCorreo {
+// Envia los correos del sistema (el codigo de verificacion de la cuenta) por SMTP. Es la implementacion real de
+// IServicioCorreo, la interfaz del proyecto; la otra es ServicioCorreoConsola.
+//
+// Usa un servidor SMTP (el de Gmail, con una "contrasena de aplicacion"). Los datos de la cuenta van en
+// correo.properties, que NO se sube a git: ver correo.properties.example en este mismo modulo.
+// Si ese archivo no existe, trabaja en "modo consola": no envia nada y deja el correo (con el codigo) en el log del
+// servidor mediante ServicioCorreoConsola, asi se puede probar el registro sin tener ninguna cuenta configurada.
+// Tambien queda en modo consola si el programa arranca con -Dtutorpucp.correo=consola (Main lo hace solo: registra
+// usuarios inventados y no debe mandar correos de verdad).
+public class EnviadorCorreo implements IServicioCorreo {
     private static final Logger LOG = Logger.getLogger(EnviadorCorreo.class.getName());
     private static final String ARCHIVO_CONFIGURACION = "correo.properties";
 
     // Los datos de correo.properties; null si no hay archivo (modo consola). Se leen una sola vez al cargar la clase.
     private static final Properties CONFIGURACION = cargarConfiguracion();
 
-    // Envia el codigo al correo del usuario. Si no se pudo enviar, lanza BL_exeption.
-    public void enviarCodigoVerificacion(String destino, String nombres, String codigo, int minutosVigencia) {
+    // lo que se usa cuando no hay cuenta de correo configurada
+    private final IServicioCorreo respaldoConsola = new ServicioCorreoConsola();
+
+    // Envia el correo en texto plano (que es lo que menos filtra el spam). Si no se pudo enviar, lanza BL_exeption.
+    @Override
+    public void enviar(String destinatario, String asunto, String contenido) {
         if (CONFIGURACION == null || consolaForzada()) {
-            LOG.info("[CORREO en modo consola] Para " + destino + " -> codigo de verificacion " + codigo
-                    + " (vence en " + minutosVigencia + " minutos)");
+            respaldoConsola.enviar(destinatario, asunto, contenido);
             return;
         }
         try {
             MimeMessage mensaje = new MimeMessage(crearSesion());
             mensaje.setFrom(new InternetAddress(remitente(), "TutorPUCP", "UTF-8"));
-            mensaje.setRecipient(Message.RecipientType.TO, new InternetAddress(destino));
-            mensaje.setSubject("Tu código de verificación de TutorPUCP", "UTF-8");
-            mensaje.setText(cuerpo(nombres, codigo, minutosVigencia), "UTF-8");
+            mensaje.setRecipient(Message.RecipientType.TO, new InternetAddress(destinatario));
+            mensaje.setSubject(asunto, "UTF-8");
+            mensaje.setText(contenido, "UTF-8");
             Transport.send(mensaje);
         } catch (MessagingException | UnsupportedEncodingException e) {
-            throw new BL_exeption("No se pudo enviar el correo de verificacion: " + e.getMessage());
+            throw new BL_exeption("No se pudo enviar el correo: " + e.getMessage());
         }
-    }
-
-    // El texto del correo (texto plano, que es lo que menos filtra el spam).
-    private static String cuerpo(String nombres, String codigo, int minutosVigencia) {
-        return "Hola " + nombres + ",\n\n"
-                + "Tu código de verificación de TutorPUCP es:\n\n"
-                + "    " + codigo + "\n\n"
-                + "Vence en " + minutosVigencia + " minutos. "
-                + "Si no creaste una cuenta en TutorPUCP, ignora este mensaje.\n";
     }
 
     // La conexion con el servidor SMTP: direccion, puerto, cifrado y usuario/clave (segun correo.properties).
@@ -148,8 +149,10 @@ public class EnviadorCorreo {
             if (entrada == null) {
                 return null;
             }
+            // algunos editores (el Bloc de notas) guardan UTF-8 con una marca invisible al inicio, que se pegaria
+            // a la primera clave y haria que no se encuentre "host"
             String texto = new String(entrada.readAllBytes(), StandardCharsets.UTF_8);
-            if (texto.startsWith("﻿")) {
+            if (texto.startsWith("\uFEFF")) {
                 texto = texto.substring(1);
             }
             Properties propiedades = new Properties();

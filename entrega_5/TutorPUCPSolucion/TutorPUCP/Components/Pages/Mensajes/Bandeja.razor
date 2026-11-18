@@ -11,18 +11,12 @@
 
 <Toasts class="p-3" Messages="avisos" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
 
-<div class="titulo-pagina">
-    <div class="d-flex align-items-center gap-3">
-        <span class="icono-titulo"><i class="bi bi-chat-dots-fill"></i></span>
-        <div>
-            <h1 class="h3">Mensajes</h1>
-            <p>Coordina tus tutorías por la mensajería interna de TutorPUCP.</p>
-        </div>
-    </div>
+<EncabezadoPagina Icono="bi-chat-dots-fill" Titulo="Mensajes"
+                  Subtitulo="Coordina tus tutorías por la mensajería interna de TutorPUCP.">
     <button type="button" class="btn btn-primary" @onclick="AbrirNuevo" disabled="@(Yo is null)">
-        <i class="bi bi-pencil-square me-1"></i> Nuevo mensaje
+        <i class="bi bi-pencil-square"></i>Nuevo mensaje
     </button>
-</div>
+</EncabezadoPagina>
 
 @if (Yo is null)
 {
@@ -32,25 +26,15 @@ else
 {
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-4 entrar" style="--i: 0;">
-        <div class="card kpi h-100">
-            <div class="card-body d-flex align-items-center gap-3">
-                <span class="kpi-icono" style="background:#dbeafe;color:#2563eb;"><i class="bi bi-chat-left-text"></i></span>
-                <div><div class="kpi-valor">@conversaciones.Count</div><div class="small text-muted">Conversaciones</div></div>
-            </div>
-        </div>
+        <TarjetaDato Icono="bi-chat-left-text" Valor="@conversaciones.Count.ToString()" Etiqueta="Conversaciones" />
     </div>
     <div class="col-6 col-md-4 entrar" style="--i: 1;">
-        <div class="card kpi h-100">
-            <div class="card-body d-flex align-items-center gap-3">
-                <span class="kpi-icono" style="background:#fee2e2;color:#dc2626;"><i class="bi bi-envelope-exclamation"></i></span>
-                <div><div class="kpi-valor">@conversaciones.Sum(c => c.NoLeidos)</div><div class="small text-muted">Sin leer</div></div>
-            </div>
-        </div>
+        <TarjetaDato Icono="bi-envelope-exclamation" Valor="@conversaciones.Sum(c => c.NoLeidos).ToString()" Etiqueta="Sin leer" />
     </div>
     <div class="col-12 col-md-4 entrar" style="--i: 2;">
-        <div class="card kpi h-100">
-            <div class="card-body d-flex align-items-center gap-3">
-                <span class="kpi-icono" style="background:#dcfce7;color:#16a34a;"><i class="bi bi-shield-check"></i></span>
+        <div class="card kpi tarjeta-dato h-100">
+            <div class="card-body">
+                <span class="kpi-icono" aria-hidden="true"><i class="bi bi-shield-check"></i></span>
                 <div class="small text-muted lh-sm">Tu teléfono y correo <b>no se muestran</b> a nadie. Todo se coordina por aquí.</div>
             </div>
         </div>
@@ -58,11 +42,11 @@ else
 </div>
 
 <div class="card">
-    <div class="card-header py-3">
+    <div class="card-header cabecera">
         <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
-            <div class="position-relative flex-grow-1" style="max-width: 380px;">
-                <i class="bi bi-search position-absolute text-muted" style="left: .8rem; top: 50%; transform: translateY(-50%);"></i>
-                <input type="text" class="form-control ps-5" placeholder="Buscar por nombre"
+            <div class="buscador flex-grow-1" style="max-width: 380px;">
+                <i class="bi bi-search"></i>
+                <input type="text" class="form-control" placeholder="Buscar por nombre"
                        @bind="busqueda" @bind:event="oninput" aria-label="Buscar conversación" />
             </div>
             <div class="segmento" role="group" aria-label="Filtrar conversaciones">

@@ -168,11 +168,21 @@ public class GestorSesionesImpl implements GestorSesiones {
         if (sesion.getEstado() != EstadoSesion.REALIZADA) {
             throw new BL_exeption("Solo se puede calificar una sesion ya realizada");
         }
+        if (sesion.getPuntaje() != null) {
+            throw new BL_exeption("Esta sesion ya fue calificada");
+        }
         if (puntaje < 1 || puntaje > 5) {
             throw new BL_exeption("El puntaje debe estar entre 1 y 5");
         }
+        // el comentario es opcional: si viene vacio se guarda como null
+        if (comentario != null && comentario.isBlank()) {
+            comentario = null;
+        }
+        if (comentario != null && comentario.trim().length() > 500) {
+            throw new BL_exeption("El comentario no puede pasar de 500 caracteres");
+        }
         sesion.setPuntaje(puntaje);
-        sesion.setComentario(comentario);
+        sesion.setComentario(comentario == null ? null : comentario.trim());
         sesionDAO.update(sesion);
     }
 

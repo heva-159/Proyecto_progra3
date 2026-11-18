@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using TutorPUCP.DTO;
 
 namespace TutorPUCP.Servicios;
@@ -22,6 +22,11 @@ public class UsuariosApi(IHttpClientFactory fabrica) : ClienteRest(fabrica)
         Enviar<UsuarioDto>(HttpMethod.Post, "usuario/login", new Credenciales(correo, password));
     public Task<string?> CambiarPasswordAsync(int idUsuario, string passwordActual, string passwordNueva) =>
         EnviarSinValor(HttpMethod.Put, $"usuario/{idUsuario}/password", new CambioPassword(passwordActual, passwordNueva));
+    // RF019: el administrador bloquea o reactiva una cuenta
+    public Task<(UsuarioDto? Valor, string? Error)> BloquearUsuarioAsync(int id) =>
+        Enviar<UsuarioDto>(HttpMethod.Put, $"usuario/{id}/bloquear");
+    public Task<(UsuarioDto? Valor, string? Error)> ReactivarUsuarioAsync(int id) =>
+        Enviar<UsuarioDto>(HttpMethod.Put, $"usuario/{id}/reactivar");
     // Si el código es correcto devuelve el usuario ya verificado; si no, el Error trae el motivo
     // ("Codigo incorrecto. Te quedan 4 intentos", "El codigo vencio...", "Demasiados intentos fallidos...").
     public Task<(UsuarioDto? Valor, string? Error)> VerificarCorreoAsync(string correo, string codigo) =>

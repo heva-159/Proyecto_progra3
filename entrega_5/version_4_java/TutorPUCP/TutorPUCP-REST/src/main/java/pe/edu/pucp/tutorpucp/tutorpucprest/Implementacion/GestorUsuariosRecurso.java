@@ -86,6 +86,30 @@ public class GestorUsuariosRecurso{
         }
     }
 
+    // RF019: el administrador bloquea una cuenta
+    @PUT
+    @Path("/{id}/bloquear")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response bloquear(@PathParam("id") Integer id) {
+        try {
+            return Response.ok(new UsuarioDTO(gestorUsuariosBL.bloquearUsuario(id))).build();
+        } catch (BL_exeption e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", e.getMessage())).build();
+        }
+    }
+
+    // RF019: el administrador reactiva una cuenta bloqueada
+    @PUT
+    @Path("/{id}/reactivar")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response reactivar(@PathParam("id") Integer id) {
+        try {
+            return Response.ok(new UsuarioDTO(gestorUsuariosBL.reactivarUsuario(id))).build();
+        } catch (BL_exeption e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", e.getMessage())).build();
+        }
+    }
+
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -116,7 +140,13 @@ public class GestorUsuariosRecurso{
         if (datos == null) {
             throw new BadRequestException("Faltan el correo y la contraseña");
         }
-        Usuario usuario = gestorUsuariosBL.iniciarSesion(datos.getCorreo(), datos.getPassword());
+        Usuario usuario;
+        try {
+            usuario = gestorUsuariosBL.iniciarSesion(datos.getCorreo(), datos.getPassword());
+        } catch (BL_exeption e) {
+            // RF001: la contraseña es correcta pero falta verificar el correo
+            return Response.status(Response.Status.FORBIDDEN).entity(Map.of("error", e.getMessage())).build();
+        }
         if (usuario == null) {
             return Response.status(Response.Status.UNAUTHORIZED)
                     .entity(Map.of("error", "Correo o contraseña incorrectos")).build();

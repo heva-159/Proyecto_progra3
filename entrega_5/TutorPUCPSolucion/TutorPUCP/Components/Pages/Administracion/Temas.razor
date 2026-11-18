@@ -6,6 +6,7 @@
 <PageTitle>Temas</PageTitle>
 
 <Toasts class="p-3" Messages="avisos" AutoHide="true" Delay="4500" Placement="ToastsPlacement.TopRight" />
+<ModalListo @ref="listo" />
 
 <div class="titulo-pagina">
     <div class="d-flex align-items-center gap-3">
@@ -172,6 +173,7 @@ else
     [SupplyParameterFromQuery(Name = "curso")] public string? CursoDesdeUrl { get; set; }
 
     private Modal modalEliminar = default!;
+    private ModalListo listo = default!;
     private readonly List<ToastMessage> avisos = [];
 
     // Cursos y temas de la BD, pedidos al servicio REST.
@@ -262,7 +264,7 @@ else
         {
             await Rest.RegistrarTemaAsync(Curso.IdCurso, new TemaFormulario { Nombre = nombre });
             nuevoTema = "";
-            Avisar(ToastType.Success, "Tema agregado", $"{nombre} en {Curso.Nombre}.");
+            await listo.MostrarAsync("Tema agregado", $"{nombre} en {Curso.Nombre}.");
             await CargarTemas();
         }
         catch (Exception ex)
@@ -291,7 +293,7 @@ else
         {
             await Rest.ModificarTemaAsync(editando.IdTema, new TemaFormulario { Nombre = nombre });
             editando = null;
-            Avisar(ToastType.Success, "Tema modificado", $"Ahora se llama {nombre}.");
+            await listo.MostrarAsync("Tema modificado", $"Ahora se llama {nombre}.");
             await CargarTemas();
         }
         catch (Exception ex)
