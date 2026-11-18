@@ -4,7 +4,7 @@ using TutorPUCP.Modelos;
 
 namespace TutorPUCP.Servicios;
 
-// Cliente del servicio REST de sesiones (RF011, RF012, RF013).
+// Cliente del servicio REST de sesiones (RF011, RF012, RF013, RF014).
 // Llama a GestorSesionesRecurso en GlassFish: {ApiRest:BaseUrl}sesion/...
 // Mismo estilo que AcademicoRestService (y que PlatoRestService del ejemplo del profesor).
 public class SesionRestService(HttpClient http)
@@ -81,5 +81,41 @@ public class SesionRestService(HttpClient http)
     {
         using var r = await http.PutAsJsonAsync($"sesion/{idSesion}/cancelacion", f);
         return await Leer<SesionRestDTO>(r);
+    }
+
+    // ======================== RF014: calificar al tutor ========================
+
+    // Solo el estudiante de una sesión Realizada, una sola vez. Devuelve la sesión con su puntaje.
+    public async Task<SesionRestDTO> CalificarAsync(int idSesion, CalificarSesionFormulario f)
+    {
+        using var r = await http.PutAsJsonAsync($"sesion/{idSesion}/calificacion", f);
+        return await Leer<SesionRestDTO>(r);
+    }
+
+    // ======================== RF017 / RF018: reportes en PDF ========================
+    // Igual que DescargarAsync de PlatoRestService (ejemplo del profesor): Java arma el PDF con JasperReports.
+
+    // RF017: tutorías del tutor entre desde y hasta.
+    public Task<byte[]> DescargarReporteTutorAsync(int idUsuario, DateOnly desde, DateOnly hasta, CancellationToken ct)
+        => DescargarPdfAsync($"sesion/reportes/tutor/{idUsuario}?{Rango(desde, hasta)}", ct);
+
+    // RF018: sesiones de la plataforma entre desde y hasta.
+    public Task<byte[]> DescargarReporteSesionesAsync(DateOnly desde, DateOnly hasta, CancellationToken ct)
+        => DescargarPdfAsync($"sesion/reportes?{Rango(desde, hasta)}", ct);
+
+    // RF018: reclamos registrados entre desde y hasta.
+    public Task<byte[]> DescargarReporteReclamosAsync(DateOnly desde, DateOnly hasta, CancellationToken ct)
+        => DescargarPdfAsync($"reclamo/reportes?{Rango(desde, hasta)}", ct);
+
+    private static string Rango(DateOnly desde, DateOnly hasta)
+        => $"desde={desde:yyyy-MM-dd}&hasta={hasta:yyyy-MM-dd}";
+
+    private async Task<byte[]> DescargarPdfAsync(string ruta, CancellationToken ct)
+    {
+        using var respuesta = await http.GetAsync(ruta, ct);
+        respuesta.EnsureSuccessStatusCode();
+        if (respuesta.Content.Headers.ContentType?.MediaType != "application/pdf")
+            throw new InvalidDataException("El backend no devolvió un PDF.");
+        return await respuesta.Content.ReadAsByteArrayAsync(ct);
     }
 }

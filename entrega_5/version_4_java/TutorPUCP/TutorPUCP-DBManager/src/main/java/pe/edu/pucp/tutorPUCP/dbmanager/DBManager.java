@@ -55,6 +55,10 @@ public class DBManager {
         config.setKeepaliveTime(2 * 60_000);       // cada 2 minutos comprueba que la conexion siga viva
         config.setMaxLifetime(15 * 60_000);        // cada 15 minutos renueva la conexion
         config.setInitializationFailTimeout(-1);   // si al arrancar no hay red, no falla: reintenta al pedir conexion
+        // la base (AWS) esta en UTC y Java en hora de Peru: sin esto curdate()/now() de MySQL van 5 horas adelante
+        // y, por ejemplo, un reclamo registrado de noche quedaba con fecha de "mañana" y no se podia resolver
+        // (ck_reclamo_fechas). Peru no tiene horario de verano, asi que -05:00 es fijo.
+        config.setConnectionInitSql("SET time_zone = '-05:00'");
         this.pool = new HikariDataSource(config);
     }
 

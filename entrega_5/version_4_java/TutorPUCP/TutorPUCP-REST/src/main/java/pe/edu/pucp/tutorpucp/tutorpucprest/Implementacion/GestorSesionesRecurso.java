@@ -14,6 +14,7 @@ import pe.edu.pucp.tutorPUCP.modelo.academico.Curso;
 import pe.edu.pucp.tutorPUCP.modelo.academico.Postulacion;
 import pe.edu.pucp.tutorPUCP.modelo.academico.Tema;
 import pe.edu.pucp.tutorPUCP.modelo.enums.EstadoAprobacion;
+import pe.edu.pucp.tutorPUCP.modelo.enums.EstadoSesion;
 import pe.edu.pucp.tutorPUCP.modelo.enums.Rol;
 import pe.edu.pucp.tutorPUCP.modelo.tutoria.Sesion;
 import pe.edu.pucp.tutorPUCP.modelo.tutoria.Tarifa;
@@ -21,6 +22,7 @@ import pe.edu.pucp.tutorPUCP.modelo.usuario.Estudiante;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Tutor;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Usuario;
 import pe.edu.pucp.tutorpucp.tutorpucprest.DTO.AsistenciaRequest;
+import pe.edu.pucp.tutorpucp.tutorpucprest.DTO.CalificarSesionRequest;
 import pe.edu.pucp.tutorpucp.tutorpucprest.DTO.CancelarSesionRequest;
 import pe.edu.pucp.tutorpucp.tutorpucprest.DTO.CursoSesionDTO;
 import pe.edu.pucp.tutorpucp.tutorpucprest.DTO.OpcionesSesionDTO;
@@ -28,11 +30,16 @@ import pe.edu.pucp.tutorpucp.tutorpucprest.DTO.PersonaSesionDTO;
 import pe.edu.pucp.tutorpucp.tutorpucprest.DTO.RegistrarSesionRequest;
 import pe.edu.pucp.tutorpucp.tutorpucprest.DTO.SesionDTO;
 import pe.edu.pucp.tutorpucp.tutorpucprest.DTO.TemaDTO;
+import pe.edu.pucp.tutorpucp.tutorpucprest.reportes.FilaSesionReporte;
+import pe.edu.pucp.tutorpucp.tutorpucprest.reportes.GeneradorReportes;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Locale;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -40,20 +47,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Servicio REST de las sesiones de tutoría (RF011, RF012, RF013).
- * Base: /api/sesion
- *
- *  RF011  GET  /opciones?idTutor=1           cursos que el tutor puede dictar (con temas y tarifa) y estudiantes
- *         POST /                              body: {idTutor, idEstudiante, idCurso, idsTemas[], fechaHoraInicio}
- *         GET  /{id}                          detalle de una sesión
- *  RF012  PUT  /{id}/checkin                  body: {rol: TUTOR | ESTUDIANTE}
- *         PUT  /{id}/checkout                 body: {rol:   TUTOR | ESTUDIANTE}
- *  RF013  PUT  /{id}/cancelacion              body: {idUsuario, motivo}
- *
- * Las reglas del BL que no se cumplen se responden con 400 y {"error": "..."};
- * lo que no existe, con 404; y cualquier otra falla, con 500 (el detalle queda en server.log).
- */
+
 @Path("/sesion")
 @Produces(MediaType.APPLICATION_JSON)
 public class GestorSesionesRecurso {
@@ -62,11 +56,8 @@ public class GestorSesionesRecurso {
     private final GestorSesiones gestorSesionesBL = new GestorSesionesImpl();
     private final GestorUsuarios gestorUsuariosBL = new GestorUsuariosImpl();
     private final GestorAcademico gestorAcademicoBL = new GestorAcademicoImpl();
+    private final GeneradorReportes generador = new GeneradorReportes();
 
-    // ======================== RF011: registrar sesión ========================
-
-    // Datos para el formulario: cursos activos con postulación aprobada del tutor (con sus temas y su tarifa)
-    // y los estudiantes a los que puede agendar (todos menos él mismo).
     @GET
     @Path("/opciones")
     public Response opcionesParaRegistrar(@QueryParam("idTutor") int idTutor) {
@@ -236,6 +227,120 @@ public class GestorSesionesRecurso {
             LOG.log(Level.SEVERE, "Error al cancelar la sesion " + id, e);
             return error(Response.Status.INTERNAL_SERVER_ERROR, "No se pudo cancelar la sesión");
         }
+    }
+
+    // ======================== RF014: calificar al tutor ========================
+
+    // Solo el estudiante de la sesión, solo si está REALIZADA y una sola vez (lo último lo valida el BL).
+    @PUT
+    @Path("/{id}/calificacion")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response calificarSesion(@PathParam("id") int id, CalificarSesionRequest datos) {
+        if (datos == null) {
+            return error(Response.Status.BAD_REQUEST, "Faltan los datos de la calificación");
+        }
+        try {
+            Sesion sesion = gestorSesionesBL.obtenerSesionPorId(id);
+            if (sesion == null) {
+                return error(Response.Status.NOT_FOUND, "No existe la sesión " + id);
+            }
+            // se compara por id: el usuario de la sesión y el que califica vienen de loads distintos
+            Usuario usuarioEstudiante = sesion.getEstudiante() != null ? sesion.getEstudiante().getUsuario() : null;
+            if (usuarioEstudiante == null || usuarioEstudiante.getIdUsuario() != datos.getIdUsuario()) {
+                return error(Response.Status.BAD_REQUEST, "Solo el estudiante de la sesión puede calificar al tutor");
+            }
+            gestorSesionesBL.calificarSesion(sesion, datos.getPuntaje(), datos.getComentario());
+            return Response.ok(aDTO(sesion)).build();
+        } catch (BL_exeption e) {
+            return error(Response.Status.BAD_REQUEST, e.getMessage());
+        } catch (Exception e) {
+            LOG.log(Level.SEVERE, "Error al calificar la sesion " + id, e);
+            return error(Response.Status.INTERNAL_SERVER_ERROR, "No se pudo registrar la calificación");
+        }
+    }
+
+    // ============== RF017 y RF018: reportes en PDF por rango de fechas ==============
+
+    // RF017: tutorías que dictó el tutor entre desde y hasta (incluidas). Ej: /sesion/reportes/tutor/1?desde=2026-10-01&hasta=2026-10-31
+    @GET
+    @Path("/reportes/tutor/{idUsuario}")
+    @Produces("application/pdf")
+    public Response reporteTutoriasTutor(@PathParam("idUsuario") int idUsuario,
+                                         @QueryParam("desde") String desde, @QueryParam("hasta") String hasta) {
+        String problema = GeneradorReportes.validarRango(desde, hasta);
+        if (problema != null) {
+            return error(Response.Status.BAD_REQUEST, problema);
+        }
+        try {
+            Tutor tutor = gestorUsuariosBL.obtenerTutorPorId(idUsuario);
+            if (tutor == null || tutor.getUsuario() == null) {
+                return error(Response.Status.NOT_FOUND, "No existe el tutor " + idUsuario);
+            }
+            LocalDate inicio = LocalDate.parse(desde.trim());
+            LocalDate fin = LocalDate.parse(hasta.trim());
+            List<Sesion> sesiones = sesionesDelRango(inicio, fin).stream()
+                    .filter(s -> s.getTutor() != null && s.getTutor().getUsuario() != null
+                            && s.getTutor().getUsuario().getIdUsuario() == idUsuario)
+                    .toList();
+
+            long realizadas = sesiones.stream().filter(s -> s.getEstado() == EstadoSesion.REALIZADA).count();
+            List<Integer> puntajes = sesiones.stream().map(Sesion::getPuntaje).filter(p -> p != null).toList();
+            String promedio = puntajes.isEmpty()
+                    ? "sin calificaciones"
+                    : String.format(Locale.forLanguageTag("es-PE"), "%.1f de 5 (%d calificaciones)",
+                            puntajes.stream().mapToInt(Integer::intValue).average().orElse(0), puntajes.size());
+
+            byte[] pdf = generador.generarTutoriasTutor(filas(sesiones),
+                    tutor.getUsuario().getNombres() + " " + tutor.getUsuario().getApellidos(),
+                    inicio, fin, realizadas, promedio);
+            return pdf(pdf, "reporte-tutorias.pdf");
+        } catch (Exception e) {
+            LOG.log(Level.SEVERE, "Error al generar el reporte de tutorias del tutor " + idUsuario, e);
+            return error(Response.Status.INTERNAL_SERVER_ERROR, "No se pudo generar el reporte");
+        }
+    }
+
+    // RF018: todas las sesiones entre desde y hasta (para el administrador). Ej: /sesion/reportes?desde=2026-10-01&hasta=2026-10-31
+    @GET
+    @Path("/reportes")
+    @Produces("application/pdf")
+    public Response reporteSesiones(@QueryParam("desde") String desde, @QueryParam("hasta") String hasta) {
+        String problema = GeneradorReportes.validarRango(desde, hasta);
+        if (problema != null) {
+            return error(Response.Status.BAD_REQUEST, problema);
+        }
+        try {
+            LocalDate inicio = LocalDate.parse(desde.trim());
+            LocalDate fin = LocalDate.parse(hasta.trim());
+            byte[] pdf = generador.generarSesiones(filas(sesionesDelRango(inicio, fin)), inicio, fin);
+            return pdf(pdf, "reporte-sesiones.pdf");
+        } catch (Exception e) {
+            LOG.log(Level.SEVERE, "Error al generar el reporte de sesiones", e);
+            return error(Response.Status.INTERNAL_SERVER_ERROR, "No se pudo generar el reporte");
+        }
+    }
+
+    // No hay SP de sesiones por fecha, así que se filtra la lista completa (como el ejemplo de la clase con platos).
+    private List<Sesion> sesionesDelRango(LocalDate desde, LocalDate hasta) {
+        return gestorSesionesBL.listarSesiones().stream()
+                .filter(s -> s.getFechaHoraInicio() != null)
+                .filter(s -> {
+                    LocalDate dia = s.getFechaHoraInicio().toLocalDate();
+                    return !dia.isBefore(desde) && !dia.isAfter(hasta);
+                })
+                .sorted(Comparator.comparing(Sesion::getFechaHoraInicio))
+                .toList();
+    }
+
+    private static List<FilaSesionReporte> filas(List<Sesion> sesiones) {
+        return sesiones.stream().map(FilaSesionReporte::new).toList();
+    }
+
+    private static Response pdf(byte[] pdf, String nombreArchivo) {
+        return Response.ok(pdf, "application/pdf")
+                .header("Content-Disposition", "attachment; filename=\"" + nombreArchivo + "\"")
+                .header("Cache-Control", "no-store")
+                .build();
     }
 
     // ================================ ayudas ================================

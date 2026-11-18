@@ -19,7 +19,14 @@
 <form class="mt-4" @onsubmit="Ingresar" novalidate>
     @if (error is not null)
     {
-        <div class="acc-alerta mb-3"><i class="bi bi-exclamation-circle"></i><span>@error</span></div>
+        <div class="acc-alerta mb-3"><i class="bi bi-exclamation-circle"></i>
+            <span>@error
+                @if (porVerificar is not null)
+                {
+                    <a href="@($"/verificar-cuenta?correo={Uri.EscapeDataString(porVerificar)}")" class="fw-semibold ms-1">Verificar ahora</a>
+                }
+            </span>
+        </div>
     }
 
     <div class="mb-3">
@@ -70,10 +77,12 @@
     private bool recordar;
     private bool ingresando;
     private string? error;
+    private string? porVerificar; // correo sin verificar, para enlazar a /verificar-cuenta
 
     private async Task Ingresar()
     {
         error = null;
+        porVerificar = null;
         var c = correo.Trim().ToLowerInvariant();
         if (c.Length == 0 || clave.Length == 0)
             error = "Escribe tu correo y tu contraseña.";
@@ -92,13 +101,28 @@
                 var usuario = await respuesta.Content.ReadFromJsonAsync<UsuarioDto>();
                 RolActual.Usuario = usuario;
                 // La cuenta es ESTUDIANTE, TUTOR o AMBOS: si es AMBOS entra como estudiante y cambia de rol en el menú
-                var rol = usuario?.Rol == "TUTOR" ? RolActual.Tutor : RolActual.Estudiante;
+                var rol = RolActual.RolInicial;
                 RolActual.Cambiar(rol);
-                Navigation.NavigateTo(rol == RolActual.Tutor ? "/tutor" : "/estudiante");
+                Navigation.NavigateTo(RolActual.Inicio(rol));
             }
             else if (respuesta.StatusCode == System.Net.HttpStatusCode.Unauthorized)
             {
                 error = "Correo o contraseña incorrectos.";
+            }
+            else if (respuesta.StatusCode == System.Net.HttpStatusCode.Forbidden)
+            {
+                var motivo = await respuesta.LeerErrorAsync() ?? "";
+                if (motivo.Contains("bloqueada", StringComparison.OrdinalIgnoreCase))
+                {
+                    // RF019: el administrador bloqueó la cuenta
+                    error = "Tu cuenta está bloqueada. Comunícate con el administrador.";
+                }
+                else
+                {
+                    // RF001: la contraseña es correcta pero el correo aún no se verificó
+                    error = "Verifica tu correo antes de iniciar sesión.";
+                    porVerificar = c;
+                }
             }
             else
             {

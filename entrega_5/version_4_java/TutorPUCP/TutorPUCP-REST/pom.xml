@@ -51,6 +51,27 @@
           <artifactId>TutorPUCP-bl</artifactId>
           <version>1.0-SNAPSHOT</version>
       </dependency>
+      <!-- Reportes en PDF (RF017, RF018): JasperReports 7, igual que en la clase de reportes -->
+      <dependency>
+          <groupId>net.sf.jasperreports</groupId>
+          <artifactId>jasperreports</artifactId>
+          <version>7.0.3</version>
+      </dependency>
+      <dependency>
+          <groupId>net.sf.jasperreports</groupId>
+          <artifactId>jasperreports-pdf</artifactId>
+          <version>7.0.3</version>
+      </dependency>
+      <dependency>
+          <groupId>net.sf.jasperreports</groupId>
+          <artifactId>jasperreports-jdt</artifactId>
+          <version>7.0.3</version>
+      </dependency>
+      <dependency>
+          <groupId>net.sf.jasperreports</groupId>
+          <artifactId>jasperreports-fonts</artifactId>
+          <version>7.0.3</version>
+      </dependency>
   </dependencies>
 
   <build>

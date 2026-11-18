@@ -1,0 +1,98 @@
+/* =====================================================================
+   Sistema visual común (encabezados, indicadores, formularios, tablas y estados).
+   Se carga después de sobrio.css. Todo es opcional: solo afecta a las vistas que
+   usan estas clases o los componentes EncabezadoPagina, TarjetaDato y EstadoBadge.
+   Escala de espacios: 8 / 12 / 16 / 24 / 32 px.
+   ===================================================================== */
+:root {
+    --tp-titulo: #1e3a8a;          /* azul institucional para títulos */
+    --tp-esp-1: .5rem;  --tp-esp-2: .75rem; --tp-esp-3: 1rem; --tp-esp-4: 1.5rem; --tp-esp-5: 2rem;
+    --tp-radio: .5rem;
+}
+[data-bs-theme="dark"] { --tp-titulo: #bfdbfe; }
+
+.min-w-0 { min-width: 0; }
+
+/* ---------- Encabezado de página ---------- */
+.titulo-pagina.encabezado {
+    gap: var(--tp-esp-3);
+    margin-bottom: var(--tp-esp-4);
+    padding: var(--tp-esp-1) 0 var(--tp-esp-3);
+    border-bottom: 1px solid var(--tp-borde);
+}
+.encabezado-texto { display: flex; align-items: center; gap: var(--tp-esp-3); min-width: 0; }
+.encabezado .icono-titulo { width: 44px; height: 44px; font-size: 1.2rem; }
+.encabezado-titulo { font-size: 1.5rem; font-weight: 700; color: var(--tp-titulo); line-height: 1.25; margin: 0 0 .2rem; }
+.encabezado-sub { margin: 0; color: var(--tp-tenue); font-size: .95rem; }
+.encabezado-acciones { display: flex; flex-wrap: wrap; align-items: center; gap: var(--tp-esp-1); margin-left: auto; }
+.encabezado-acciones .btn { min-height: 38px; display: inline-flex; align-items: center; gap: .375rem; }
+
+@media (max-width: 575.98px) {
+    .encabezado-titulo { font-size: 1.3rem; }
+    .encabezado-acciones { margin-left: 0; width: 100%; }
+}
+
+/* ---------- Título de sección dentro de la página ---------- */
+.seccion-titulo { font-size: 1rem; font-weight: 700; color: var(--tp-texto); margin: 0 0 var(--tp-esp-2); }
+
+/* ---------- Tarjetas ---------- */
+.card-titulo { font-size: 1rem; font-weight: 700; margin: 0; color: var(--tp-texto); }
+.card > .card-header.cabecera { padding: var(--tp-esp-3) var(--tp-esp-4); border-bottom: 1px solid var(--tp-borde); }
+.tarjeta-form > .card-body { padding: var(--tp-esp-4); }
+@media (max-width: 575.98px) { .tarjeta-form > .card-body { padding: var(--tp-esp-3); } }
+
+/* Indicadores (StatCard) */
+.tarjeta-dato .card-body { display: flex; align-items: center; gap: var(--tp-esp-3); padding: var(--tp-esp-3) 1.25rem; min-height: 88px; }
+.tarjeta-dato .kpi-icono { flex-shrink: 0; }
+.tarjeta-dato .kpi-valor { font-size: 1.6rem; font-weight: 700; color: var(--tp-texto); }
+.kpi-sufijo { font-size: .85rem; font-weight: 500; color: var(--tp-tenue); margin-left: .25rem; }
+.kpi-etiqueta { font-size: .85rem; color: var(--tp-tenue); }
+.kpi-detalle { font-size: .78rem; color: var(--tp-tenue); opacity: .85; }
+
+/* Accesos directos */
+.acceso { display: flex; gap: var(--tp-esp-3); align-items: flex-start; padding: 1.25rem; height: 100%; }
+.acceso h3 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; color: var(--tp-texto); }
+.acceso p { font-size: .9rem; color: var(--tp-tenue); margin-bottom: var(--tp-esp-2); }
+
+/* ---------- Avisos informativos (InfoAlert) ---------- */
+.nota.aviso-info { display: flex; gap: var(--tp-esp-2); align-items: flex-start; font-size: .9rem; border-color: #bfdbfe; background: #eff6ff; color: #1e3a8a; }
+.nota.aviso-info > i { color: var(--tp-azul); margin-top: .1rem; flex-shrink: 0; }
+[data-bs-theme="dark"] .nota.aviso-info { background: rgba(59, 130, 246, .1); border-color: rgba(59, 130, 246, .35); color: #dbeafe; }
+[data-bs-theme="dark"] .nota.aviso-info > i { color: #93c5fd; }
+
+/* ---------- Formularios ---------- */
+.tarjeta-form .form-label { font-weight: 600; font-size: .9rem; margin-bottom: .375rem; }
+.tarjeta-form .form-control:not(textarea),
+.tarjeta-form .form-select,
+.tarjeta-form .input-group-text { min-height: 42px; }
+.tarjeta-form .form-text { font-size: .8rem; }
+.grupo-campo { margin-bottom: var(--tp-esp-4); }
+.acciones-form {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--tp-esp-1);
+    margin-top: var(--tp-esp-4); padding-top: var(--tp-esp-3); border-top: 1px solid var(--tp-borde);
+}
+.acciones-form .btn { min-height: 40px; }
+
+/* ---------- Tablas (TableCard) ---------- */
+.tabla-tp { margin-bottom: 0; }
+.tabla-tp > thead th { font-size: .8rem; font-weight: 600; padding-top: .7rem; padding-bottom: .7rem; white-space: nowrap; }
+.tabla-tp > :not(caption) > * > * { padding-left: .75rem; padding-right: .75rem; }
+.tabla-tp > :not(caption) > * > :first-child { padding-left: 1.25rem; }
+.tabla-tp > :not(caption) > * > :last-child { padding-right: 1.25rem; }
+.tabla-tp > tbody td { padding-top: .8rem; padding-bottom: .8rem; }
+
+/* ---------- Estados (StatusBadge) ---------- */
+.estado-badge { font-size: .75rem; font-weight: 600; padding: .3rem .6rem; border-radius: .375rem; border: 1px solid transparent; white-space: nowrap; }
+.estado-info    { background: #dbeafe; color: #1d4ed8; border-color: #bfdbfe; }
+.estado-exito   { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
+.estado-aviso   { background: #fef3c7; color: #b45309; border-color: #fde68a; }
+.estado-peligro { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+.estado-neutro  { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
+[data-bs-theme="dark"] .estado-info    { background: rgba(59, 130, 246, .16); color: #93c5fd; border-color: rgba(59, 130, 246, .3); }
+[data-bs-theme="dark"] .estado-exito   { background: rgba(34, 197, 94, .14);  color: #86efac; border-color: rgba(34, 197, 94, .3); }
+[data-bs-theme="dark"] .estado-aviso   { background: rgba(245, 158, 11, .14); color: #fcd34d; border-color: rgba(245, 158, 11, .3); }
+[data-bs-theme="dark"] .estado-peligro { background: rgba(239, 68, 68, .14);  color: #fca5a5; border-color: rgba(239, 68, 68, .3); }
+[data-bs-theme="dark"] .estado-neutro  { background: rgba(148, 163, 184, .14); color: #cbd5e1; border-color: rgba(148, 163, 184, .25); }
+
+/* Etiqueta de archivo o dato secundario dentro de tablas */
+.etiqueta i { margin-right: .25rem; }

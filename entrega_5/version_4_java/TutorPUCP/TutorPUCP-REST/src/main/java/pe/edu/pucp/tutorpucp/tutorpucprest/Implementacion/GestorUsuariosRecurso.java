@@ -86,6 +86,30 @@ public class GestorUsuariosRecurso{
         }
     }
 
+    // RF019: el administrador bloquea una cuenta
+    @PUT
+    @Path("/{id}/bloquear")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response bloquear(@PathParam("id") Integer id) {
+        try {
+            return Response.ok(new UsuarioDTO(gestorUsuariosBL.bloquearUsuario(id))).build();
+        } catch (BL_exeption e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", e.getMessage())).build();
+        }
+    }
+
+    // RF019: el administrador reactiva una cuenta bloqueada
+    @PUT
+    @Path("/{id}/reactivar")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response reactivar(@PathParam("id") Integer id) {
+        try {
+            return Response.ok(new UsuarioDTO(gestorUsuariosBL.reactivarUsuario(id))).build();
+        } catch (BL_exeption e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", e.getMessage())).build();
+        }
+    }
+
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -116,12 +140,50 @@ public class GestorUsuariosRecurso{
         if (datos == null) {
             throw new BadRequestException("Faltan el correo y la contraseña");
         }
-        Usuario usuario = gestorUsuariosBL.iniciarSesion(datos.getCorreo(), datos.getPassword());
+        Usuario usuario;
+        try {
+            usuario = gestorUsuariosBL.iniciarSesion(datos.getCorreo(), datos.getPassword());
+        } catch (BL_exeption e) {
+            // RF001: la contraseña es correcta pero falta verificar el correo
+            return Response.status(Response.Status.FORBIDDEN).entity(Map.of("error", e.getMessage())).build();
+        }
         if (usuario == null) {
             return Response.status(Response.Status.UNAUTHORIZED)
                     .entity(Map.of("error", "Correo o contraseña incorrectos")).build();
         }
         return Response.ok(new UsuarioDTO(usuario)).build();
+    }
+
+    // RF001: activa la cuenta con el código de 6 dígitos que llegó al correo.
+    @POST
+    @Path("/verificar")
+    @Consumes(MediaType.APPLICATION_JSON) @Produces(MediaType.APPLICATION_JSON)
+    public Response verificarCorreo(VerificarCorreoRequest datos) {
+        if (datos == null) {
+            throw new BadRequestException("Faltan el correo y el código");
+        }
+        try {
+            gestorUsuariosBL.verificarCorreo(datos.getCorreo(), datos.getCodigo());
+            return Response.noContent().build();
+        } catch (BL_exeption e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", e.getMessage())).build();
+        }
+    }
+
+    // RF001: genera y envía un código nuevo (solo se usa el correo).
+    @POST
+    @Path("/reenviar-codigo")
+    @Consumes(MediaType.APPLICATION_JSON) @Produces(MediaType.APPLICATION_JSON)
+    public Response reenviarCodigo(VerificarCorreoRequest datos) {
+        if (datos == null) {
+            throw new BadRequestException("Falta el correo");
+        }
+        try {
+            gestorUsuariosBL.reenviarCodigo(datos.getCorreo());
+            return Response.noContent().build();
+        } catch (BL_exeption e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", e.getMessage())).build();
+        }
     }
 
     @PUT

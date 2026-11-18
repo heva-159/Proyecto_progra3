@@ -2,9 +2,10 @@
 @layout AuthLayout
 @implements IDisposable
 @inject NavigationManager Navigation
+@inject UsuariosApi Api
 
 @* Verificación de la cuenta (RF001): código de 6 dígitos enviado al correo, válido por 15 minutos,
-   con opción de reenviarlo. Pantalla visual: cualquier código de 6 dígitos se acepta. *@
+   con opción de reenviarlo. Java comprueba el código (POST usuario/verificar) y activa la cuenta. *@
 
 <PageTitle>Verificar cuenta · TutorPUCP</PageTitle>
 
@@ -120,12 +121,28 @@
         }
     }
 
+    // correo que llegó en ?correo=; null si se abrió la página sin él
+    private string? CorreoReal => Correo == "tu correo PUCP" ? null : Correo;
+
     private async Task Reenviar()
     {
+        error = null;
+        aviso = null;
+        if (CorreoReal is null)
+        {
+            error = "No sabemos a qué correo enviar el código. Vuelve al registro o inicia sesión.";
+            return;
+        }
+        esperaReenvio = 30; // evita pedir varios códigos seguidos mientras responde el servidor
+        var fallo = await Api.ReenviarCodigoAsync(CorreoReal);
+        if (fallo is not null)
+        {
+            error = fallo;
+            esperaReenvio = 0;
+            return;
+        }
         for (var i = 0; i < 6; i++) digitos[i] = "";
         restante = TimeSpan.FromMinutes(15);
-        esperaReenvio = 30;
-        error = null;
         aviso = "Te enviamos un código nuevo. El anterior ya no sirve.";
         await casillas[0].FocusAsync();
     }
@@ -133,14 +150,32 @@
     private async Task Verificar()
     {
         aviso = null;
+        error = null;
+        if (CorreoReal is null)
+        {
+            error = "No sabemos qué correo verificar. Vuelve al registro o inicia sesión.";
+            return;
+        }
         if (Vencido)
         {
             error = "El código venció. Pide uno nuevo con «Reenviar código».";
             return;
         }
         verificando = true;
-        await Task.Delay(500); // Pantalla visual: aún no hay base de datos.
-        Navigation.NavigateTo("/login/usuario");
+        try
+        {
+            var fallo = await Api.VerificarCorreoAsync(CorreoReal, string.Concat(digitos));
+            if (fallo is not null)
+            {
+                error = fallo;
+                return;
+            }
+            Navigation.NavigateTo("/login/usuario");
+        }
+        finally
+        {
+            verificando = false;
+        }
     }
 
     public void Dispose() => reloj?.Dispose();

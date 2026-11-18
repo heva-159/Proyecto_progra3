@@ -1,132 +1,95 @@
-﻿@page "/tutor"
+@page "/tutor"
 @inject RolActual RolActual
 
 <PageTitle>Inicio Tutor - TutorPUCP</PageTitle>
-@* =============================================================================
-     ENCABEZADO Y BOTÓN DE ACCIÓN RÁPIDA
-   - "d-flex justify-content-between": Título a la izquierda, botón a la derecha.
-   - Usamos btn-primary (azul uniforme de la aplicación).
-   ============================================================================= *@
-<div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
-    <div>
-        <h2 class="text-primary fw-bold mb-1">Panel del Tutor</h2>
-        <p class="text-muted mb-0">Hola, @RolActual.PrimerNombre. Gestiona tus cursos, tarifas y solicitudes académicas.</p>
-    </div>
-    <a href="/tutor/postular" class="btn btn-primary shadow-sm">
-        + Postular a nuevo curso
-    </a>
-</div>
-@* =============================================================================
-     TARJETAS DE MÉTRICAS (KPIs)
-   - "card shadow-sm border-0": Tarjeta blanca limpia con sombra suave y sin bordes toscos.
-   - Usamos los colores semánticos: warning (amarillo), primary (azul) y success (verde).
-   ============================================================================= *@
+
+<EncabezadoPagina Icono="bi-mortarboard-fill" Titulo="Panel del Tutor"
+                  Subtitulo="@($"Hola, {RolActual.PrimerNombre}. Gestiona tus cursos, tarifas y solicitudes académicas.")">
+    <a href="/tutor/postular" class="btn btn-primary"><i class="bi bi-plus-lg"></i>Postular a nuevo curso</a>
+</EncabezadoPagina>
+
+@* Indicadores *@
 <div class="row g-3 mb-4">
-    @* Calificación Promedio *@
-    <div class="col-md-4">
-        <div class="card shadow-sm border-0 text-center p-3 h-100 bg-light">
-            <span class="text-muted small fw-semibold">CALIFICACIÓN PROMEDIO</span>
-            <h3 class="text-warning fw-bold my-2">
-                 @calificacionPromedio.ToString("0.0") <span class="fs-6 text-muted fw-normal">/ 5.0</span>
-            </h3>
-            <span class="text-muted small">Basado en @totalSesiones tutorías</span>
-        </div>
+    <div class="col-sm-6 col-lg-4">
+        <TarjetaDato Icono="bi-star" Valor="@calificacionPromedio.ToString("0.0")" Sufijo="/ 5.0"
+                     Etiqueta="Calificación promedio" Detalle="@($"Basado en {totalSesiones} tutorías")" />
     </div>
-    @* Sesiones Realizadas *@
-    <div class="col-md-4">
-        <div class="card shadow-sm border-0 text-center p-3 h-100 bg-light">
-            <span class="text-muted small fw-semibold">SESIONES COMPLETADAS</span>
-            <h3 class="text-primary fw-bold my-2">@totalSesiones</h3>
-            <span class="text-muted small">Horas dictadas este ciclo</span>
-        </div>
+    <div class="col-sm-6 col-lg-4">
+        <TarjetaDato Icono="bi-check-circle" Valor="@totalSesiones.ToString()"
+                     Etiqueta="Sesiones completadas" Detalle="Horas dictadas este ciclo" />
     </div>
-    @*  Cursos Aprobados *@
-    <div class="col-md-4">
-        <div class="card shadow-sm border-0 text-center p-3 h-100 bg-light">
-            <span class="text-muted small fw-semibold">CURSOS HABILITADOS</span>
-            <h3 class="text-success fw-bold my-2">@cursosHabilitados</h3>
-            <span class="text-muted small">Con postulación aprobada</span>
-        </div>
+    <div class="col-sm-12 col-lg-4">
+        <TarjetaDato Icono="bi-journal-check" Valor="@cursosHabilitados.ToString()"
+                     Etiqueta="Cursos habilitados" Detalle="Con postulación aprobada" />
     </div>
 </div>
-@* =============================================================================
-   ACCESOS DIRECTOS 
-   ============================================================================= *@
-<h5 class="fw-bold text-secondary mb-3">Gestión de Tutor</h5>
+
+@* Accesos directos *@
+<h2 class="seccion-titulo">Gestión de Tutor</h2>
 <div class="row g-3 mb-4">
-    @* Mis Postulaciones *@
     <div class="col-md-6">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-body d-flex flex-column justify-content-between p-4">
-                <div>
-                    <h5 class="card-title fw-bold text-dark"> Mis Postulaciones a Cursos</h5>
-                    <p class="card-text text-muted">
-                        Revisa el estado de aprobación de tus certificados de notas enviados a coordinación académica.
-                    </p>
+        <div class="card h-100">
+            <div class="acceso">
+                <span class="kpi-icono" aria-hidden="true"><i class="bi bi-file-earmark-text"></i></span>
+                <div class="d-flex flex-column h-100">
+                    <h3>Mis Postulaciones a Cursos</h3>
+                    <p>Revisa el estado de aprobación de tus certificados de notas enviados a coordinación académica.</p>
+                    <a href="/tutor/postulaciones" class="btn btn-outline-primary btn-sm align-self-start mt-auto">
+                        Consultar historial de postulaciones <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
                 </div>
-                <a href="/tutor/postulaciones" class="btn btn-outline-primary mt-3">
-                    Consultar historial de postulaciones →
-                </a>
             </div>
         </div>
     </div>
-    @* Mis Tarifas *@
     <div class="col-md-6">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-body d-flex flex-column justify-content-between p-4">
-                <div>
-                    <h5 class="card-title fw-bold text-dark"> Mis Tarifas por Hora</h5>
-                    <p class="card-text text-muted">
-                        Establece y modifica el costo en soles por hora de clase para los cursos en los que fuiste aprobado.
-                    </p>
+        <div class="card h-100">
+            <div class="acceso">
+                <span class="kpi-icono" aria-hidden="true"><i class="bi bi-cash-coin"></i></span>
+                <div class="d-flex flex-column h-100">
+                    <h3>Mis Tarifas por Hora</h3>
+                    <p>Establece y modifica el costo en soles por hora de clase para los cursos en los que fuiste aprobado.</p>
+                    <a href="/tutor/tarifas" class="btn btn-outline-primary btn-sm align-self-start mt-auto">
+                        Configurar mis tarifas <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
                 </div>
-                <a href="/tutor/tarifas" class="btn btn-outline-success mt-3">
-                    Configurar mis tarifas →
-                </a>
             </div>
         </div>
     </div>
 </div>
-@* =============================================================================
-   PRÓXIMAS SESIONES (TABLA DE MOCKUP)
-   ============================================================================= *@
-<div class="card shadow-sm border-0 mb-4">
-    <div class="card-header bg-white py-3 border-0">
-        <h5 class="fw-bold mb-0 text-dark"> Próximas Sesiones Programadas</h5>
+
+@* Próximas sesiones *@
+<div class="card mb-4">
+    <div class="card-header cabecera">
+        <h2 class="card-titulo">Próximas Sesiones Programadas</h2>
     </div>
-    <div class="card-body p-0">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle tabla-tp">
+            <thead class="table-primary">
                 <tr>
-                    <th class="ps-3">Estudiante</th>
+                    <th>Estudiante</th>
                     <th>Curso</th>
                     <th>Fecha y Hora</th>
                     <th>Estado</th>
                 </tr>
             </thead>
             <tbody>
-
                 @if (listaSesionesSimuladas != null)
                 {
                     @foreach (var sesion in listaSesionesSimuladas)
                     {
                         <tr>
-                            <td class="ps-3 fw-semibold">@sesion.Estudiante</td>
+                            <td class="fw-semibold">@sesion.Estudiante</td>
                             <td>@sesion.Curso</td>
-                            <td>@sesion.Fecha</td>
-                            <td><span class="badge bg-primary">@sesion.Estado</span></td>
+                            <td class="text-nowrap">@sesion.Fecha</td>
+                            <td><EstadoBadge Estado="@sesion.Estado" /></td>
                         </tr>
                     }
                 }
-
-                
             </tbody>
         </table>
     </div>
 </div>
-@* =============================================================================
-   LÓGICA EN C# 
-   ============================================================================= *@
+
 @code {
 
     // Lista de prueba 

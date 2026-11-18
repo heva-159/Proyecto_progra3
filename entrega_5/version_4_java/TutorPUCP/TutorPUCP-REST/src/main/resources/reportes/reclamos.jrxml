@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport name="ReporteReclamos" language="java" pageWidth="595" pageHeight="842"
+ columnWidth="515" leftMargin="40" rightMargin="40" topMargin="42" bottomMargin="42"
+ whenNoDataType="NoDataSection" uuid="3187fd69-d634-42ff-b16c-9dde75c0b036">
+    <property name="net.sf.jasperreports.compiler.java" value="net.sf.jasperreports.jdt.JRJdtCompiler"/>
+    <style name="Base" default="true" fontName="DejaVu Sans" fontSize="9.0" forecolor="#163653"/>
+    <parameter name="DESDE" class="java.lang.String"/>
+    <parameter name="HASTA" class="java.lang.String"/>
+    <field name="idReclamo" class="java.lang.Integer"/>
+    <field name="fecha" class="java.lang.String"/>
+    <field name="sesion" class="java.lang.String"/>
+    <field name="reclamante" class="java.lang.String"/>
+    <field name="rol" class="java.lang.String"/>
+    <field name="estado" class="java.lang.String"/>
+    <title height="86">
+        <element kind="staticText" uuid="36661088-524e-4fd0-866a-80cdd371e20b" x="0" y="0" width="515" height="20" fontSize="10.0" bold="true"><text><![CDATA[TUTORPUCP · ADMINISTRACIÓN]]></text></element>
+
+        <element kind="staticText" uuid="a3cfda88-2a78-4484-982f-70d2e39bb732" x="0" y="22" width="515" height="32" fontSize="23.0" bold="true"><text><![CDATA[Reporte de reclamos]]></text></element>
+
+        <element kind="textField" uuid="9750bb5c-7b5b-4fd7-bc08-3605ee745a53" x="0" y="57" width="515" height="21" fontSize="10.0"><expression><![CDATA["Del " + $P{DESDE} + " al " + $P{HASTA}]]></expression></element>
+
+    </title>
+    <columnHeader height="23"><element kind="staticText" uuid="1d4369b2-97b0-4b6b-840e-2510f6f86906" x="0" y="0" width="35" height="23" mode="Opaque" backcolor="#163653" forecolor="#FFFFFF" bold="true" vTextAlign="Middle"><text><![CDATA[N.º]]></text></element>
+<element kind="staticText" uuid="fb2f09b5-1127-46ee-a41f-f3eb9ef35842" x="35" y="0" width="70" height="23" mode="Opaque" backcolor="#163653" forecolor="#FFFFFF" bold="true" vTextAlign="Middle"><text><![CDATA[Fecha]]></text></element>
+<element kind="staticText" uuid="3e456e03-213f-4534-a1d2-33c4c04a8f9c" x="105" y="0" width="150" height="23" mode="Opaque" backcolor="#163653" forecolor="#FFFFFF" bold="true" vTextAlign="Middle"><text><![CDATA[Sesión]]></text></element>
+<element kind="staticText" uuid="5b28e07a-ad35-4495-a593-82759b6ca66f" x="255" y="0" width="120" height="23" mode="Opaque" backcolor="#163653" forecolor="#FFFFFF" bold="true" vTextAlign="Middle"><text><![CDATA[Reclamante]]></text></element>
+<element kind="staticText" uuid="4512ab3a-a0b6-4b00-9165-db12320e55a4" x="375" y="0" width="70" height="23" mode="Opaque" backcolor="#163653" forecolor="#FFFFFF" bold="true" vTextAlign="Middle"><text><![CDATA[Rol]]></text></element>
+<element kind="staticText" uuid="f056fde8-b475-462a-b82d-4e28a564a9fe" x="445" y="0" width="70" height="23" mode="Opaque" backcolor="#163653" forecolor="#FFFFFF" bold="true" vTextAlign="Middle"><text><![CDATA[Estado]]></text></element>
+</columnHeader>
+    <detail><band height="22" splitType="Stretch"><element kind="textField" uuid="ee66fa18-abb2-4a54-bea0-39e8e23e1d16" x="0" y="1" width="35" height="19" ><expression><![CDATA[$F{idReclamo}]]></expression></element>
+<element kind="textField" uuid="97841afa-6676-4d6e-801a-8093d34126c5" x="35" y="1" width="70" height="19" ><expression><![CDATA[$F{fecha}]]></expression></element>
+<element kind="textField" uuid="9d58dc6d-cb88-4d1c-933d-aab1ea13fbc7" x="105" y="1" width="150" height="19" textAdjust="StretchHeight"><expression><![CDATA[$F{sesion}]]></expression></element>
+<element kind="textField" uuid="2503b8cb-90d5-40e7-85c0-8f4d6b76d365" x="255" y="1" width="120" height="19" textAdjust="StretchHeight"><expression><![CDATA[$F{reclamante}]]></expression></element>
+<element kind="textField" uuid="69a84157-b86f-48a6-9c22-20e994fe4010" x="375" y="1" width="70" height="19" ><expression><![CDATA[$F{rol}]]></expression></element>
+<element kind="textField" uuid="64debd1a-a9aa-4d97-abf5-4e02149a4098" x="445" y="1" width="70" height="19" ><expression><![CDATA[$F{estado}]]></expression></element>
+</band></detail>
+    <pageFooter height="24"><element kind="textField" uuid="51cc8958-8e35-4c2f-8597-658bf5c811e2" x="0" y="2" width="515" height="18" hTextAlign="Right"><expression><![CDATA["Página " + $V{PAGE_NUMBER}]]></expression></element>
+</pageFooter>
+    <summary height="32"><element kind="textField" uuid="6c5a26ee-6e5e-4e7f-8a26-651a3e3fa6c1" x="0" y="10" width="515" height="20" fontSize="10.0" bold="true"><expression><![CDATA["Total de reclamos: " + $V{REPORT_COUNT}]]></expression></element>
+</summary>
+    <noData height="105">
+        <element kind="staticText" uuid="3035e2b4-fd45-485b-83c3-780aec03640d" x="0" y="0" width="515" height="30" fontSize="23.0" bold="true"><text><![CDATA[Reporte de reclamos]]></text></element>
+
+        <element kind="textField" uuid="267f1ae0-a304-4c1e-bce1-ac34617c0798" x="0" y="40" width="515" height="20" fontSize="10.0"><expression><![CDATA["Del " + $P{DESDE} + " al " + $P{HASTA}]]></expression></element>
+
+        <element kind="staticText" uuid="f3541118-0884-4e50-bec1-5f627d565809" x="0" y="70" width="515" height="20" fontSize="10.0"><text><![CDATA[No hay reclamos en este rango de fechas.]]></text></element>
+
+    </noData>
+</jasperReport>

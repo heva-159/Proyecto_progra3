@@ -4,37 +4,26 @@
 
 <PageTitle>Mis sesiones</PageTitle>
 
-<div class="titulo-pagina">
-    <div class="d-flex align-items-center gap-3">
-        <span class="icono-titulo"><i class="bi bi-calendar-week-fill"></i></span>
-        <div>
-            <h1 class="h3">Mis sesiones</h1>
-            <p>@(EsTutor
-                ? "Las tutorías que registraste con tus estudiantes."
-                : "Tus tutorías agendadas y pasadas. Entra a una para hacer check-in, calificar o reclamar.")</p>
-        </div>
-    </div>
+<EncabezadoPagina Icono="bi-calendar-week-fill" Titulo="Mis sesiones"
+                  Subtitulo="@(EsTutor
+                      ? "Las tutorías que registraste con tus estudiantes."
+                      : "Tus tutorías agendadas y pasadas. Entra a una para hacer check-in, calificar o reclamar.")">
     @if (EsTutor)
     {
-        <a class="btn btn-primary" href="/tutor/sesiones/nueva"><i class="bi bi-calendar-plus me-1"></i>Registrar sesión</a>
+        <a class="btn btn-primary" href="/tutor/sesiones/nueva"><i class="bi bi-calendar-plus"></i>Registrar sesión</a>
     }
     else
     {
-        <a class="btn btn-primary" href="/estudiante/buscar-tutores"><i class="bi bi-compass me-1"></i>Buscar tutores</a>
+        <a class="btn btn-primary" href="/estudiante/buscar-tutores"><i class="bi bi-compass"></i>Buscar tutores</a>
     }
-</div>
+</EncabezadoPagina>
 
 <div class="row g-3 mb-4">
     @{ var k = 0; }
     @foreach (var (titulo, valor, icono) in Resumen)
     {
         <div class="col-6 col-lg-3 entrar" style="--i: @(k++);">
-            <div class="card kpi h-100">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <span class="kpi-icono"><i class="bi @icono"></i></span>
-                    <div><div class="kpi-valor">@valor</div><div class="small text-muted">@titulo</div></div>
-                </div>
-            </div>
+            <TarjetaDato Icono="@icono" Valor="@valor" Etiqueta="@titulo" />
         </div>
     }
 </div>
@@ -42,11 +31,11 @@
 @{ var lista = Filtradas.ToList(); }
 
 <div class="card entrar" style="--i: 4;">
-    <div class="card-header py-3">
+    <div class="card-header cabecera">
         <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
-            <div class="position-relative flex-grow-1" style="max-width: 380px;">
-                <i class="bi bi-search position-absolute text-muted" style="left: .8rem; top: 50%; transform: translateY(-50%);"></i>
-                <input type="text" class="form-control ps-5" placeholder="Buscar por curso, tema o nombre"
+            <div class="buscador flex-grow-1" style="max-width: 380px;">
+                <i class="bi bi-search"></i>
+                <input type="text" class="form-control" placeholder="Buscar por curso, tema o nombre"
                        @bind="busqueda" @bind:event="oninput" aria-label="Buscar sesión" />
             </div>
             <div class="segmento" style="max-width: 100%; overflow-x: auto; scrollbar-width: none;" role="group" aria-label="Filtrar por estado">
@@ -61,23 +50,23 @@
     @if (lista.Count > 0)
     {
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover align-middle tabla-tp">
                 <thead class="table-primary">
                     <tr>
-                        <th class="ps-3">N.º</th>
+                        <th>N.º</th>
                         <th>Curso</th>
                         <th>Fecha y hora</th>
                         <th>@(EsTutor ? "Estudiante" : "Tutor")</th>
                         <th>Estado</th>
                         <th>Calificación</th>
-                        <th class="pe-3"></th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var s in lista)
                     {
                         <tr @key="s.Numero">
-                            <td class="ps-3 fw-semibold">@s.Numero</td>
+                            <td class="fw-semibold">@s.Numero</td>
                             <td class="lh-sm"><div class="fw-semibold">@s.Curso</div><small class="text-muted">@s.Tema</small></td>
                             <td class="text-nowrap">@s.Fecha<br /><small class="text-muted">@s.Hora</small></td>
                             <td>
@@ -86,7 +75,7 @@
                                     <span>@Contraparte(s)</span>
                                 </div>
                             </td>
-                            <td><span class="badge @ClaseEstado(s.Estado)">@s.Estado</span></td>
+                            <td><EstadoBadge Estado="@s.Estado" /></td>
                             <td class="text-nowrap">
                                 @if (s.Puntaje is int p)
                                 {
@@ -106,7 +95,7 @@
                                     <span class="text-muted">—</span>
                                 }
                             </td>
-                            <td class="pe-3 text-end text-nowrap">
+                            <td class="text-end text-nowrap">
                                 @if (!EsTutor && s.Estado == "Realizada" && s.Puntaje is null)
                                 {
                                     <a class="btn btn-sm btn-primary me-1" href="/sesiones/calificar?sesion=@s.Numero">Calificar</a>
@@ -122,10 +111,10 @@
     }
     else
     {
-        <div class="text-center text-muted py-5">
-            <i class="bi bi-calendar-x fs-1 d-block mb-2"></i>
+        <div class="estado-vacio">
+            <i class="bi bi-calendar-x"></i>
             <div class="fw-semibold">No hay sesiones con ese filtro</div>
-            <small>Prueba con otra búsqueda o cambia el estado.</small>
+            <div class="small">Prueba con otra búsqueda o cambia el estado.</div>
         </div>
     }
 </div>
@@ -198,15 +187,6 @@
             return notas.Count == 0 ? "—" : notas.Average().ToString("0.0");
         }
     }
-
-    private static string ClaseEstado(string estado) => estado switch
-    {
-        "Programada" => "text-bg-primary",
-        "En curso" => "text-bg-warning",
-        "Realizada" => "text-bg-success",
-        "Cancelada por inasistencia" => "text-bg-danger",
-        _ => "text-bg-secondary",
-    };
 
     protected override void OnInitialized() => RolActual.Cambio += AlCambiarRol;
 

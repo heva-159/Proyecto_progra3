@@ -290,7 +290,10 @@ public class GestorAcademicoRecurso {
             "COALESCE(p.id_tutor, t.id_tutor) AS id_tutor, " +
             "u.nombres, u.apellidos, u.especialidad, " +
             "c.id AS id_curso, c.codigo AS curso_codigo, c.nombre AS curso_nombre, " +
-            "COALESCE(t.monto_por_hora, 35.00) AS tarifa_por_hora " +
+            "COALESCE(t.monto_por_hora, 35.00) AS tarifa_por_hora, " +
+            // RF014: promedio de las calificaciones que recibió el tutor y cuántas sesiones realizó
+            "(SELECT AVG(s.puntaje) FROM sesion s WHERE s.id_tutor = u.id AND s.puntaje IS NOT NULL) AS calificacion, " +
+            "(SELECT COUNT(*) FROM sesion s WHERE s.id_tutor = u.id AND s.estado = 'REALIZADA') AS sesiones_dictadas " +
             "FROM usuario u " +
             "JOIN tutor tu ON tu.id_usuario = u.id " +
             "JOIN curso c ON c.activo = 1 " +
@@ -315,8 +318,9 @@ public class GestorAcademicoRecurso {
                     dto.setNombre(((nom != null ? nom : "") + " " + (ape != null ? ape : "")).trim());
                     String esp = rs.getString("especialidad");
                     dto.setEspecialidad(esp != null && !esp.isBlank() ? esp : "Estudiante PUCP");
-                    dto.setCalificacion(4.9);
-                    dto.setSesionesDictadas(14);
+                    // sin calificaciones todavia, AVG devuelve null y queda en 0
+                    dto.setCalificacion(Math.round(rs.getDouble("calificacion") * 10) / 10.0);
+                    dto.setSesionesDictadas(rs.getInt("sesiones_dictadas"));
                     dto.setIdCurso(rs.getInt("id_curso"));
                     dto.setCursoCodigo(rs.getString("curso_codigo"));
                     dto.setCursoNombre(rs.getString("curso_nombre"));

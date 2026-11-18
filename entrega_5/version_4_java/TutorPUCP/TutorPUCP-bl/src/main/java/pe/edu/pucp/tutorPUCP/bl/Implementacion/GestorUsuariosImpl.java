@@ -3,6 +3,7 @@ package pe.edu.pucp.tutorPUCP.bl.Implementacion;
 import pe.edu.pucp.tutorPUCP.bl.Clases.GestorUsuarios;
 import pe.edu.pucp.tutorPUCP.bl.Exeptions.BL_exeption;
 import pe.edu.pucp.tutorPUCP.bl.Seguridad.PasswordHasher;
+import pe.edu.pucp.tutorPUCP.bl.ServicioCorreoSmtp;
 import pe.edu.pucp.tutorPUCP.dao.DAOs.AdministradorDAO;
 import pe.edu.pucp.tutorPUCP.dao.DAOs.EstudianteDAO;
 import pe.edu.pucp.tutorPUCP.dao.DAOs.TutorDAO;
@@ -14,19 +15,29 @@ import pe.edu.pucp.tutorPUCP.dao.Impl.UsuarioDAOImpl;
 import pe.edu.pucp.tutorPUCP.dbmanager.TransactionContext;
 import pe.edu.pucp.tutorPUCP.modelo.enums.EstadoCuenta;
 import pe.edu.pucp.tutorPUCP.modelo.enums.Rol;
+import pe.edu.pucp.tutorPUCP.modelo.interfaces.IServicioCorreo;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Administrador;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Estudiante;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Tutor;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Usuario;
 
+import java.security.SecureRandom;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class GestorUsuariosImpl implements GestorUsuarios {
+    private static final Logger LOG = Logger.getLogger(GestorUsuariosImpl.class.getName());
+    private static final int MINUTOS_CODIGO = 15;
+    private static final SecureRandom ALEATORIO = new SecureRandom();
+
     private final UsuarioDAO usuarioDAO = new UsuarioDAOImpl();
     private final TutorDAO tutorDAO = new TutorDAOImpl();
     private final EstudianteDAO estudianteDAO = new EstudianteDAOImpl();
     private final AdministradorDAO administradorDAO = new AdministradorDAOImpl();
+    private final IServicioCorreo servicioCorreo = new ServicioCorreoSmtp();
 
     // ---- Usuario ----
 
@@ -53,6 +64,7 @@ public class GestorUsuariosImpl implements GestorUsuarios {
         }
         Usuario usuario = new Usuario(nombres, apellidos, codigoPucp, facultad, especialidad,
                 correoInstitucional, PasswordHasher.hashear(password), rol);
+        nuevoCodigo(usuario);
 
         // la transaccion la abre esta capa: si falla un perfil, no queda el usuario guardado sin el
         try (TransactionContext tx = new TransactionContext()) {
@@ -64,9 +76,69 @@ public class GestorUsuariosImpl implements GestorUsuarios {
                 estudianteDAO.save(usuario.getPerfilEstudiante(), tx);
             }
             tx.commit();
-            return usuario;
         } catch (SQLException e) {
             throw new BL_exeption("No se pudo registrar el usuario con sus perfiles: " + e.getMessage());
+        }
+        // si el correo falla el registro igual queda hecho: el usuario puede pedir otro codigo
+        try {
+            enviarCodigo(usuario);
+        } catch (RuntimeException e) {
+            LOG.log(Level.WARNING, "No se pudo enviar el codigo de verificacion", e);
+        }
+        return usuario;
+    }
+
+    // RF001: codigo de 6 digitos que vence en 15 minutos
+    private static void nuevoCodigo(Usuario usuario) {
+        usuario.setCodigoVerificacion(String.format("%06d", ALEATORIO.nextInt(1_000_000)));
+        usuario.setFechaExpiracionCodigo(LocalDateTime.now().plusMinutes(MINUTOS_CODIGO));
+    }
+
+    private void enviarCodigo(Usuario usuario) {
+        String contenido = "Hola " + usuario.getNombres() + ",\n\n"
+                + "Tu codigo de verificacion de TutorPUCP es: " + usuario.getCodigoVerificacion() + "\n\n"
+                + "El codigo vence en " + MINUTOS_CODIGO + " minutos. Si no creaste una cuenta, ignora este correo.";
+        servicioCorreo.enviar(usuario.getCorreoInstitucional(), "TutorPUCP - Codigo de verificacion", contenido);
+    }
+
+    @Override
+    public void verificarCorreo(String correo, String codigo) {
+        Usuario usuario = correo == null ? null : usuarioDAO.buscarPorCorreo(correo.trim());
+        if (usuario == null) {
+            throw new BL_exeption("No existe una cuenta con ese correo");
+        }
+        if (usuario.isCorreoVerificado()) {
+            throw new BL_exeption("El correo ya fue verificado, ya puedes iniciar sesion");
+        }
+        if (codigo == null || usuario.getCodigoVerificacion() == null
+                || !usuario.getCodigoVerificacion().equals(codigo.trim())) {
+            throw new BL_exeption("El codigo de verificacion no es correcto");
+        }
+        if (usuario.getFechaExpiracionCodigo() == null || LocalDateTime.now().isAfter(usuario.getFechaExpiracionCodigo())) {
+            throw new BL_exeption("El codigo ya vencio, pide uno nuevo");
+        }
+        usuario.setCorreoVerificado(true);
+        usuario.setCodigoVerificacion(null);
+        usuario.setFechaExpiracionCodigo(null);
+        usuarioDAO.update(usuario);
+    }
+
+    @Override
+    public void reenviarCodigo(String correo) {
+        Usuario usuario = correo == null ? null : usuarioDAO.buscarPorCorreo(correo.trim());
+        if (usuario == null) {
+            throw new BL_exeption("No existe una cuenta con ese correo");
+        }
+        if (usuario.isCorreoVerificado()) {
+            throw new BL_exeption("El correo ya fue verificado, ya puedes iniciar sesion");
+        }
+        nuevoCodigo(usuario);
+        usuarioDAO.update(usuario);
+        try {
+            enviarCodigo(usuario);
+        } catch (RuntimeException e) {
+            LOG.log(Level.WARNING, "No se pudo reenviar el codigo de verificacion", e);
+            throw new BL_exeption("No se pudo enviar el correo, intentalo en unos minutos");
         }
     }
 
@@ -120,6 +192,31 @@ public class GestorUsuariosImpl implements GestorUsuarios {
         usuarioDAO.remove(usuario);
     }
 
+    // RF019: bloqueo de cuenta por el administrador
+    @Override
+    public Usuario bloquearUsuario(int idUsuario) {
+        return cambiarEstado(idUsuario, EstadoCuenta.BLOQUEADA, "La cuenta ya esta bloqueada");
+    }
+
+    // RF019: reactivacion de una cuenta bloqueada
+    @Override
+    public Usuario reactivarUsuario(int idUsuario) {
+        return cambiarEstado(idUsuario, EstadoCuenta.ACTIVA, "La cuenta ya esta activa");
+    }
+
+    private Usuario cambiarEstado(int idUsuario, EstadoCuenta nuevo, String mensajeSiIgual) {
+        Usuario usuario = usuarioDAO.load(idUsuario);
+        if (usuario == null) {
+            throw new BL_exeption("El usuario no existe");
+        }
+        if (usuario.getEstado() == nuevo) {
+            throw new BL_exeption(mensajeSiIgual);
+        }
+        usuario.setEstado(nuevo);
+        usuarioDAO.update(usuario);
+        return usuario;
+    }
+
     @Override
     public Usuario obtenerUsuarioPorId(int idUsuario) {
         return usuarioDAO.load(idUsuario);
@@ -133,10 +230,15 @@ public class GestorUsuariosImpl implements GestorUsuarios {
     @Override
     public Usuario iniciarSesion(String correo, String password) {
         Usuario usuario = usuarioDAO.buscarPorCorreo(correo);
-        if (usuario == null
-                || usuario.getEstado() != EstadoCuenta.ACTIVA
-                || !PasswordHasher.coincide(password, usuario.getPasswordHash())) {
+        if (usuario == null || !PasswordHasher.coincide(password, usuario.getPasswordHash())) {
             return null;
+        }
+        // RF019: con la contrasena correcta se avisa que la cuenta fue bloqueada por el administrador
+        if (usuario.getEstado() != EstadoCuenta.ACTIVA) {
+            throw new BL_exeption("Tu cuenta esta bloqueada. Comunicate con el administrador");
+        }
+        if (!usuario.isCorreoVerificado()) {
+            throw new BL_exeption("Verifica tu correo antes de iniciar sesion");
         }
         return usuario;
     }

@@ -8,18 +8,12 @@
 
 <Toasts class="p-3" Messages="avisos" AutoHide="true" Delay="4500" Placement="ToastsPlacement.TopRight" />
 
-<div class="titulo-pagina">
-    <div class="d-flex align-items-center gap-3">
-        <span class="icono-titulo" style="background:#fee2e2;color:#dc2626;"><i class="bi bi-flag-fill"></i></span>
-        <div>
-            <h1 class="h3">Reclamos</h1>
-            <p>Si algo salió mal en una sesión, cuéntanos. Un administrador lo revisará y lo aprobará o rechazará.</p>
-        </div>
-    </div>
+<EncabezadoPagina Icono="bi-flag-fill" Titulo="Reclamos"
+                  Subtitulo="Si algo salió mal en una sesión, cuéntanos. Un administrador lo revisará y lo aprobará o rechazará.">
     <button type="button" class="btn btn-primary" @onclick="AbrirAsistente" disabled="@(Yo is null)">
-        <i class="bi bi-plus-lg me-1"></i> Registrar reclamo
+        <i class="bi bi-plus-lg"></i>Registrar reclamo
     </button>
-</div>
+</EncabezadoPagina>
 
 @if (Yo is null)
 {
@@ -29,22 +23,17 @@ else
 {
 <div class="row g-3 mb-4">
     @{ var k = 0; }
-    @foreach (var (titulo, valor, icono, fondo, color) in Resumen)
+    @foreach (var (titulo, valor, icono) in Resumen)
     {
-        <div class="col-4 entrar" style="--i: @(k++);">
-            <div class="card kpi h-100">
-                <div class="card-body d-flex flex-column flex-md-row align-items-md-center gap-2 gap-md-3">
-                    <span class="kpi-icono" style="background:@fondo;color:@color;"><i class="bi @icono"></i></span>
-                    <div><div class="kpi-valor">@valor</div><div class="small text-muted">@titulo</div></div>
-                </div>
-            </div>
+        <div class="col-sm-4 entrar" style="--i: @(k++);">
+            <TarjetaDato Icono="@icono" Valor="@valor.ToString()" Etiqueta="@titulo" />
         </div>
     }
 </div>
 
 <div class="card">
-    <div class="card-header py-3">
-        <h2 class="h5 mb-0">Mis reclamos</h2>
+    <div class="card-header cabecera">
+        <h2 class="card-titulo">Mis reclamos</h2>
     </div>
     <div class="card-body p-0">
         @if (cargando)
@@ -77,13 +66,13 @@ else
             @foreach (var r in reclamos)
             {
                 <div class="d-flex gap-3 p-3 border-bottom entrar @(r.IdReclamo == resaltado ? "resaltado" : "")" style="--i: @(j++);" @key="r.IdReclamo">
-                    <span class="kpi-icono flex-shrink-0" style="background:@ColorFondo(r.EstadoTexto);color:@ColorTexto(r.EstadoTexto);">
+                    <span class="kpi-icono flex-shrink-0" aria-hidden="true">
                         <i class="bi @IconoEstado(r.EstadoTexto)"></i>
                     </span>
                     <div class="flex-grow-1" style="min-width: 0;">
                         <div class="d-flex flex-wrap align-items-center gap-2">
                             <span class="fw-bold">N.º @r.IdReclamo · @(r.Curso ?? "Sesión " + r.IdSesion)</span>
-                            <span class="badge @ClaseEstado(r.EstadoTexto)">@r.EstadoTexto</span>
+                            <EstadoBadge Estado="@r.EstadoTexto" />
                             <span class="badge etiqueta">Como @r.Rol</span>
                         </div>
                         <div class="small text-muted">
@@ -141,18 +130,18 @@ else
                             <button type="button" class="opcion-tarjeta @(sesion == s ? "elegida" : "")" disabled="@s.YaReclamada"
                                     @onclick="() => sesion = s" title="@(s.YaReclamada ? "Ya registraste un reclamo para esta sesión" : "")">
                                 <span class="opcion-marca"><i class="bi bi-check"></i></span>
-                                <span class="kpi-icono" style="background:#eef2ff;color:#2563eb;"><i class="bi bi-calendar-check"></i></span>
+                                <span class="kpi-icono" aria-hidden="true"><i class="bi bi-calendar-check"></i></span>
                                 <span class="flex-grow-1 lh-sm">
                                     <span class="d-block fw-semibold">@(s.Curso ?? "Sesión " + s.IdSesion)</span>
                                     <small class="text-muted">@Fecha(s.Inicio) · con @(s.NombreContraparte ?? "—") · como @s.Rol</small>
                                 </span>
                                 @if (s.YaReclamada)
                                 {
-                                    <span class="badge text-bg-light">Ya reclamada</span>
+                                    <span class="badge estado-badge estado-neutro">Ya reclamada</span>
                                 }
                                 else
                                 {
-                                    <span class="badge @ClaseSesion(s.Estado)">@s.EstadoTexto</span>
+                                    <EstadoBadge Estado="@s.Estado" Texto="@s.EstadoTexto" />
                                 }
                             </button>
                         }
@@ -294,11 +283,11 @@ else
 
     private static string Fecha(DateTime d) => d == DateTime.MinValue ? "—" : d.ToString("dd/MM/yyyy, h:mm tt");
 
-    private IEnumerable<(string, int, string, string, string)> Resumen =>
+    private IEnumerable<(string, int, string)> Resumen =>
     [
-        ("Pendientes", reclamos.Count(r => r.EstadoTexto == "Pendiente"), "bi-hourglass-split", "#fef3c7", "#b45309"),
-        ("Aprobados", reclamos.Count(r => r.EstadoTexto == "Aprobado"), "bi-check-circle", "#dcfce7", "#16a34a"),
-        ("Rechazados", reclamos.Count(r => r.EstadoTexto == "Rechazado"), "bi-x-circle", "#fee2e2", "#dc2626"),
+        ("Pendientes", reclamos.Count(r => r.EstadoTexto == "Pendiente"), "bi-hourglass-split"),
+        ("Aprobados", reclamos.Count(r => r.EstadoTexto == "Aprobado"), "bi-check-circle"),
+        ("Rechazados", reclamos.Count(r => r.EstadoTexto == "Rechazado"), "bi-x-circle"),
     ];
 
     private bool PuedeAvanzar => paso switch
@@ -371,39 +360,10 @@ else
         });
     }
 
-    private static string ClaseEstado(string estado) => estado switch
-    {
-        "Aprobado" => "text-bg-success",
-        "Rechazado" => "text-bg-danger",
-        _ => "text-bg-warning",
-    };
-
     private static string IconoEstado(string estado) => estado switch
     {
         "Aprobado" => "bi-check-circle",
         "Rechazado" => "bi-x-circle",
         _ => "bi-hourglass-split",
-    };
-
-    private static string ColorFondo(string estado) => estado switch
-    {
-        "Aprobado" => "#dcfce7",
-        "Rechazado" => "#fee2e2",
-        _ => "#fef3c7",
-    };
-
-    private static string ColorTexto(string estado) => estado switch
-    {
-        "Aprobado" => "#16a34a",
-        "Rechazado" => "#dc2626",
-        _ => "#b45309",
-    };
-
-    private static string ClaseSesion(string estado) => estado switch
-    {
-        "REALIZADA" => "text-bg-success",
-        "CANCELADA_INASISTENCIA" => "text-bg-danger",
-        "PROGRAMADA" or "EN_CURSO" => "text-bg-info",
-        _ => "text-bg-secondary",
     };
 }

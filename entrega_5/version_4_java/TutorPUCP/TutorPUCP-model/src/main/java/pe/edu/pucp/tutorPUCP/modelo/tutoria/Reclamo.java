@@ -36,7 +36,7 @@ public class Reclamo implements IAprobable {
     public void aprobar(Administrador administrador, String resolucion) {
         this.estado = EstadoAprobacion.APROBADA;
         this.administradorResuelve = administrador;
-        this.fechaResolucion = LocalDate.now();
+        this.fechaResolucion = fechaDeResolucion();
         this.resolucion = resolucion;
     }
 
@@ -44,8 +44,15 @@ public class Reclamo implements IAprobable {
     public void rechazar(Administrador administrador, String motivo) {
         this.estado = EstadoAprobacion.RECHAZADA;
         this.administradorResuelve = administrador;
-        this.fechaResolucion = LocalDate.now();
+        this.fechaResolucion = fechaDeResolucion();
         this.resolucion = motivo;
+    }
+
+    // La BD (RDS en UTC) pone fecha_reclamo con curdate() y Java usa la hora de Peru: de noche la BD ya va un dia
+    // adelante y ck_reclamo_fechas (fecha_resolucion >= fecha_reclamo) fallaba. Nunca se resuelve antes del reclamo.
+    private LocalDate fechaDeResolucion() {
+        LocalDate hoy = LocalDate.now();
+        return fechaReclamo != null && hoy.isBefore(fechaReclamo) ? fechaReclamo : hoy;
     }
 
     @Override

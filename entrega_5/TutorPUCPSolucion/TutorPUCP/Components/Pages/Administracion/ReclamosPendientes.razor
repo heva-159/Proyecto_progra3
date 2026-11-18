@@ -4,7 +4,7 @@
 
 @* Requisito: RF016 (consultar y resolver reclamos) *@
 
-<PageTitle>Reclamos pendientes</PageTitle>
+<PageTitle>Reclamos</PageTitle>
 
 <Toasts class="p-3" Messages="avisos" AutoHide="true" Delay="4500" Placement="ToastsPlacement.TopRight" />
 
@@ -12,8 +12,8 @@
     <div class="d-flex align-items-center gap-3">
         <span class="icono-titulo" style="background:#fef3c7;color:#b45309;"><i class="bi bi-inboxes-fill"></i></span>
         <div>
-            <h1 class="h3">Reclamos pendientes</h1>
-            <p>Revisa los reclamos registrados sobre las sesiones y apruébalos o recházalos.</p>
+            <h1 class="h3">Reclamos</h1>
+            <p>Revisa los reclamos registrados sobre las sesiones, apruébalos o recházalos y consulta el historial de los ya resueltos.</p>
         </div>
     </div>
     <button type="button" class="btn btn-outline-primary" @onclick="Cargar" disabled="@cargando">
@@ -55,17 +55,38 @@
 
 <div class="card">
     <div class="card-header py-3">
+        <div class="segmento mb-3" role="tablist" aria-label="Vista de reclamos">
+            <button type="button" role="tab" aria-selected="@(vista == Vista.Pendientes)" class="@(vista == Vista.Pendientes ? "activo" : "")"
+                    @onclick="() => vista = Vista.Pendientes">
+                <i class="bi bi-hourglass-split me-1"></i>Pendientes (@Pendientes.Count())
+            </button>
+            <button type="button" role="tab" aria-selected="@(vista == Vista.Historial)" class="@(vista == Vista.Historial ? "activo" : "")"
+                    @onclick="() => vista = Vista.Historial">
+                <i class="bi bi-clock-history me-1"></i>Historial (@Resueltos.Count())
+            </button>
+        </div>
         <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
             <div class="position-relative flex-grow-1" style="max-width: 340px;">
                 <i class="bi bi-search position-absolute text-muted" style="left: .8rem; top: 50%; transform: translateY(-50%);"></i>
                 <input type="text" class="form-control ps-5" placeholder="Reclamante o curso" aria-label="Buscar"
                        @bind="busqueda" @bind:event="oninput" />
             </div>
-            <div class="segmento" role="group" aria-label="Rol del reclamante">
-                @foreach (var r in new[] { "Todos", "Estudiante", "Tutor" })
+            <div class="d-flex flex-wrap gap-2">
+                @if (vista == Vista.Historial)
                 {
-                    <button type="button" class="@(filtroRol == r ? "activo" : "")" @onclick="() => filtroRol = r">@r</button>
+                    <div class="segmento" role="group" aria-label="Resultado del reclamo">
+                        @foreach (var e in new[] { "Todos", "Aprobados", "Rechazados" })
+                        {
+                            <button type="button" class="@(filtroResultado == e ? "activo" : "")" @onclick="() => filtroResultado = e">@e</button>
+                        }
+                    </div>
                 }
+                <div class="segmento" role="group" aria-label="Rol del reclamante">
+                    @foreach (var r in new[] { "Todos", "Estudiante", "Tutor" })
+                    {
+                        <button type="button" class="@(filtroRol == r ? "activo" : "")" @onclick="() => filtroRol = r">@r</button>
+                    }
+                </div>
             </div>
         </div>
     </div>
@@ -85,6 +106,72 @@
             <div class="small">@error</div>
             <button type="button" class="btn btn-outline-primary btn-sm mt-2" @onclick="Cargar">Reintentar</button>
         </div>
+    }
+    else if (vista == Vista.Historial)
+    {
+        var historial = HistorialFiltrado.ToList();
+        if (historial.Count > 0)
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-primary">
+                        <tr>
+                            <th class="ps-3">N.º</th>
+                            <th>Reclamante</th>
+                            <th>Sesión</th>
+                            <th>Motivo</th>
+                            <th>Resultado</th>
+                            <th>Resolución</th>
+                            <th class="pe-3">Resuelto por</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in historial)
+                        {
+                            <tr @key="r.IdReclamo">
+                                <td class="ps-3 fw-bold">
+                                    <a class="text-decoration-none" href="@($"/admin/reclamos/resolver/{r.IdReclamo}")" title="Ver ficha completa">@r.IdReclamo</a>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <Avatar Nombre="@(r.NombreReclamante ?? "?")" Tamano="sm" />
+                                        <div class="lh-sm">
+                                            <div class="fw-semibold">@r.NombreReclamante</div>
+                                            <small class="text-muted">@r.Rol · @r.Registrado.ToString("dd/MM/yyyy")</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><div class="fw-semibold">@r.Curso</div><small class="text-muted">@Fecha(r.Sesion)</small></td>
+                                <td style="max-width: 200px;">
+                                    <Tooltip Title="@r.Motivo" Placement="TooltipPlacement.Top">
+                                        <span class="d-inline-block text-truncate" style="max-width: 190px;">@r.Motivo</span>
+                                    </Tooltip>
+                                </td>
+                                <td><EstadoBadge Estado="@r.Estado" Texto="@r.EstadoTexto" /></td>
+                                <td style="max-width: 220px;">
+                                    <Tooltip Title="@(r.Resolucion ?? "")" Placement="TooltipPlacement.Top">
+                                        <span class="d-inline-block text-truncate small" style="max-width: 210px;">@(r.Resolucion ?? "—")</span>
+                                    </Tooltip>
+                                </td>
+                                <td class="pe-3">
+                                    <div class="lh-sm">
+                                        <div class="small fw-semibold">@(r.NombreAdministrador ?? "—")</div>
+                                        <small class="text-muted">@(r.Resuelto == DateTime.MinValue ? "—" : r.Resuelto.ToString("dd/MM/yyyy"))</small>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="estado-vacio">
+                <i class="bi bi-clock-history"></i>
+                <div class="fw-semibold">@(Resueltos.Any() ? "Ningún reclamo resuelto coincide con el filtro" : "Todavía no hay reclamos resueltos")</div>
+            </div>
+        }
     }
     else if (Filtrados.Any())
     {
@@ -288,10 +375,28 @@
 
     private IEnumerable<ReclamoDto> Filtrados => Pendientes
         .OrderBy(r => r.Registrado).ThenBy(r => r.IdReclamo) // el que más espera, primero
-        .Where(r => filtroRol == "Todos" || r.Rol == filtroRol)
-        .Where(r => string.IsNullOrWhiteSpace(busqueda)
-                    || (r.NombreReclamante ?? "").Contains(busqueda, StringComparison.OrdinalIgnoreCase)
-                    || (r.Curso ?? "").Contains(busqueda, StringComparison.OrdinalIgnoreCase));
+        .Where(Coincide);
+
+    // Historial: reclamos ya resueltos (APROBADA o RECHAZADA), el más reciente primero
+    private enum Vista { Pendientes, Historial }
+    private Vista vista = Vista.Pendientes;
+    private string filtroResultado = "Todos";
+
+    private IEnumerable<ReclamoDto> Resueltos => reclamos.Where(r => r.Estado != "PENDIENTE");
+
+    private IEnumerable<ReclamoDto> HistorialFiltrado => Resueltos
+        .Where(r => filtroResultado == "Todos"
+                    || (filtroResultado == "Aprobados" && r.Estado == "APROBADA")
+                    || (filtroResultado == "Rechazados" && r.Estado == "RECHAZADA"))
+        .Where(Coincide)
+        .OrderByDescending(r => r.Resuelto).ThenByDescending(r => r.IdReclamo);
+
+    // búsqueda y rol se comparten entre las dos vistas
+    private bool Coincide(ReclamoDto r) =>
+        (filtroRol == "Todos" || r.Rol == filtroRol)
+        && (string.IsNullOrWhiteSpace(busqueda)
+            || (r.NombreReclamante ?? "").Contains(busqueda, StringComparison.OrdinalIgnoreCase)
+            || (r.Curso ?? "").Contains(busqueda, StringComparison.OrdinalIgnoreCase));
 
     private bool PuedeAvanzar => paso switch
     {

@@ -22,6 +22,16 @@ public class UsuariosApi(IHttpClientFactory fabrica) : ClienteRest(fabrica)
         Enviar<UsuarioDto>(HttpMethod.Post, "usuario/login", new Credenciales(correo, password));
     public Task<string?> CambiarPasswordAsync(int idUsuario, string passwordActual, string passwordNueva) =>
         EnviarSinValor(HttpMethod.Put, $"usuario/{idUsuario}/password", new CambioPassword(passwordActual, passwordNueva));
+    // RF019: el administrador bloquea o reactiva una cuenta
+    public Task<(UsuarioDto? Valor, string? Error)> BloquearUsuarioAsync(int id) =>
+        Enviar<UsuarioDto>(HttpMethod.Put, $"usuario/{id}/bloquear");
+    public Task<(UsuarioDto? Valor, string? Error)> ReactivarUsuarioAsync(int id) =>
+        Enviar<UsuarioDto>(HttpMethod.Put, $"usuario/{id}/reactivar");
+    // RF001: código de 6 dígitos que llega al correo
+    public Task<string?> VerificarCorreoAsync(string correo, string codigo) =>
+        EnviarSinValor(HttpMethod.Post, "usuario/verificar", new VerificacionCorreo(correo, codigo));
+    public Task<string?> ReenviarCodigoAsync(string correo) =>
+        EnviarSinValor(HttpMethod.Post, "usuario/reenviar-codigo", new VerificacionCorreo(correo, null));
 
     // ---- Perfil tutor ----
     public Task<(PerfilDto? Valor, string? Error)> RegistrarTutorAsync(int idUsuario) =>
@@ -69,3 +79,4 @@ public record DatosUsuario(string Nombres, string Apellidos, string CodigoPucp, 
                            string? Especialidad, string CorreoInstitucional);
 public record RegistroAdministrador(string Nombre, string Correo, string Password, string? NivelPermiso);
 public record CambioPassword(string PasswordActual, string PasswordNueva);
+public record VerificacionCorreo(string Correo, string? Codigo);

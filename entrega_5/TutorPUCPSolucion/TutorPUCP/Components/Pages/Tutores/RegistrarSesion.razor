@@ -9,15 +9,10 @@
 
 <Toasts class="p-3" Messages="avisos" AutoHide="true" Delay="4500" Placement="ToastsPlacement.TopRight" />
 
-<div class="titulo-pagina">
-    <div class="d-flex align-items-center gap-3">
-        <span class="icono-titulo"><i class="bi bi-calendar-plus-fill"></i></span>
-        <div>
-            <h1 class="h3">Registrar sesión</h1>
-            <p>Agenda una tutoría con un estudiante. La sesión se crea como Programada.</p>
-        </div>
-    </div>
-</div>
+<EncabezadoPagina Icono="bi-calendar-plus-fill" Titulo="Registrar sesión"
+                  Subtitulo="Agenda una tutoría con un estudiante. La sesión se crea como Programada.">
+    <a class="btn btn-outline-secondary" href="/sesiones"><i class="bi bi-calendar-week"></i>Mis sesiones</a>
+</EncabezadoPagina>
 
 @if (cargando)
 {
@@ -44,7 +39,7 @@ else if (registrada is not null)
                     <h2 class="h4">¡Sesión registrada!</h2>
                     <p class="text-muted">
                         La sesión N.º @registrada.IdSesion de <b>@registrada.Curso</b> con <b>@registrada.Estudiante</b> quedó
-                        <span class="badge text-bg-primary">Programada</span> para el @InicioTexto
+                        <EstadoBadge Estado="Programada" /> para el @InicioTexto
                     </p>
                     <div class="d-flex flex-wrap gap-2 justify-content-center">
                         <a class="btn btn-primary" href="@($"/sesiones/detalle?id={registrada.IdSesion}")">Ver la sesión</a>
@@ -60,7 +55,7 @@ else
 {
     <div class="row g-4">
         <div class="col-lg-8">
-            <div class="card entrar" style="--i: 0;">
+            <div class="card tarjeta-form entrar" style="--i: 0;">
                 <div class="card-body">
                     @if (UsaTutorDePrueba)
                     {
@@ -76,7 +71,7 @@ else
 
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label for="estudiante" class="form-label fw-semibold">Estudiante</label>
+                            <label for="estudiante" class="form-label">Estudiante</label>
                             <select id="estudiante" class="form-select" @bind="idEstudiante">
                                 <option value="">Elige un estudiante</option>
                                 @foreach (var e in opciones.Estudiantes)
@@ -86,7 +81,7 @@ else
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label for="curso" class="form-label fw-semibold">Curso</label>
+                            <label for="curso" class="form-label">Curso</label>
                             <select id="curso" class="form-select" @bind="idCurso" @bind:after="AlCambiarCurso">
                                 <option value="">Elige un curso</option>
                                 @foreach (var c in opciones.Cursos)
@@ -101,7 +96,7 @@ else
                         </div>
 
                         <div class="col-12">
-                            <label class="form-label fw-semibold d-block">Temas de la sesión</label>
+                            <label class="form-label d-block">Temas de la sesión</label>
                             @if (Curso is null)
                             {
                                 <div class="small text-muted">Elige primero un curso para ver sus temas.</div>
@@ -131,12 +126,12 @@ else
                         </div>
 
                         <div class="col-md-6">
-                            <label for="fecha" class="form-label fw-semibold">Fecha</label>
+                            <label for="fecha" class="form-label">Fecha</label>
                             <RadzenDatePicker TValue="DateOnly?" @bind-Value="fecha" Name="fecha" DateFormat="dd/MM/yyyy" Placeholder="dd/mm/aaaa"
                                               Min="@Hoy.ToDateTime(TimeOnly.MinValue)" Culture="@Peru" class="tp-fecha" />
                         </div>
                         <div class="col-md-6">
-                            <label for="hora" class="form-label fw-semibold">Hora de inicio</label>
+                            <label for="hora" class="form-label">Hora de inicio</label>
                             <select id="hora" class="form-select" @bind="hora">
                                 <option value="">Elige una hora</option>
                                 @foreach (var h in horarios)
@@ -151,7 +146,7 @@ else
                         </div>
                     </div>
 
-                    <div class="d-flex flex-wrap align-items-center justify-content-end gap-2 mt-4">
+                    <div class="acciones-form">
                         @if (!EsValido)
                         {
                             <small class="text-muted me-auto">Falta elegir: @Faltan.</small>
@@ -176,7 +171,7 @@ else
         <div class="col-lg-4">
             <div class="card entrar" style="--i: 1;">
                 <div class="card-body">
-                    <h2 class="h5 mb-3"><i class="bi bi-card-list me-2 text-primary"></i>Resumen</h2>
+                    <h2 class="card-titulo mb-3"><i class="bi bi-card-list me-2 text-primary"></i>Resumen</h2>
                     <dl class="row datos mb-0">
                         <dt class="col-4">Estudiante</dt>
                         <dd class="col-8">@(NombreEstudiante == "" ? "—" : NombreEstudiante)</dd>
@@ -189,7 +184,7 @@ else
                         <dt class="col-4">Tarifa</dt>
                         <dd class="col-8">@(Curso is null ? "—" : TarifaTexto(Curso.Tarifa))</dd>
                         <dt class="col-4">Estado</dt>
-                        <dd class="col-8 mb-0"><span class="badge text-bg-primary">Programada</span></dd>
+                        <dd class="col-8 mb-0"><EstadoBadge Estado="Programada" /></dd>
                     </dl>
                 </div>
             </div>

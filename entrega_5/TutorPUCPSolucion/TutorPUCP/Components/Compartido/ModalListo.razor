@@ -1,0 +1,48 @@
+@* Modal de "listo": se muestra después de crear, aprobar o reactivar algo.
+   Uso:  <ModalListo @ref="listo" />
+         await listo.MostrarAsync("Curso registrado", "1INF01 · Programación"); *@
+
+<Modal @ref="modal" IsVerticallyCentered="true" ShowCloseButton="false">
+    <BodyTemplate>
+        <div class="text-center py-3">
+            <div class="exito-icono mx-auto mb-3 @(rojo ? "rechazo" : "")"><i class="bi @icono"></i></div>
+            <h2 class="h4 mb-2">@titulo</h2>
+            @if (!string.IsNullOrWhiteSpace(mensaje))
+            {
+                <p class="text-muted mb-0">@mensaje</p>
+            }
+        </div>
+    </BodyTemplate>
+    <FooterTemplate>
+        <button type="button" class="btn btn-primary px-4 mx-auto" @onclick="CerrarAsync">Listo</button>
+    </FooterTemplate>
+</Modal>
+
+@code {
+    private Modal modal = default!;
+    private string titulo = "";
+    private string? mensaje;
+    private string icono = "bi-check-lg";
+
+    // Se llama al pulsar "Listo" (por ejemplo, para recargar la lista o navegar)
+    [Parameter] public EventCallback AlCerrar { get; set; }
+
+    private bool rojo;
+
+    // rojo = true para acciones como bloquear o desactivar (el ícono sale en rojo)
+    public async Task MostrarAsync(string titulo, string? mensaje = null, string icono = "bi-check-lg", bool rojo = false)
+    {
+        this.titulo = titulo;
+        this.mensaje = mensaje;
+        this.icono = icono;
+        this.rojo = rojo;
+        StateHasChanged();
+        await modal.ShowAsync();
+    }
+
+    private async Task CerrarAsync()
+    {
+        await modal.HideAsync();
+        await AlCerrar.InvokeAsync();
+    }
+}

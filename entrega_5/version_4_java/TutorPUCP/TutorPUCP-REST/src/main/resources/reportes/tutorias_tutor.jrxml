@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport name="ReporteTutoriasTutor" language="java" pageWidth="595" pageHeight="842"
+ columnWidth="515" leftMargin="40" rightMargin="40" topMargin="42" bottomMargin="42"
+ whenNoDataType="NoDataSection" uuid="bd367794-6038-49ae-987a-16d01967ba9e">
+    <property name="net.sf.jasperreports.compiler.java" value="net.sf.jasperreports.jdt.JRJdtCompiler"/>
+    <style name="Base" default="true" fontName="DejaVu Sans" fontSize="10.0" forecolor="#163653"/>
+    <parameter name="TUTOR" class="java.lang.String"/>
+    <parameter name="DESDE" class="java.lang.String"/>
+    <parameter name="HASTA" class="java.lang.String"/>
+    <parameter name="REALIZADAS" class="java.lang.Long"/>
+    <parameter name="PROMEDIO" class="java.lang.String"/>
+    <field name="fecha" class="java.lang.String"/>
+    <field name="curso" class="java.lang.String"/>
+    <field name="estudiante" class="java.lang.String"/>
+    <field name="estado" class="java.lang.String"/>
+    <field name="puntaje" class="java.lang.Integer"/>
+    <title height="106">
+        <element kind="staticText" uuid="756c1328-a8f6-4568-8cdd-38b89ece178f" x="0" y="0" width="515" height="20" fontSize="10.0" bold="true"><text><![CDATA[TUTORPUCP]]></text></element>
+
+        <element kind="staticText" uuid="a630707b-032a-4fe0-9f1f-e029a7a774d5" x="0" y="22" width="515" height="32" fontSize="23.0" bold="true"><text><![CDATA[Reporte de tutorías]]></text></element>
+
+        <element kind="textField" uuid="ff3ac844-2f31-45ef-aa00-1e6dce699dd5" x="0" y="57" width="515" height="21" ><expression><![CDATA["Tutor: " + $P{TUTOR}]]></expression></element>
+
+        <element kind="textField" uuid="6774187a-b43d-49dd-98e7-6123d0907cfa" x="0" y="78" width="515" height="21" ><expression><![CDATA["Del " + $P{DESDE} + " al " + $P{HASTA}]]></expression></element>
+
+    </title>
+    <columnHeader height="23"><element kind="staticText" uuid="40f6c5ec-3fa9-4eb8-92bc-3f1a8da804b0" x="0" y="0" width="95" height="23" mode="Opaque" backcolor="#163653" forecolor="#FFFFFF" bold="true" vTextAlign="Middle"><text><![CDATA[Fecha]]></text></element>
+<element kind="staticText" uuid="f04d558e-c101-4556-90d4-923c0cbed467" x="95" y="0" width="160" height="23" mode="Opaque" backcolor="#163653" forecolor="#FFFFFF" bold="true" vTextAlign="Middle"><text><![CDATA[Curso]]></text></element>
+<element kind="staticText" uuid="8b23b429-1d28-435d-8afd-80d2968a7b8c" x="255" y="0" width="130" height="23" mode="Opaque" backcolor="#163653" forecolor="#FFFFFF" bold="true" vTextAlign="Middle"><text><![CDATA[Estudiante]]></text></element>
+<element kind="staticText" uuid="f5eef1dd-6d1f-4057-ae7b-000b2ee3bea0" x="385" y="0" width="70" height="23" mode="Opaque" backcolor="#163653" forecolor="#FFFFFF" bold="true" vTextAlign="Middle"><text><![CDATA[Estado]]></text></element>
+<element kind="staticText" uuid="b8f26ba0-27e0-4ecc-9ba5-4a60344c192f" x="455" y="0" width="60" height="23" mode="Opaque" backcolor="#163653" forecolor="#FFFFFF" bold="true" vTextAlign="Middle" hTextAlign="Right"><text><![CDATA[Puntaje]]></text></element>
+</columnHeader>
+    <detail><band height="22" splitType="Stretch"><element kind="textField" uuid="08750db1-7713-41b8-8103-34f4000b5ac5" x="0" y="1" width="95" height="19" ><expression><![CDATA[$F{fecha}]]></expression></element>
+<element kind="textField" uuid="f17f6049-c52a-467b-9efc-91cf277bd4b0" x="95" y="1" width="160" height="19" textAdjust="StretchHeight"><expression><![CDATA[$F{curso}]]></expression></element>
+<element kind="textField" uuid="6366f0ac-9e3a-4002-ba0b-51eac9010ca3" x="255" y="1" width="130" height="19" textAdjust="StretchHeight"><expression><![CDATA[$F{estudiante}]]></expression></element>
+<element kind="textField" uuid="0a98f036-cb14-4b74-9ae7-93cb755fd373" x="385" y="1" width="70" height="19" textAdjust="StretchHeight"><expression><![CDATA[$F{estado}]]></expression></element>
+<element kind="textField" uuid="b72119a4-4ecf-4fc7-8c10-16af56c38006" x="455" y="1" width="60" height="19" hTextAlign="Right"><expression><![CDATA[$F{puntaje} == null ? "-" : $F{puntaje} + " / 5"]]></expression></element>
+</band></detail>
+    <pageFooter height="24"><element kind="textField" uuid="51c57d12-c476-44a5-b690-121ddf56ef2a" x="0" y="2" width="515" height="18" hTextAlign="Right"><expression><![CDATA["Página " + $V{PAGE_NUMBER}]]></expression></element>
+</pageFooter>
+    <summary height="76"><element kind="textField" uuid="806a160d-5317-40e6-b71a-5685ac90c8cc" x="0" y="10" width="515" height="20" bold="true"><expression><![CDATA["Total de tutorías: " + $V{REPORT_COUNT}]]></expression></element>
+<element kind="textField" uuid="e62702e5-a70f-4dbe-9990-74150ae9144a" x="0" y="32" width="515" height="20" ><expression><![CDATA["Realizadas: " + $P{REALIZADAS}]]></expression></element>
+<element kind="textField" uuid="cdda1021-f5ec-4375-a638-1a80383aaa24" x="0" y="54" width="515" height="20" ><expression><![CDATA["Calificación promedio: " + $P{PROMEDIO}]]></expression></element>
+</summary>
+    <noData height="125">
+        <element kind="staticText" uuid="a109c436-f0ff-48b4-9ec2-5213378280c6" x="0" y="0" width="515" height="30" fontSize="23.0" bold="true"><text><![CDATA[Reporte de tutorías]]></text></element>
+
+        <element kind="textField" uuid="cfa40d27-8b6f-4d76-b46c-e3a5a759b145" x="0" y="40" width="515" height="20" ><expression><![CDATA["Tutor: " + $P{TUTOR}]]></expression></element>
+
+        <element kind="textField" uuid="7c6803a2-ade3-4b1f-9187-73d2230baa55" x="0" y="62" width="515" height="20" ><expression><![CDATA["Del " + $P{DESDE} + " al " + $P{HASTA}]]></expression></element>
+
+        <element kind="staticText" uuid="f45fbfd7-17de-4ebe-a1e6-b491736def47" x="0" y="92" width="515" height="20" ><text><![CDATA[No dictaste tutorías en este rango de fechas.]]></text></element>
+
+    </noData>
+</jasperReport>

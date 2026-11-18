@@ -22,3 +22,11 @@ public class CancelarSesionFormulario
     public int IdUsuario { get; set; }      // quién cancela: el tutor o el estudiante de la sesión
     public string Motivo { get; set; } = "";
 }
+
+// Lo que se envía al calificar al tutor (CalificarSesionRequest en Java, RF014).
+public class CalificarSesionFormulario
+{
+    public int IdUsuario { get; set; }      // quién califica: el estudiante de la sesión
+    public int Puntaje { get; set; }        // de 1 a 5
+    public string? Comentario { get; set; } // opcional
+}

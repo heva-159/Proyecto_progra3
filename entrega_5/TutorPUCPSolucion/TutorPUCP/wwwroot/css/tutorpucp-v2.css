@@ -61,6 +61,7 @@
 .sb-perfil-item:hover { background: var(--tp-suave); color: var(--tp-texto); padding-left: .8rem; }
 .sb-perfil-item.salir, .sb-perfil-item.salir i { color: #dc2626; }
 .sb-perfil-item.salir:hover { background: rgba(220, 38, 38, .08); }
+button.sb-perfil-item { width: 100%; background: none; border: 0; text-align: left; } /* "Cerrar sesión" es un botón */
 .sb-perfil-divisor { height: 1px; background: var(--tp-borde); margin: .3rem .2rem; }
 
 /* Superficies con variables (funcionan en claro y oscuro) */
@@ -314,3 +315,10 @@ body { transition: background-color .35s ease, color .35s ease; }
 
 /* Botón gris claro: en modo oscuro Bootstrap lo deja blanco */
 [data-bs-theme="dark"] .btn-light { --bs-btn-bg: #1e293b; --bs-btn-border-color: #334155; --bs-btn-color: #e2e8f0; --bs-btn-hover-bg: #334155; --bs-btn-hover-border-color: #475569; --bs-btn-hover-color: #fff; --bs-btn-active-bg: #334155; --bs-btn-active-color: #fff; }
+
+/* RF003: rol que la cuenta todavía no tiene (se ofrece activarlo) y su confirmación dentro del selector */
+.sb-rol-opcion.por-activar { opacity: .85; }
+.sb-rol-opcion.por-activar .sb-rol-opcion-icono { filter: grayscale(1); opacity: .7; }
+.sb-rol-opcion.por-activar:hover { opacity: 1; }
+.sb-rol-confirmar { padding: .6rem .7rem; font-size: .85rem; }
+.sb-rol-confirmar small { font-size: .74rem; line-height: 1.35; }

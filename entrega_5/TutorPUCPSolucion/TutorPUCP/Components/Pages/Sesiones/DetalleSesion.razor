@@ -169,9 +169,18 @@ else
 
                     @if (!SoyTutor)
                     {
-                        <a class="btn btn-primary @(s.Estado == "REALIZADA" ? "" : "disabled")" href="@($"/sesiones/calificar?id={s.IdSesion}")">
-                            <i class="bi bi-star me-1"></i> Calificar al tutor
-                        </a>
+                        @if (s.Puntaje is int puntos)
+                        {
+                            <div class="btn btn-outline-success disabled">
+                                <i class="bi bi-star-fill me-1"></i> Calificaste con @puntos de 5
+                            </div>
+                        }
+                        else
+                        {
+                            <a class="btn btn-primary @(s.Estado == "REALIZADA" ? "" : "disabled")" href="@($"/sesiones/calificar?id={s.IdSesion}")">
+                                <i class="bi bi-star me-1"></i> Calificar al tutor
+                            </a>
+                        }
                     }
                     <a class="btn btn-outline-danger @(PuedeReclamar ? "" : "disabled")" href="/reclamos/nuevo?abrir=true">
                         <i class="bi bi-flag me-1"></i> Registrar reclamo

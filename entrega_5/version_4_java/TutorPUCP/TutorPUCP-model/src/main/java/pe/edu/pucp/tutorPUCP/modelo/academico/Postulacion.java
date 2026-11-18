@@ -33,7 +33,7 @@ public class Postulacion implements IAprobable {
     public void aprobar(Administrador administrador, String resolucion) {
         this.estado = EstadoAprobacion.APROBADA;
         this.administradorRevisor = administrador;
-        this.fechaResolucion = LocalDate.now();
+        this.fechaResolucion = fechaDeResolucion();
         this.resolucion = resolucion;
     }
 
@@ -41,8 +41,15 @@ public class Postulacion implements IAprobable {
     public void rechazar(Administrador administrador, String motivo) {
         this.estado = EstadoAprobacion.RECHAZADA;
         this.administradorRevisor = administrador;
-        this.fechaResolucion = LocalDate.now();
+        this.fechaResolucion = fechaDeResolucion();
         this.resolucion = motivo;
+    }
+
+    // igual que en Reclamo: la BD (UTC) pone fecha_postulacion con curdate() y de noche va un dia adelante de Peru;
+    // asi ck_postulacion_fechas (fecha_resolucion >= fecha_postulacion) no falla.
+    private LocalDate fechaDeResolucion() {
+        LocalDate hoy = LocalDate.now();
+        return fechaPostulacion != null && hoy.isBefore(fechaPostulacion) ? fechaPostulacion : hoy;
     }
 
     @Override
