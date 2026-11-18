@@ -98,7 +98,16 @@
                             </td>
                             <td><div class="fw-semibold">@p.Curso</div><small class="text-muted">@p.CodigoCurso</small></td>
                             <td>@p.FechaPostulacionTexto</td>
-                            <td class="text-nowrap"><i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i><small>@p.NombreCertificado</small></td>
+                            <td class="text-nowrap">
+                                @if (p.CertificadoDisponible)
+                                {
+                                    <a href="/certificados/postulacion/@p.IdPostulacion" target="_blank" rel="noopener" class="text-decoration-none" title="Abrir el certificado en otra pestaña"><i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i><small>@p.NombreCertificado</small></a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted" title="Esta postulación se registró sin el archivo PDF"><i class="bi bi-file-earmark-x me-1"></i><small>Sin archivo</small></span>
+                                }
+                            </td>
                             <td><span class="badge @ClaseEstado(p.EstadoTexto)">@p.EstadoTexto</span></td>
                             <td class="text-end pe-3 text-nowrap">
                                 @if (p.EsPendiente)

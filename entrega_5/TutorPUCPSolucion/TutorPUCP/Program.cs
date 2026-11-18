@@ -59,6 +59,28 @@ app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
+// RF005: el PDF del certificado de una postulación. Se lo pide al REST de Java y lo devuelve desde
+// esta misma web, así el navegador lo muestra dentro de "Revisar postulación" (o en otra pestaña).
+app.MapGet("/certificados/postulacion/{id:int}", async (int id,
+    [Microsoft.AspNetCore.Mvc.FromServices] TutorPUCP.Servicios.AcademicoRestService rest) =>
+{
+    try
+    {
+        byte[] pdf = await rest.ObtenerCertificadoAsync(id);
+        return Results.File(pdf, "application/pdf");   // sin nombre de descarga: el navegador lo abre
+    }
+    catch (Exception ex)
+    {
+        string mensaje = System.Net.WebUtility.HtmlEncode(TutorPUCP.Servicios.AcademicoRestService.MensajeDeError(ex));
+        string html = "<!DOCTYPE html><html lang=\"es\"><head><meta charset=\"utf-8\"><title>Certificado</title></head>"
+            + "<body style=\"font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;"
+            + "height:90vh;margin:0;color:#475569;text-align:center\"><div><div style=\"font-size:2.5rem\">&#128196;</div>"
+            + "<p style=\"font-weight:600;margin:.5rem 0\">No se pudo mostrar el certificado</p>"
+            + $"<p style=\"font-size:.9rem;margin:0\">{mensaje}</p></div></body></html>";
+        return Results.Content(html, "text/html; charset=utf-8", statusCode: StatusCodes.Status404NotFound);
+    }
+});
+
 // Prueba temporal: bórrala cuando confirmes que funciona
 /*app.MapGet("/probar-api", async (IHttpClientFactory fabrica) =>
 {

@@ -68,6 +68,18 @@ public class AcademicoRestService(HttpClient http)
         return await Leer<PostulacionRestDTO>(r);
     }
 
+    // RF005: el PDF del certificado para que el administrador lo revise.
+    // GET /postulaciones/{id}/certificado responde el archivo (application/pdf), no JSON.
+    public async Task<byte[]> ObtenerCertificadoAsync(int idPostulacion)
+    {
+        using var pedido = new HttpRequestMessage(HttpMethod.Get, $"academico/postulaciones/{idPostulacion}/certificado");
+        pedido.Headers.Accept.ParseAdd("application/pdf");
+        pedido.Headers.Accept.ParseAdd("application/json");   // los errores llegan como {"error": "..."}
+        using var r = await http.SendAsync(pedido);
+        await Verificar(r);
+        return await r.Content.ReadAsByteArrayAsync();
+    }
+
     // ============================ RF006: cursos ============================
 
     public async Task<List<CursoRestDTO>> ListarCursosAsync()

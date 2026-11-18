@@ -92,12 +92,22 @@
                                     @* Nombre y código del curso *@
                                     <td class="ps-3 fw-semibold">@post.CursoCodigo - @post.CursoNombre</td>
                                     @* Fecha en que se envió *@
-                                    <td class="text-muted">@(string.IsNullOrEmpty(post.FechaPostulacion) ? "Reciente" : post.FechaPostulacion)</td>
+                                    <td class="text-muted">@FormatearFecha(post.FechaPostulacion)</td>
                                     @* Archivo adjunto con ícono PDF *@
                                     <td>
-                                        <span class="badge bg-secondary text-white">
-                                            <i class="bi bi-file-earmark-pdf"></i> @post.ArchivoCertificadoUrl
-                                        </span>
+                                        @if (post.CertificadoDisponible)
+                                        {
+                                            <a class="badge bg-secondary text-white text-decoration-none" href="/certificados/postulacion/@post.IdPostulacion"
+                                               target="_blank" rel="noopener" title="Ver el PDF que enviaste">
+                                                <i class="bi bi-file-earmark-pdf"></i> @System.IO.Path.GetFileName(post.ArchivoCertificadoUrl)
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-light text-muted border" title="Esta postulación se registró sin el archivo PDF">
+                                                <i class="bi bi-file-earmark-x"></i> Sin archivo
+                                            </span>
+                                        }
                                     </td>
                                     @* Estado con insignia de color dinámico *@
                                     <td>
@@ -155,12 +165,6 @@
         if (error != null)
         {
             mensajeError = error;
-            // Datos iniciales de cortesía en caso de no conectar a BD aún
-            listaPostulaciones = new()
-            {
-                new PostulacionDto(1, 1, "1INF30", "Programación 3", "certificado_p3.pdf", "APROBADA", "2026-10-15", "2026-10-16", "Aprobado por coordinación académica."),
-                new PostulacionDto(2, 2, "1INF01", "Algoritmia", "cert_algoritmia.pdf", "PENDIENTE", "2026-10-22", null, "En evaluación.")
-            };
         }
         else if (postulaciones != null)
         {
@@ -169,6 +173,13 @@
 
         cargando = false;
     }
+
+    // "2026-09-20" -> "20/09/2026"
+    private static string FormatearFecha(string? fecha) =>
+        DateOnly.TryParseExact(fecha, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture,
+                               System.Globalization.DateTimeStyles.None, out var dia)
+            ? dia.ToString("dd/MM/yyyy")
+            : (string.IsNullOrEmpty(fecha) ? "Reciente" : fecha);
 
     private string ObtenerColorBadge(string estado)
     {

@@ -35,6 +35,7 @@ import java.util.logging.Logger;
  *  RF005  GET  /postulaciones[?estado=PENDIENTE|APROBADA|RECHAZADA]
  *         GET  /postulaciones/{id}
  *         PUT  /postulaciones/{id}/resolucion        body: {aprobar, resolucion, idAdministrador}
+ *         GET  /postulaciones/{id}/certificado       responde el PDF (application/pdf) para verificarlo
  *  RF006  GET  /cursos
  *         GET  /cursos/{id}
  *         POST /cursos                               body: {codigo, nombre, temas[]}
@@ -47,10 +48,10 @@ import java.util.logging.Logger;
  *         DELETE /temas/{id}
  *
  * Tutor y estudiante (RF004, RF008, RF009):
- *  RF004  POST /postulaciones                        body: {idTutor, idCurso, archivoCertificadoUrl}
+ *  RF004  POST /postulaciones                        body: {idTutor, idCurso, certificadoBase64 (el PDF) o archivoCertificadoUrl}
  *         GET  /postulaciones/tutor/{idTutor}
- *  RF008  GET  /tarifas/tutor/{idTutor}
- *         POST /tarifas                              body: {idTutor, idCurso, montoPorHora}
+ *  RF008  GET  /tarifas/tutor/{idTutor}             cursos aprobados del tutor, con su tarifa o sin ella
+ *         POST /tarifas                              body: {idTutor, idCurso, montoPorHora} (registra o modifica)
  *  RF009  GET  /tutores/buscar[?idCurso=N]
  *
  * Las reglas del BL que no se cumplen se responden con 400 y {"error": "..."};
@@ -73,28 +74,44 @@ public class GestorAcademicoRecurso {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response postular(PostularRequest req) {
-        if (req == null || req.getArchivoCertificadoUrl() == null || req.getArchivoCertificadoUrl().isBlank()) {
+        boolean traePdf = req != null && req.getCertificadoBase64() != null && !req.getCertificadoBase64().isBlank();
+        boolean traeNombre = req != null && req.getArchivoCertificadoUrl() != null && !req.getArchivoCertificadoUrl().isBlank();
+        if (!traePdf && !traeNombre) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(Map.of("error", "Debe adjuntar el certificado de notas en formato PDF")).build();
+        }
+        // El PDF llega en Base64 dentro del JSON: se vuelve a convertir en bytes.
+        byte[] pdf = null;
+        if (traePdf) {
+            try {
+                pdf = java.util.Base64.getMimeDecoder().decode(req.getCertificadoBase64());
+            } catch (IllegalArgumentException e) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity(Map.of("error", "El certificado no llegó bien codificado en Base64")).build();
+            }
         }
         try {
             Tutor tutor = gestorUsuariosBL.obtenerTutorPorId(req.getIdTutor());
             Curso curso = gestorAcademicoBL.obtenerCursoPorId(req.getIdCurso());
 
             if (tutor == null) {
-                return Response.status(Response.Status.BAD_REQUEST)
-                        .entity(Map.of("error", "Tutor no encontrado")).build();
+                return error(Response.Status.NOT_FOUND, "Tutor no encontrado");
             }
             if (curso == null) {
-                return Response.status(Response.Status.BAD_REQUEST)
-                        .entity(Map.of("error", "Curso no encontrado")).build();
+                return error(Response.Status.NOT_FOUND, "Curso no encontrado");
             }
 
-            Postulacion postulacion = gestorAcademicoBL.postular(tutor, curso, req.getArchivoCertificadoUrl());
-            return Response.status(Response.Status.CREATED).entity(new PostulacionDTO(postulacion)).build();
+            // Con PDF: el BL valida que sea un PDF de hasta 5 MB, lo guarda en el servidor y registra su ruta.
+            // Solo con el nombre: se registra como antes.
+            Postulacion postulacion = pdf != null
+                    ? gestorAcademicoBL.postularConCertificado(tutor, curso, pdf)
+                    : gestorAcademicoBL.postular(tutor, curso, req.getArchivoCertificadoUrl());
+            return Response.status(Response.Status.CREATED).entity(aDTO(postulacion)).build();
+        } catch (BL_exeption e) {
+            return error(Response.Status.BAD_REQUEST, e.getMessage());
         } catch (Exception e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("error", e.getMessage())).build();
+            LOG.log(Level.SEVERE, "Error al registrar la postulacion del tutor " + req.getIdTutor(), e);
+            return error(Response.Status.INTERNAL_SERVER_ERROR, "No se pudo registrar la postulación");
         }
     }
 
@@ -112,12 +129,12 @@ public class GestorAcademicoRecurso {
             List<Postulacion> postulaciones = gestorAcademicoBL.listarPostulacionesPorTutor(tutor);
             List<PostulacionDTO> resultado = new ArrayList<>();
             for (Postulacion p : postulaciones) {
-                resultado.add(new PostulacionDTO(p));
+                resultado.add(aDTO(p));
             }
             return Response.ok(resultado).build();
         } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(Map.of("error", e.getMessage())).build();
+            LOG.log(Level.SEVERE, "Error al listar las postulaciones del tutor " + idTutor, e);
+            return error(Response.Status.INTERNAL_SERVER_ERROR, "No se pudo listar las postulaciones");
         }
     }
 
@@ -136,15 +153,26 @@ public class GestorAcademicoRecurso {
                         .entity(Map.of("error", "No existe el tutor con ID: " + idTutor)).build();
             }
 
-            List<Tarifa> tarifas = gestorAcademicoBL.listarTarifasPorTutor(tutor);
-            List<TarifaDTO> resultado = new ArrayList<>();
-            for (Tarifa t : tarifas) {
-                resultado.add(new TarifaDTO(t));
+            // Una fila por cada curso con postulación APROBADA: con su tarifa, o sin tarifa todavía
+            // (idTarifa = 0 y montoPorHora = null) para que el tutor pueda registrarla.
+            Map<Integer, TarifaDTO> filas = new java.util.LinkedHashMap<>();
+            for (Postulacion p : gestorAcademicoBL.listarPostulacionesPorTutor(tutor)) {
+                if (p.getEstado() == EstadoAprobacion.APROBADA && p.getCurso() != null) {
+                    filas.putIfAbsent(p.getCurso().getIdCurso(), new TarifaDTO(p.getCurso()));
+                }
             }
+            for (Tarifa t : gestorAcademicoBL.listarTarifasPorTutor(tutor)) {
+                if (t.getCurso() != null) {
+                    filas.put(t.getCurso().getIdCurso(), new TarifaDTO(t));
+                }
+            }
+            List<TarifaDTO> resultado = new ArrayList<>(filas.values());
+            resultado.sort(java.util.Comparator.comparing(TarifaDTO::getCursoCodigo,
+                    java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())));
             return Response.ok(resultado).build();
         } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(Map.of("error", e.getMessage())).build();
+            LOG.log(Level.SEVERE, "Error al listar las tarifas del tutor " + idTutor, e);
+            return error(Response.Status.INTERNAL_SERVER_ERROR, "No se pudo listar las tarifas");
         }
     }
 
@@ -161,34 +189,18 @@ public class GestorAcademicoRecurso {
             Tutor tutor = gestorUsuariosBL.obtenerTutorPorId(req.getIdTutor());
             Curso curso = gestorAcademicoBL.obtenerCursoPorId(req.getIdCurso());
             if (tutor == null || curso == null) {
-                return Response.status(Response.Status.BAD_REQUEST)
-                        .entity(Map.of("error", "Tutor o Curso no encontrado")).build();
+                return error(Response.Status.NOT_FOUND, "Tutor o curso no encontrado");
             }
 
-            // RF008: Registrar y Modificar
-            // Verificamos si el tutor ya tiene una tarifa para este curso
-            List<Tarifa> tarifasExistentes = gestorAcademicoBL.listarTarifasPorTutor(tutor);
-            Tarifa tarifaExistente = null;
-            for (Tarifa t : tarifasExistentes) {
-                if (t.getCurso() != null && t.getCurso().getIdCurso() == curso.getIdCurso()) {
-                    tarifaExistente = t;
-                    break;
-                }
-            }
-
-            Tarifa guardada;
-            if (tarifaExistente != null) {
-                // Si ya existe la tarifa, la MODIFICAMOS
-                tarifaExistente.setMontoPorHora(req.getMontoPorHora());
-                guardada = gestorAcademicoBL.modificarTarifa(tarifaExistente);
-            } else {
-                // Si no existe, la REGISTRAMOS
-                guardada = gestorAcademicoBL.registrarTarifa(tutor, curso, req.getMontoPorHora());
-            }
+            // RF008: el BL decide si registra (primera vez en ese curso) o modifica (ya cobraba ahí),
+            // y valida el monto (mayor que 0, máximo 9999.99) y que la postulación al curso esté aprobada.
+            Tarifa guardada = gestorAcademicoBL.guardarTarifa(tutor, curso, req.getMontoPorHora());
             return Response.ok(new TarifaDTO(guardada)).build();
+        } catch (BL_exeption e) {
+            return error(Response.Status.BAD_REQUEST, e.getMessage());
         } catch (Exception e) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("error", e.getMessage())).build();
+            LOG.log(Level.SEVERE, "Error al guardar la tarifa del tutor " + req.getIdTutor(), e);
+            return error(Response.Status.INTERNAL_SERVER_ERROR, "No se pudo guardar la tarifa");
         }
     }
 
@@ -207,7 +219,7 @@ public class GestorAcademicoRecurso {
                         ? gestorAcademicoBL.listarPostulacionesPendientes()
                         : gestorAcademicoBL.listarPostulaciones().stream().filter(p -> p.getEstado() == filtro).toList();
             }
-            return Response.ok(postulaciones.stream().map(PostulacionDTO::new).toList()).build();
+            return Response.ok(postulaciones.stream().map(this::aDTO).toList()).build();
         } catch (IllegalArgumentException e) {
             return error(Response.Status.BAD_REQUEST, "Estado no válido: usa PENDIENTE, APROBADA o RECHAZADA");
         } catch (Exception e) {
@@ -224,10 +236,39 @@ public class GestorAcademicoRecurso {
             if (postulacion == null) {
                 return error(Response.Status.NOT_FOUND, "No existe la postulación " + id);
             }
-            return Response.ok(new PostulacionDTO(postulacion)).build();
+            return Response.ok(aDTO(postulacion)).build();
         } catch (Exception e) {
             LOG.log(Level.SEVERE, "Error al obtener la postulacion " + id, e);
             return error(Response.Status.INTERNAL_SERVER_ERROR, "No se pudo obtener la postulación");
+        }
+    }
+
+    // RF005: el administrador abre el PDF del certificado para verificarlo antes de aprobar o rechazar.
+    // Responde el archivo tal cual (application/pdf) e "inline" para que el navegador lo muestre.
+    @GET
+    @Path("/postulaciones/{id}/certificado")
+    @Produces({"application/pdf", MediaType.APPLICATION_JSON})
+    public Response obtenerCertificado(@PathParam("id") int id) {
+        try {
+            Postulacion postulacion = gestorAcademicoBL.obtenerPostulacionPorId(id);
+            if (postulacion == null) {
+                return error(Response.Status.NOT_FOUND, "No existe la postulación " + id);
+            }
+            byte[] pdf = gestorAcademicoBL.obtenerCertificado(postulacion);
+            if (pdf == null) {
+                return error(Response.Status.NOT_FOUND,
+                        "El archivo del certificado (" + postulacion.getArchivoCertificadoUrl() + ") no está en el servidor");
+            }
+            String ruta = postulacion.getArchivoCertificadoUrl().replace('\\', '/');
+            String nombre = ruta.substring(ruta.lastIndexOf('/') + 1);
+            return Response.ok(pdf, "application/pdf")
+                    .header("Content-Disposition", "inline; filename=\"" + nombre + "\"")
+                    .build();
+        } catch (BL_exeption e) {
+            return error(Response.Status.BAD_REQUEST, e.getMessage());
+        } catch (Exception e) {
+            LOG.log(Level.SEVERE, "Error al obtener el certificado de la postulacion " + id, e);
+            return error(Response.Status.INTERNAL_SERVER_ERROR, "No se pudo obtener el certificado");
         }
     }
 
@@ -249,7 +290,7 @@ public class GestorAcademicoRecurso {
                 return error(Response.Status.NOT_FOUND, "No existe el administrador " + datos.getIdAdministrador());
             }
             gestorAcademicoBL.resolverPostulacion(postulacion, administrador, datos.isAprobar(), datos.getResolucion());
-            return Response.ok(new PostulacionDTO(postulacion)).build();
+            return Response.ok(aDTO(postulacion)).build();
         } catch (BL_exeption e) {
             return error(Response.Status.BAD_REQUEST, e.getMessage());
         } catch (Exception e) {
@@ -379,7 +420,7 @@ public class GestorAcademicoRecurso {
             if (curso == null) {
                 return error(Response.Status.NOT_FOUND, "No existe el curso " + id);
             }
-            gestorAcademicoBL.modificarCurso(curso, datos.getCodigo(), datos.getNombre());
+                gestorAcademicoBL.modificarCurso(curso, datos.getCodigo(), datos.getNombre());
             return Response.ok(new CursoDTO(curso, curso.getTemas().size())).build();
         } catch (BL_exeption e) {
             return error(Response.Status.BAD_REQUEST, e.getMessage());
@@ -499,6 +540,13 @@ public class GestorAcademicoRecurso {
             LOG.log(Level.SEVERE, "Error al eliminar el tema " + id, e);
             return error(Response.Status.INTERNAL_SERVER_ERROR, "No se pudo eliminar el tema");
         }
+    }
+
+    // DTO de una postulación + si su PDF está en el servidor (así la pantalla no muestra enlaces rotos).
+    private PostulacionDTO aDTO(Postulacion postulacion) {
+        PostulacionDTO dto = new PostulacionDTO(postulacion);
+        dto.setCertificadoDisponible(gestorAcademicoBL.tieneCertificado(postulacion));
+        return dto;
     }
 
     private static Response error(Response.Status estado, String mensaje) {

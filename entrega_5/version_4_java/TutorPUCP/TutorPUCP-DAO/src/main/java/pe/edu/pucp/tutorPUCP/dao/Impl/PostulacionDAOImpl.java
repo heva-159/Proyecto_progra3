@@ -3,8 +3,10 @@ package pe.edu.pucp.tutorPUCP.dao.Impl;
 import pe.edu.pucp.tutorPUCP.dao.DAOs.PostulacionDAO;
 import pe.edu.pucp.tutorPUCP.dbmanager.DBManager;
 import pe.edu.pucp.tutorPUCP.dbmanager.TransactionContext;
+import pe.edu.pucp.tutorPUCP.modelo.academico.Curso;
 import pe.edu.pucp.tutorPUCP.modelo.academico.Postulacion;
 import pe.edu.pucp.tutorPUCP.modelo.enums.EstadoAprobacion;
+import pe.edu.pucp.tutorPUCP.modelo.usuario.Administrador;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Tutor;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Usuario;
 
@@ -15,59 +17,64 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PostulacionDAOImpl implements PostulacionDAO {
 
+    // Las tres consultas leen primero todas las filas y cierran la conexion; recien despues se cargan
+    // el tutor, el curso y el administrador de cada postulacion (ver completarRelaciones).
     @Override
     public Postulacion load(Integer id) {
-        Postulacion postulacion = null;
+        List<FilaPostulacion> filas = new ArrayList<>();
         String sql = "{CALL buscar_postulacion_por_id(?)}";
         try (Connection connection = DBManager.getInstance().getConnection()) {
             CallableStatement stmt = connection.prepareCall(sql);
             stmt.setInt(1, id);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                postulacion = leerPostulacion(rs, null);
+                filas.add(leerFila(rs));
             }
         } catch (SQLException e) {
             System.out.println("Error al obtener postulacion: " + e.getMessage());
         }
-        return postulacion;
+        List<Postulacion> postulaciones = completarRelaciones(filas, null);
+        return postulaciones.isEmpty() ? null : postulaciones.get(0);
     }
 
     @Override
     public List<Postulacion> listAll() {
-        List<Postulacion> postulaciones = new ArrayList<>();
+        List<FilaPostulacion> filas = new ArrayList<>();
         String sql = "{CALL listar_postulaciones()}";
         try (Connection connection = DBManager.getInstance().getConnection()) {
             CallableStatement stmt = connection.prepareCall(sql);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                postulaciones.add(leerPostulacion(rs, null));
+                filas.add(leerFila(rs));
             }
         } catch (SQLException e) {
             System.out.println("Error al listar postulaciones: " + e.getMessage());
         }
-        return postulaciones;
+        return completarRelaciones(filas, null);
     }
 
     // el tutor que se pasa queda asignado a cada postulacion
     @Override
     public List<Postulacion> listarPorTutor(Tutor tutor) {
-        List<Postulacion> postulaciones = new ArrayList<>();
+        List<FilaPostulacion> filas = new ArrayList<>();
         String sql = "{CALL listar_postulaciones_por_tutor(?)}";
         try (Connection connection = DBManager.getInstance().getConnection()) {
             CallableStatement stmt = connection.prepareCall(sql);
             stmt.setInt(1, tutor.getUsuario().getIdUsuario());
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                postulaciones.add(leerPostulacion(rs, tutor));
+                filas.add(leerFila(rs));
             }
         } catch (SQLException e) {
             System.out.println("Error al listar postulaciones del tutor: " + e.getMessage());
         }
-        return postulaciones;
+        return completarRelaciones(filas, tutor);
     }
 
     @Override
@@ -169,8 +176,15 @@ public class PostulacionDAOImpl implements PostulacionDAO {
         }
     }
 
-    // si tutor es null se carga desde la base con el id_tutor de la fila
-    private Postulacion leerPostulacion(ResultSet rs, Tutor tutor) throws SQLException {
+    // Una fila de la consulta: la postulacion con sus datos propios y los ids de lo relacionado.
+    private static class FilaPostulacion {
+        Postulacion postulacion;
+        int idTutor;
+        int idCurso;
+        Integer idAdministrador;
+    }
+
+    private FilaPostulacion leerFila(ResultSet rs) throws SQLException {
         Postulacion postulacion = new Postulacion();
         postulacion.setIdPostulacion(rs.getInt("id"));
         postulacion.setArchivoCertificadoUrl(rs.getString("archivo_certificado_url"));
@@ -179,16 +193,46 @@ public class PostulacionDAOImpl implements PostulacionDAO {
         postulacion.setFechaResolucion(rs.getObject("fecha_resolucion", LocalDate.class));
         postulacion.setResolucion(rs.getString("resolucion"));
 
-        if (tutor == null) {
-            Usuario usuario = new UsuarioDAOImpl().load(rs.getInt("id_tutor"));
-            tutor = usuario != null ? usuario.getPerfilTutor() : null;
+        FilaPostulacion fila = new FilaPostulacion();
+        fila.postulacion = postulacion;
+        fila.idTutor = rs.getInt("id_tutor");
+        fila.idCurso = rs.getInt("id_curso");
+        fila.idAdministrador = rs.getObject("id_administrador_revisor", Integer.class);
+        return fila;
+    }
+
+    // Carga el tutor, el curso y el administrador UNA sola vez por id y con la primera conexion ya cerrada.
+    // Antes se abrian 3 conexiones mas por cada fila mientras la primera seguia abierta, y con la BD
+    // en AWS eso terminaba en "Communications link failure" al listar las postulaciones.
+    // Si tutor no es null, se usa ese para todas las filas (listarPorTutor).
+    private List<Postulacion> completarRelaciones(List<FilaPostulacion> filas, Tutor tutor) {
+        Map<Integer, Tutor> tutores = new HashMap<>();
+        Map<Integer, Curso> cursos = new HashMap<>();
+        Map<Integer, Administrador> administradores = new HashMap<>();
+        List<Postulacion> postulaciones = new ArrayList<>();
+        for (FilaPostulacion fila : filas) {
+            Postulacion postulacion = fila.postulacion;
+            if (tutor != null) {
+                postulacion.setTutor(tutor);
+            } else {
+                if (!tutores.containsKey(fila.idTutor)) {
+                    Usuario usuario = new UsuarioDAOImpl().load(fila.idTutor);
+                    tutores.put(fila.idTutor, usuario != null ? usuario.getPerfilTutor() : null);
+                }
+                postulacion.setTutor(tutores.get(fila.idTutor));
+            }
+            if (!cursos.containsKey(fila.idCurso)) {
+                cursos.put(fila.idCurso, new CursoDAOImpl().load(fila.idCurso));
+            }
+            postulacion.setCurso(cursos.get(fila.idCurso));
+            if (fila.idAdministrador != null) {
+                if (!administradores.containsKey(fila.idAdministrador)) {
+                    administradores.put(fila.idAdministrador, new AdministradorDAOImpl().load(fila.idAdministrador));
+                }
+                postulacion.setAdministradorRevisor(administradores.get(fila.idAdministrador));
+            }
+            postulaciones.add(postulacion);
         }
-        postulacion.setTutor(tutor);
-        postulacion.setCurso(new CursoDAOImpl().load(rs.getInt("id_curso")));
-        Integer idAdministrador = rs.getObject("id_administrador_revisor", Integer.class);
-        if (idAdministrador != null) {
-            postulacion.setAdministradorRevisor(new AdministradorDAOImpl().load(idAdministrador));
-        }
-        return postulacion;
+        return postulaciones;
     }
 }
