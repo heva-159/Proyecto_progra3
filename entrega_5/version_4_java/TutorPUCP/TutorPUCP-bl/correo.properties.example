@@ -1,0 +1,30 @@
+# Datos de la cuenta que envia los correos de verificacion.
+#
+# COPIA este archivo (no lo muevas ni le cambies el nombre) como
+#     TutorPUCP-bl/src/main/resources/correo.properties      (crea la carpeta resources si no existe)
+# y completa los datos. correo.properties NO se sube a git (esta en el .gitignore) porque tiene la clave de la cuenta.
+#
+# Si correo.properties no existe o esta vacio, no se envia ningun correo: el codigo de verificacion se escribe en el
+# log del servidor ("modo consola"), que sirve para probar. Main (el probador de consola) siempre usa el modo consola.
+
+# --- Gmail ---
+# Usa una cuenta de Gmail solo para el proyecto, con la verificacion en 2 pasos activada, y crea una
+# "contrasena de aplicacion" (Cuenta de Google > Seguridad > Contrasenas de aplicaciones): son 16 letras que Google
+# muestra en grupos de 4 ("abcd efgh ijkl mnop"). Esa es la clave; NO sirve la contrasena normal de la cuenta.
+host=smtp.gmail.com
+puerto=587
+usuario=cuenta.del.proyecto@gmail.com
+clave=xxxx xxxx xxxx xxxx
+
+# --- Opcionales (los valores de abajo son los que se usan si no se ponen) ---
+# autenticacion=true
+# starttls=true
+# remitente=cuenta.del.proyecto@gmail.com
+
+# --- Para probar SIN enviar correos de verdad: Mailpit o smtp4dev corriendo en tu PC ---
+# (reemplaza los datos de Gmail de arriba por estos; los correos se ven en la pagina web del programa)
+# host=localhost
+# puerto=1025
+# autenticacion=false
+# starttls=false
+# remitente=tutorpucp@localhost

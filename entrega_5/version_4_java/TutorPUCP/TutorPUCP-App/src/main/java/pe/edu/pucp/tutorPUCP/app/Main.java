@@ -50,6 +50,9 @@ public class Main {
     private static int verificacionesFallidas = 0;
 
     public static void main(String[] args) {
+        // Main registra usuarios inventados: aunque exista correo.properties, que no mande correos de verdad
+        // (el codigo de verificacion solo se escribe en la consola)
+        System.setProperty("tutorpucp.correo", "consola");
         try {
             // para que cuando se ejecute varias veces no falle y registre datos nuevos
             String sufijo = String.valueOf(System.currentTimeMillis() % 100000);

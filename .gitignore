@@ -1,2 +1,4 @@
 entrega_5/glassfish8/
 hs_err_pid*.log
+# clave de la cuenta de correo (ver correo.properties.example en TutorPUCP-bl)
+**/correo.properties

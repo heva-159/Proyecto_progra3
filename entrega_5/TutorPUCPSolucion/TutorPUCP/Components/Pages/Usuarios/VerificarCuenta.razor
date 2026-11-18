@@ -2,9 +2,12 @@
 @layout AuthLayout
 @implements IDisposable
 @inject NavigationManager Navigation
+@inject UsuariosApi Api
+@inject RolActual RolActual
 
 @* Verificación de la cuenta (RF001): código de 6 dígitos enviado al correo, válido por 15 minutos,
-   con opción de reenviarlo. Pantalla visual: cualquier código de 6 dígitos se acepta. *@
+   con opción de reenviarlo. El REST comprueba el código: máximo 5 intentos fallidos por código y 30 segundos
+   entre un envío y otro (el contador y la espera de esta pantalla son solo informativos). *@
 
 <PageTitle>Verificar cuenta · TutorPUCP</PageTitle>
 
@@ -32,7 +35,11 @@
 
 <div class="campo-ayuda mt-2 d-flex justify-content-between">
     <span><i class="bi bi-clock me-1"></i>@(Vencido ? "El código venció." : $"Vence en {restante:mm\\:ss}")</span>
-    @if (esperaReenvio > 0)
+    @if (reenviando)
+    {
+        <span>Enviando…</span>
+    }
+    else if (esperaReenvio > 0)
     {
         <span>Reenviar en @esperaReenvio s</span>
     }
@@ -63,17 +70,20 @@
     private TimeSpan restante = TimeSpan.FromMinutes(15);
     private int esperaReenvio = 30;
     private string? error, aviso;
-    private bool verificando;
+    private bool verificando, reenviando;
     private System.Threading.Timer? reloj;
 
-    private string Correo
+    private string Correo => Parametro("correo") ?? "tu correo PUCP";
+
+    // Viene de Perfil («Correo sin verificar · Verificar»): ahí nadie acaba de recibir un código, así que al abrir
+    // la pantalla se manda uno nuevo. Desde el registro no hace falta: el REST ya lo envió.
+    private bool EnviarAlAbrir => Parametro("reenviar") == "1";
+
+    private string? Parametro(string nombre)
     {
-        get
-        {
-            var q = new Uri(Navigation.Uri).Query.TrimStart('?').Split('&')
-                .Select(p => p.Split('=', 2)).FirstOrDefault(p => p[0] == "correo" && p.Length == 2);
-            return q is null ? "tu correo PUCP" : Uri.UnescapeDataString(q[1]);
-        }
+        var q = new Uri(Navigation.Uri).Query.TrimStart('?').Split('&')
+            .Select(p => p.Split('=', 2)).FirstOrDefault(p => p[0] == nombre && p.Length == 2);
+        return q is null ? null : Uri.UnescapeDataString(q[1]);
     }
 
     private bool Completo => digitos.All(d => d is { Length: 1 });
@@ -92,7 +102,11 @@
 
     protected override async Task OnAfterRenderAsync(bool primera)
     {
-        if (primera) await casillas[0].FocusAsync();
+        if (!primera) return;
+        await casillas[0].FocusAsync();
+        // Aquí y no en OnInitialized: este método corre una sola vez y ya con la conexión interactiva
+        // (OnInitialized también corre al pre-renderizar y mandaría el código dos veces).
+        if (EnviarAlAbrir) await EnviarCodigoNuevo(alAbrir: true);
     }
 
     // Acepta un dígito por casilla; si se pega el código completo, lo reparte en las seis. Con @bind (y no con value + @oninput) Blazor también borra del cuadro lo que no es dígito.
@@ -120,26 +134,63 @@
         }
     }
 
-    private async Task Reenviar()
+    private Task Reenviar() => EnviarCodigoNuevo(alAbrir: false);
+
+    // alAbrir = true: se llamó solo por entrar desde Perfil (nadie pulsó «Reenviar código»). Si el REST contesta
+    // «Espera N segundos» es porque ya se mandó un código hace un momento: no hay nada que avisar.
+    private async Task EnviarCodigoNuevo(bool alAbrir)
     {
+        if (reenviando) return;
+        error = null;
+        aviso = null;
+        reenviando = true;
+        if (alAbrir) StateHasChanged(); // se llama desde OnAfterRenderAsync: ahí la pantalla no se actualiza sola
+        var fallo = await Api.ReenviarCodigoAsync(Correo);
+        reenviando = false;
+        if (fallo is not null)
+        {
+            if (!(alAbrir && fallo.StartsWith("Espera ")))
+                error = fallo; // por ejemplo: "Espera 12 segundos para pedir otro codigo"
+            if (alAbrir) StateHasChanged();
+            return;
+        }
         for (var i = 0; i < 6; i++) digitos[i] = "";
         restante = TimeSpan.FromMinutes(15);
         esperaReenvio = 30;
-        error = null;
-        aviso = "Te enviamos un código nuevo. El anterior ya no sirve.";
+        aviso = alAbrir ? "Te enviamos un código a tu correo." : "Te enviamos un código nuevo. El anterior ya no sirve.";
+        if (alAbrir) StateHasChanged();
         await casillas[0].FocusAsync();
     }
 
     private async Task Verificar()
     {
         aviso = null;
+        error = null;
         if (Vencido)
         {
             error = "El código venció. Pide uno nuevo con «Reenviar código».";
             return;
         }
         verificando = true;
-        await Task.Delay(500); // Pantalla visual: aún no hay base de datos.
+        var (usuario, fallo) = await Api.VerificarCorreoAsync(Correo, string.Concat(digitos));
+        verificando = false;
+        if (fallo is not null)
+        {
+            // por ejemplo: "Codigo incorrecto. Te quedan 4 intentos" o "Demasiados intentos fallidos. Pide un codigo nuevo..."
+            error = fallo;
+            for (var i = 0; i < 6; i++) digitos[i] = "";
+            await casillas[0].FocusAsync();
+            return;
+        }
+
+        // Si quien verificó es la persona que tiene la sesión abierta (entró desde Perfil), su cuenta queda
+        // verificada al instante y vuelve a su perfil; si no, va a iniciar sesión.
+        if (usuario is not null && RolActual.Usuario is { } actual && actual.IdUsuario == usuario.IdUsuario)
+        {
+            RolActual.Usuario = usuario;
+            Navigation.NavigateTo("/perfil");
+            return;
+        }
         Navigation.NavigateTo("/login/usuario");
     }
 

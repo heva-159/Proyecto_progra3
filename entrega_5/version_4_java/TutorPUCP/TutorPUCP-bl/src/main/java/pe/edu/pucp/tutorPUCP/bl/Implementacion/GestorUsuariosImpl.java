@@ -1,6 +1,7 @@
 package pe.edu.pucp.tutorPUCP.bl.Implementacion;
 
 import pe.edu.pucp.tutorPUCP.bl.Clases.GestorUsuarios;
+import pe.edu.pucp.tutorPUCP.bl.EnviadorCorreo;
 import pe.edu.pucp.tutorPUCP.bl.Exeptions.BL_exeption;
 import pe.edu.pucp.tutorPUCP.bl.Seguridad.PasswordHasher;
 import pe.edu.pucp.tutorPUCP.dao.DAOs.AdministradorDAO;
@@ -19,14 +20,35 @@ import pe.edu.pucp.tutorPUCP.modelo.usuario.Estudiante;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Tutor;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Usuario;
 
+import java.security.SecureRandom;
 import java.sql.SQLException;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class GestorUsuariosImpl implements GestorUsuarios {
+    private static final Logger LOG = Logger.getLogger(GestorUsuariosImpl.class.getName());
+
+    // Verificacion del correo: el codigo de 6 digitos vence a los 15 minutos, se puede pedir otro cada 30 segundos
+    // y se permiten 5 intentos fallidos por codigo.
+    private static final int MINUTOS_VIGENCIA_CODIGO = 15;
+    private static final int SEGUNDOS_ESPERA_REENVIO = 30;
+    private static final int MAX_INTENTOS_FALLIDOS = 5;
+    private static final SecureRandom ALEATORIO = new SecureRandom();
+    // Intentos fallidos por usuario (id -> cantidad). Es static porque el REST crea un gestor nuevo en cada
+    // peticion y el conteo tiene que sobrevivir entre peticiones (se pierde si se reinicia el servidor).
+    private static final Map<Integer, Integer> intentosFallidos = new ConcurrentHashMap<>();
+
     private final UsuarioDAO usuarioDAO = new UsuarioDAOImpl();
     private final TutorDAO tutorDAO = new TutorDAOImpl();
     private final EstudianteDAO estudianteDAO = new EstudianteDAOImpl();
     private final AdministradorDAO administradorDAO = new AdministradorDAOImpl();
+    private final EnviadorCorreo enviadorCorreo = new EnviadorCorreo();
 
     // ---- Usuario ----
 
@@ -53,6 +75,8 @@ public class GestorUsuariosImpl implements GestorUsuarios {
         }
         Usuario usuario = new Usuario(nombres, apellidos, codigoPucp, facultad, especialidad,
                 correoInstitucional, PasswordHasher.hashear(password), rol);
+        // el codigo de verificacion se guarda junto con el usuario y se envia al correo apenas se registra
+        asignarCodigoNuevo(usuario);
 
         // la transaccion la abre esta capa: si falla un perfil, no queda el usuario guardado sin el
         try (TransactionContext tx = new TransactionContext()) {
@@ -64,10 +88,18 @@ public class GestorUsuariosImpl implements GestorUsuarios {
                 estudianteDAO.save(usuario.getPerfilEstudiante(), tx);
             }
             tx.commit();
-            return usuario;
         } catch (SQLException e) {
             throw new BL_exeption("No se pudo registrar el usuario con sus perfiles: " + e.getMessage());
         }
+
+        // se envia despues del commit y fuera de la transaccion: el usuario ya esta registrado, asi que si el
+        // correo no sale no se deshace el registro (puede pedir otro codigo con "Reenviar codigo")
+        try {
+            enviarCodigo(usuario);
+        } catch (RuntimeException e) {
+            LOG.log(Level.WARNING, "No se pudo enviar el codigo de verificacion a " + usuario.getCorreoInstitucional(), e);
+        }
+        return usuario;
     }
 
     @Override
@@ -153,6 +185,107 @@ public class GestorUsuariosImpl implements GestorUsuarios {
         validarCambioDePassword(passwordActual, passwordNueva, usuario.getPasswordHash());
         usuario.setPasswordHash(PasswordHasher.hashear(passwordNueva));
         usuarioDAO.update(usuario);
+    }
+
+    // ---- Verificacion del correo ----
+
+    @Override
+    public Usuario verificarCorreo(String correo, String codigo) {
+        if (codigo == null || !codigo.matches("[0-9]{6}")) {
+            throw new BL_exeption("El codigo debe tener 6 digitos");
+        }
+        Usuario usuario = buscarCuentaActiva(correo);
+        if (usuario.isCorreoVerificado()) {
+            return usuario;
+        }
+        if (usuario.getCodigoVerificacion() == null || usuario.getFechaExpiracionCodigo() == null) {
+            throw new BL_exeption("No hay un codigo pendiente. Pide uno nuevo con Reenviar codigo");
+        }
+        if (ahora().isAfter(usuario.getFechaExpiracionCodigo())) {
+            throw new BL_exeption("El codigo vencio. Pide uno nuevo con Reenviar codigo");
+        }
+        if (!usuario.getCodigoVerificacion().equals(codigo)) {
+            int fallidos = intentosFallidos.merge(usuario.getIdUsuario(), 1, Integer::sum);
+            if (fallidos >= MAX_INTENTOS_FALLIDOS) {
+                // se acabaron los intentos: este codigo ya no sirve y hay que pedir otro
+                intentosFallidos.remove(usuario.getIdUsuario());
+                usuario.setCodigoVerificacion(null);
+                usuario.setFechaExpiracionCodigo(null);
+                usuarioDAO.update(usuario);
+                throw new BL_exeption("Demasiados intentos fallidos. Pide un codigo nuevo con Reenviar codigo");
+            }
+            int quedan = MAX_INTENTOS_FALLIDOS - fallidos;
+            throw new BL_exeption("Codigo incorrecto. " + (quedan == 1 ? "Te queda 1 intento" : "Te quedan " + quedan + " intentos"));
+        }
+        // la tabla exige que codigo y fecha de vencimiento queden los dos en null
+        usuario.setCorreoVerificado(true);
+        usuario.setCodigoVerificacion(null);
+        usuario.setFechaExpiracionCodigo(null);
+        usuarioDAO.update(usuario);
+        intentosFallidos.remove(usuario.getIdUsuario());
+        return usuario;
+    }
+
+    @Override
+    public void reenviarCodigo(String correo) {
+        Usuario usuario = buscarCuentaActiva(correo);
+        if (usuario.isCorreoVerificado()) {
+            throw new BL_exeption("Esa cuenta ya tiene el correo verificado");
+        }
+        // el ultimo envio fue 15 minutos antes del vencimiento del codigo vigente: no hace falta guardar la hora aparte
+        if (usuario.getFechaExpiracionCodigo() != null) {
+            LocalDateTime puedeReenviarDesde = usuario.getFechaExpiracionCodigo()
+                    .minusMinutes(MINUTOS_VIGENCIA_CODIGO).plusSeconds(SEGUNDOS_ESPERA_REENVIO);
+            long faltan = (long) Math.ceil(Duration.between(ahora(), puedeReenviarDesde).toMillis() / 1000.0);
+            if (faltan > 0) {
+                throw new BL_exeption("Espera " + faltan + " segundos para pedir otro codigo");
+            }
+        }
+        asignarCodigoNuevo(usuario);
+        usuarioDAO.update(usuario);
+        intentosFallidos.remove(usuario.getIdUsuario());
+        try {
+            enviarCodigo(usuario);
+        } catch (RuntimeException e) {
+            LOG.log(Level.WARNING, "No se pudo reenviar el codigo de verificacion a " + usuario.getCorreoInstitucional(), e);
+            // si el correo no salio, ese codigo no le sirve a nadie: se invalida para poder volver a pedirlo enseguida
+            usuario.setCodigoVerificacion(null);
+            usuario.setFechaExpiracionCodigo(null);
+            usuarioDAO.update(usuario);
+            throw new BL_exeption("No se pudo enviar el correo. Intenta de nuevo en unos minutos");
+        }
+    }
+
+    // La cuenta que tiene ese correo; falla si no existe o no esta activa.
+    private Usuario buscarCuentaActiva(String correo) {
+        if (correo == null || correo.isBlank()) {
+            throw new BL_exeption("El correo es obligatorio");
+        }
+        Usuario usuario = usuarioDAO.buscarPorCorreo(correo.trim());
+        if (usuario == null) {
+            throw new BL_exeption("No existe una cuenta con ese correo");
+        }
+        if (usuario.getEstado() != EstadoCuenta.ACTIVA) {
+            throw new BL_exeption("La cuenta no esta activa");
+        }
+        return usuario;
+    }
+
+    // Un codigo de 6 digitos al azar (con ceros a la izquierda) que vence en 15 minutos. No guarda nada en la BD.
+    private void asignarCodigoNuevo(Usuario usuario) {
+        usuario.setCodigoVerificacion(String.format("%06d", ALEATORIO.nextInt(1_000_000)));
+        usuario.setFechaExpiracionCodigo(ahora().plusMinutes(MINUTOS_VIGENCIA_CODIGO));
+    }
+
+    // La hora del vencimiento se guarda en UTC, igual que la hora del servidor de la BD (que va 5 horas adelantada
+    // respecto a Lima): asi no depende de la zona horaria de la maquina donde corra GlassFish.
+    private static LocalDateTime ahora() {
+        return LocalDateTime.now(ZoneOffset.UTC);
+    }
+
+    private void enviarCodigo(Usuario usuario) {
+        enviadorCorreo.enviarCodigoVerificacion(usuario.getCorreoInstitucional(), usuario.getNombres(),
+                usuario.getCodigoVerificacion(), MINUTOS_VIGENCIA_CODIGO);
     }
 
     // ---- Perfil Tutor ----

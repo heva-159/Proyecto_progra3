@@ -22,6 +22,13 @@ public class UsuariosApi(IHttpClientFactory fabrica) : ClienteRest(fabrica)
         Enviar<UsuarioDto>(HttpMethod.Post, "usuario/login", new Credenciales(correo, password));
     public Task<string?> CambiarPasswordAsync(int idUsuario, string passwordActual, string passwordNueva) =>
         EnviarSinValor(HttpMethod.Put, $"usuario/{idUsuario}/password", new CambioPassword(passwordActual, passwordNueva));
+    // Si el código es correcto devuelve el usuario ya verificado; si no, el Error trae el motivo
+    // ("Codigo incorrecto. Te quedan 4 intentos", "El codigo vencio...", "Demasiados intentos fallidos...").
+    public Task<(UsuarioDto? Valor, string? Error)> VerificarCorreoAsync(string correo, string codigo) =>
+        Enviar<UsuarioDto>(HttpMethod.Post, "usuario/verificar-correo", new VerificacionCorreo(correo, codigo));
+    // Manda un código nuevo al correo; el Error puede ser "Espera 12 segundos para pedir otro codigo".
+    public Task<string?> ReenviarCodigoAsync(string correo) =>
+        EnviarSinValor(HttpMethod.Post, "usuario/reenviar-codigo", new ReenvioCodigo(correo));
 
     // ---- Perfil tutor ----
     public Task<(PerfilDto? Valor, string? Error)> RegistrarTutorAsync(int idUsuario) =>
@@ -69,3 +76,5 @@ public record DatosUsuario(string Nombres, string Apellidos, string CodigoPucp, 
                            string? Especialidad, string CorreoInstitucional);
 public record RegistroAdministrador(string Nombre, string Correo, string Password, string? NivelPermiso);
 public record CambioPassword(string PasswordActual, string PasswordNueva);
+public record VerificacionCorreo(string Correo, string Codigo);
+public record ReenvioCodigo(string Correo);

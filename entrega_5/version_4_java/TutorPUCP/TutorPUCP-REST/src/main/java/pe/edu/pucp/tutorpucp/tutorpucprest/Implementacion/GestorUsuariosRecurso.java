@@ -124,6 +124,40 @@ public class GestorUsuariosRecurso{
         return Response.ok(new UsuarioDTO(usuario)).build();
     }
 
+    // Verifica el correo con el codigo de 6 digitos que llego por correo. El BL cuenta los intentos fallidos
+    // (maximo 5 por codigo) y revisa que el codigo no haya vencido.
+    @POST
+    @Path("/verificar-correo")
+    @Consumes(MediaType.APPLICATION_JSON) @Produces(MediaType.APPLICATION_JSON)
+    public Response verificarCorreo(VerificarCorreoRequest datos) {
+        if (datos == null) {
+            throw new BadRequestException("Faltan el correo y el codigo");
+        }
+        try {
+            Usuario usuario = gestorUsuariosBL.verificarCorreo(datos.getCorreo(), datos.getCodigo());
+            return Response.ok(new UsuarioDTO(usuario)).build();
+        } catch (BL_exeption e) {
+            // codigo incorrecto, vencido, sin intentos...: se responde como 400 con el mensaje del BL
+            return Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", e.getMessage())).build();
+        }
+    }
+
+    // Manda un codigo nuevo al correo (el anterior deja de servir). El BL exige 30 segundos entre un envio y otro.
+    @POST
+    @Path("/reenviar-codigo")
+    @Consumes(MediaType.APPLICATION_JSON) @Produces(MediaType.APPLICATION_JSON)
+    public Response reenviarCodigo(ReenviarCodigoRequest datos) {
+        if (datos == null) {
+            throw new BadRequestException("Falta el correo");
+        }
+        try {
+            gestorUsuariosBL.reenviarCodigo(datos.getCorreo());
+            return Response.noContent().build();
+        } catch (BL_exeption e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", e.getMessage())).build();
+        }
+    }
+
     @PUT
     @Path("/{id}/password")
     @Consumes(MediaType.APPLICATION_JSON) @Produces(MediaType.APPLICATION_JSON)

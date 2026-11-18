@@ -31,6 +31,15 @@ public interface GestorUsuarios {
     // Cambia la contrasena si la actual coincide (la cuenta debe estar activa). La nueva se guarda como hash.
     void cambiarPassword(int idUsuario, String passwordActual, String passwordNueva);
 
+    // Verifica el correo con el codigo de 6 digitos que se envio al registrarse. Falla si no hay un codigo
+    // pendiente, si vencio o si es incorrecto; con 5 intentos fallidos el codigo se invalida y hay que pedir otro.
+    // Si el correo ya estaba verificado no hace nada. Devuelve el usuario ya verificado.
+    Usuario verificarCorreo(String correo, String codigo);
+
+    // Genera un codigo nuevo (el anterior deja de servir) y lo envia al correo. Hay que esperar 30 segundos
+    // entre un envio y otro.
+    void reenviarCodigo(String correo);
+
     // ---- Perfil Tutor ----
 
     // Le agrega el perfil de tutor a un usuario que ya existe.
