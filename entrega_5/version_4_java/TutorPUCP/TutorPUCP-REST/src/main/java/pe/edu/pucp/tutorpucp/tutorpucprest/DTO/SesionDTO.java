@@ -3,6 +3,7 @@ package pe.edu.pucp.tutorpucp.tutorpucprest.DTO;
 import pe.edu.pucp.tutorPUCP.modelo.academico.Curso;
 import pe.edu.pucp.tutorPUCP.modelo.academico.Tema;
 import pe.edu.pucp.tutorPUCP.modelo.tutoria.Sesion;
+import pe.edu.pucp.tutorPUCP.modelo.tutoria.SesionResumen;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Usuario;
 
 import java.math.BigDecimal;
@@ -71,6 +72,28 @@ public class SesionDTO {
         this.comentario = sesion.getComentario();
         this.motivoCancelacion = sesion.getMotivoCancelacion();
         this.cancelo = sesion.getUsuarioCancelo() != null ? nombreCompleto(sesion.getUsuarioCancelo()) : null;
+    }
+
+    // Para los listados: viene de la vista resumida, así que no lleva comentario, motivo de cancelación ni quién canceló
+    // (eso se ve en el detalle de la sesión).
+    public SesionDTO(SesionResumen resumen) {
+        this.idSesion = resumen.getIdSesion();
+        this.idTutor = resumen.getIdTutor();
+        this.tutor = resumen.getTutor();
+        this.idEstudiante = resumen.getIdEstudiante();
+        this.estudiante = resumen.getEstudiante();
+        this.idCurso = resumen.getIdCurso();
+        this.codigoCurso = resumen.getCodigoCurso();
+        this.curso = resumen.getCurso();
+        this.temas.addAll(resumen.getTemas());
+        this.fechaHoraInicio = resumen.getFechaHoraInicio() != null ? resumen.getFechaHoraInicio().toString() : null;
+        this.fechaHoraFin = resumen.getFechaHoraFin() != null ? resumen.getFechaHoraFin().toString() : null;
+        this.estado = resumen.getEstado() != null ? resumen.getEstado().name() : null;
+        this.checkInTutor = resumen.isCheckInTutor();
+        this.checkInEstudiante = resumen.isCheckInEstudiante();
+        this.checkOutTutor = resumen.isCheckOutTutor();
+        this.checkOutEstudiante = resumen.isCheckOutEstudiante();
+        this.puntaje = resumen.getPuntaje();
     }
 
     private static String nombreCompleto(Usuario usuario) {

@@ -152,6 +152,24 @@ public class GestorSesionesRecurso {
         }
     }
 
+    // "Mis sesiones": las sesiones en las que participa la persona (como tutor o como estudiante), de la más
+    // reciente a la más antigua. Es una lista resumida (sin comentario ni motivo de cancelación: eso va en el detalle).
+    @GET
+    @Path("/usuario/{idUsuario}")
+    public Response sesionesDelUsuario(@PathParam("idUsuario") int idUsuario) {
+        try {
+            if (gestorUsuariosBL.obtenerUsuarioPorId(idUsuario) == null) {
+                return error(Response.Status.NOT_FOUND, "No existe el usuario " + idUsuario);
+            }
+            List<SesionDTO> sesiones = gestorSesionesBL.listarResumenPorUsuario(idUsuario).stream()
+                    .map(SesionDTO::new).toList();
+            return Response.ok(sesiones).build();
+        } catch (Exception e) {
+            LOG.log(Level.SEVERE, "Error al listar las sesiones del usuario " + idUsuario, e);
+            return error(Response.Status.INTERNAL_SERVER_ERROR, "No se pudieron cargar las sesiones");
+        }
+    }
+
     // ===================== RF012: check-in y check-out =====================
 
     // Cada uno (tutor o estudiante) marca el suyo. Con los dos check-in la sesión pasa a EN_CURSO.

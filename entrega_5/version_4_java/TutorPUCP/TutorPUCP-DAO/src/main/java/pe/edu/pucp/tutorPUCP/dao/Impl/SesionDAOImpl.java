@@ -6,16 +6,20 @@ import pe.edu.pucp.tutorPUCP.dbmanager.DBManager;
 import pe.edu.pucp.tutorPUCP.dbmanager.TransactionContext;
 import pe.edu.pucp.tutorPUCP.modelo.enums.EstadoSesion;
 import pe.edu.pucp.tutorPUCP.modelo.tutoria.Sesion;
+import pe.edu.pucp.tutorPUCP.modelo.tutoria.SesionResumen;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Usuario;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SesionDAOImpl implements SesionDAO {
 
@@ -53,6 +57,76 @@ public class SesionDAOImpl implements SesionDAO {
             }
         } catch (SQLException e) {
             System.out.println("Error al listar sesiones: " + e.getMessage());
+        }
+        return sesiones;
+    }
+
+    // Las sesiones de un usuario como tutor o como estudiante. Si la consulta falla se lanza el error (no se devuelve
+    // una lista vacia, que se confundiria con "no tiene sesiones").
+    @Override
+    public List<SesionResumen> listarResumenPorUsuario(int idUsuario) {
+        String sqlSesiones = "SELECT s.id, s.id_tutor, CONCAT(ut.nombres, ' ', ut.apellidos) AS tutor, "
+                + "s.id_estudiante, CONCAT(ue.nombres, ' ', ue.apellidos) AS estudiante, "
+                + "s.id_curso, c.codigo AS codigo_curso, c.nombre AS curso, "
+                + "s.fecha_hora_inicio, s.fecha_hora_fin, s.estado, "
+                + "s.check_in_tutor, s.check_in_estudiante, s.check_out_tutor, s.check_out_estudiante, s.puntaje "
+                + "FROM sesion s "
+                + "JOIN usuario ut ON ut.id = s.id_tutor "
+                + "JOIN usuario ue ON ue.id = s.id_estudiante "
+                + "JOIN curso c ON c.id = s.id_curso "
+                + "WHERE s.id_tutor = ? OR s.id_estudiante = ? "
+                + "ORDER BY s.fecha_hora_inicio DESC, s.id DESC";
+        String sqlTemas = "SELECT st.id_sesion, t.nombre FROM sesion_tema st "
+                + "JOIN tema t ON t.id = st.id_tema "
+                + "JOIN sesion s ON s.id = st.id_sesion "
+                + "WHERE s.id_tutor = ? OR s.id_estudiante = ? "
+                + "ORDER BY st.id_sesion, t.nombre";
+
+        List<SesionResumen> sesiones = new ArrayList<>();
+        Map<Integer, SesionResumen> porId = new HashMap<>();
+        try (Connection connection = DBManager.getInstance().getConnection()) {
+            try (PreparedStatement stmt = connection.prepareStatement(sqlSesiones)) {
+                stmt.setInt(1, idUsuario);
+                stmt.setInt(2, idUsuario);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        SesionResumen sesion = new SesionResumen();
+                        sesion.setIdSesion(rs.getInt("id"));
+                        sesion.setIdTutor(rs.getInt("id_tutor"));
+                        sesion.setTutor(rs.getString("tutor"));
+                        sesion.setIdEstudiante(rs.getInt("id_estudiante"));
+                        sesion.setEstudiante(rs.getString("estudiante"));
+                        sesion.setIdCurso(rs.getInt("id_curso"));
+                        sesion.setCodigoCurso(rs.getString("codigo_curso"));
+                        sesion.setCurso(rs.getString("curso"));
+                        sesion.setFechaHoraInicio(rs.getObject("fecha_hora_inicio", LocalDateTime.class));
+                        sesion.setFechaHoraFin(rs.getObject("fecha_hora_fin", LocalDateTime.class));
+                        sesion.setEstado(EstadoSesion.valueOf(rs.getString("estado")));
+                        sesion.setCheckInTutor(rs.getBoolean("check_in_tutor"));
+                        sesion.setCheckInEstudiante(rs.getBoolean("check_in_estudiante"));
+                        sesion.setCheckOutTutor(rs.getBoolean("check_out_tutor"));
+                        sesion.setCheckOutEstudiante(rs.getBoolean("check_out_estudiante"));
+                        sesion.setPuntaje(rs.getObject("puntaje", Integer.class));
+                        sesiones.add(sesion);
+                        porId.put(sesion.getIdSesion(), sesion);
+                    }
+                }
+            }
+            try (PreparedStatement stmt = connection.prepareStatement(sqlTemas)) {
+                stmt.setInt(1, idUsuario);
+                stmt.setInt(2, idUsuario);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        SesionResumen sesion = porId.get(rs.getInt("id_sesion"));
+                        if (sesion != null) {
+                            sesion.getTemas().add(rs.getString("nombre"));
+                        }
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error al listar las sesiones del usuario: " + e.getMessage());
+            throw new RuntimeException(e);
         }
         return sesiones;
     }

@@ -4,6 +4,7 @@ import pe.edu.pucp.tutorPUCP.modelo.academico.Curso;
 import pe.edu.pucp.tutorPUCP.modelo.academico.Tema;
 import pe.edu.pucp.tutorPUCP.modelo.enums.Rol;
 import pe.edu.pucp.tutorPUCP.modelo.tutoria.Sesion;
+import pe.edu.pucp.tutorPUCP.modelo.tutoria.SesionResumen;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Estudiante;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Tutor;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Usuario;
@@ -26,6 +27,10 @@ public interface GestorSesiones {
     Sesion obtenerSesionPorId(int idSesion);
 
     List<Sesion> listarSesiones();
+
+    // Las sesiones en las que participa la persona (como tutor o como estudiante), de la mas reciente a la mas antigua.
+    // Es una vista resumida para listados ("Mis sesiones"): no arma cada sesion completa, asi que es rapida.
+    List<SesionResumen> listarResumenPorUsuario(int idUsuario);
 
     void confirmarCheckIn(Sesion sesion, Rol rol);
     void confirmarCheckOut(Sesion sesion, Rol rol);

@@ -17,6 +17,7 @@ import pe.edu.pucp.tutorPUCP.modelo.enums.EstadoAprobacion;
 import pe.edu.pucp.tutorPUCP.modelo.enums.EstadoSesion;
 import pe.edu.pucp.tutorPUCP.modelo.enums.Rol;
 import pe.edu.pucp.tutorPUCP.modelo.tutoria.Sesion;
+import pe.edu.pucp.tutorPUCP.modelo.tutoria.SesionResumen;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Estudiante;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Tutor;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Usuario;
@@ -122,6 +123,11 @@ public class GestorSesionesImpl implements GestorSesiones {
     @Override
     public List<Sesion> listarSesiones() {
         return sesionDAO.listAll();
+    }
+
+    @Override
+    public List<SesionResumen> listarResumenPorUsuario(int idUsuario) {
+        return sesionDAO.listarResumenPorUsuario(idUsuario);
     }
 
     // se valida contra la BD (no contra tema.getCurso() en memoria) para no depender
