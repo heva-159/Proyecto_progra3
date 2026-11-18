@@ -60,6 +60,15 @@ public class SesionRestService(HttpClient http)
         return await Leer<SesionRestDTO>(r);
     }
 
+    // "Mis sesiones": las sesiones en las que participa la persona (como tutor o como estudiante),
+    // de la más reciente a la más antigua. Es una lista resumida: no trae comentario ni motivo de cancelación
+    // (eso está en ObtenerAsync).
+    public async Task<List<SesionRestDTO>> ListarDeUsuarioAsync(int idUsuario)
+    {
+        using var r = await http.GetAsync($"sesion/usuario/{idUsuario}");
+        return await Leer<List<SesionRestDTO>>(r);
+    }
+
     // ===================== RF012: check-in y check-out =====================
 
     // rol: "TUTOR" o "ESTUDIANTE". Devuelve la sesión actualizada.

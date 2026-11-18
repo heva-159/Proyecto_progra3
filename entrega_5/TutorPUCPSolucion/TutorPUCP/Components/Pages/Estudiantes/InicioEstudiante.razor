@@ -1,6 +1,10 @@
 ﻿@page "/estudiante"
 @implements IDisposable
 @inject RolActual RolActual
+@inject SesionRestService Rest
+
+@* Las sesiones salen de la BD a través del servicio REST (GET sesion/usuario/{id}).
+   "Mensajes sin leer" todavía es un dato de ejemplo. *@
 
 <PageTitle>Inicio estudiante</PageTitle>
 
@@ -16,14 +20,17 @@
 </div>
 
 @* Sesión realizada que todavía no se calificó (RF014) *@
-<div class="nota d-flex flex-wrap align-items-center gap-3 mb-4">
-    <i class="bi bi-star fs-4 text-primary"></i>
-    <div class="flex-grow-1 lh-sm">
-        <div class="fw-semibold">Ya puedes calificar tu sesión con @porCalificar.Tutor</div>
-        <small class="text-muted">@porCalificar.Curso · @porCalificar.Tema · @porCalificar.Fecha</small>
+@if (PorCalificar is { } pendiente)
+{
+    <div class="nota d-flex flex-wrap align-items-center gap-3 mb-4">
+        <i class="bi bi-star fs-4 text-primary"></i>
+        <div class="flex-grow-1 lh-sm">
+            <div class="fw-semibold">Ya puedes calificar tu sesión con @pendiente.Tutor</div>
+            <small class="text-muted">@pendiente.Curso · @pendiente.TemasTexto · @pendiente.FechaTexto</small>
+        </div>
+        <a class="btn btn-primary btn-sm" href="/sesiones/calificar?id=@pendiente.IdSesion">Calificar</a>
     </div>
-    <a class="btn btn-primary btn-sm" href="/sesiones/calificar?sesion=@porCalificar.Numero">Calificar</a>
-</div>
+}
 
 <div class="row g-3 mb-4">
     @{ var k = 0; }
@@ -47,34 +54,69 @@
                 <h2 class="h5 mb-0"><i class="bi bi-calendar-event me-2 text-primary"></i>Próximas sesiones</h2>
                 <a class="small text-decoration-none" href="/sesiones">Ver todas <i class="bi bi-arrow-right"></i></a>
             </div>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-primary">
-                        <tr>
-                            <th class="ps-3">Tutor</th>
-                            <th>Curso</th>
-                            <th>Fecha y hora</th>
-                            <th class="pe-3"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var s in proximas)
-                        {
+            @if (Yo is null)
+            {
+                <div class="estado-vacio">
+                    <i class="bi bi-person-lock"></i>
+                    <div class="fw-semibold">Inicia sesión para ver tus sesiones</div>
+                    <a class="btn btn-outline-primary btn-sm mt-2" href="/login/usuario">Iniciar sesión</a>
+                </div>
+            }
+            else if (cargando)
+            {
+                <div class="estado-vacio">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <div class="small mt-2">Cargando tus sesiones...</div>
+                </div>
+            }
+            else if (error is not null)
+            {
+                <div class="estado-vacio">
+                    <i class="bi bi-wifi-off"></i>
+                    <div class="fw-semibold">No se pudieron cargar tus sesiones</div>
+                    <div class="small">@error</div>
+                    <button type="button" class="btn btn-outline-primary btn-sm mt-2" @onclick="Cargar">Reintentar</button>
+                </div>
+            }
+            else if (Proximas.Count == 0)
+            {
+                <div class="estado-vacio">
+                    <i class="bi bi-calendar-x"></i>
+                    <div class="fw-semibold">No tienes sesiones próximas</div>
+                    <a class="btn btn-outline-primary btn-sm mt-2" href="/estudiante/buscar-tutores">Buscar tutores</a>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-primary">
                             <tr>
-                                <td class="ps-3">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <Avatar Nombre="@s.Tutor" Tamano="sm" />
-                                        <span class="fw-semibold">@s.Tutor</span>
-                                    </div>
-                                </td>
-                                <td class="lh-sm"><div>@s.Curso</div><small class="text-muted">@s.Tema</small></td>
-                                <td class="text-nowrap">@s.Fecha<br /><small class="text-muted">@s.Hora</small></td>
-                                <td class="pe-3 text-end"><a class="btn btn-sm btn-outline-primary" href="/sesiones/detalle">Ver detalle</a></td>
+                                <th class="ps-3">Tutor</th>
+                                <th>Curso</th>
+                                <th>Fecha y hora</th>
+                                <th class="pe-3"></th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+                        <tbody>
+                            @foreach (var s in Proximas)
+                            {
+                                <tr @key="s.IdSesion">
+                                    <td class="ps-3">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <Avatar Nombre="@s.Tutor" Tamano="sm" />
+                                            <span class="fw-semibold">@s.Tutor</span>
+                                        </div>
+                                    </td>
+                                    <td class="lh-sm"><div>@s.Curso</div><small class="text-muted">@s.TemasTexto</small></td>
+                                    <td class="text-nowrap">@s.FechaTexto<br /><small class="text-muted">@s.HoraTexto</small></td>
+                                    <td class="pe-3 text-end"><a class="btn btn-sm btn-outline-primary" href="/sesiones/detalle?id=@s.IdSesion">Ver detalle</a></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
         </div>
     </div>
 
@@ -101,16 +143,8 @@
 </div>
 
 @code {
-    private record Sesion(int Numero, string Curso, string Tema, string Tutor, string Fecha, string Hora);
-
-    // Mismas sesiones de Lucía Ramos que en "Mis sesiones"
-    private static readonly Sesion porCalificar = new(29, "Cálculo 1", "Derivadas", "Andrés Villanueva", "23/10/2026", "4:00 p. m.");
-
-    private static readonly Sesion[] proximas =
-    [
-        new(31, "Cálculo 1", "Límites y continuidad", "Andrés Villanueva", "27/10/2026", "4:00 p. m."),
-        new(33, "Química General", "Estequiometría", "Rosa Huamán", "29/10/2026", "2:00 p. m."),
-    ];
+    // Cuántas sesiones se muestran en "Próximas sesiones" (las demás están en "Mis sesiones")
+    private const int MaxProximas = 5;
 
     private static readonly (string, string, string, string)[] accesos =
     [
@@ -120,17 +154,73 @@
         ("/reclamos/nuevo", "bi-flag", "Reclamos", "Si algo salió mal en una sesión"),
     ];
 
+    // null = todavía no llega la respuesta del servicio
+    private List<SesionRestDTO>? sesiones;
+    private bool cargando = true;
+    private string? error;
+
+    private UsuarioDto? Yo => RolActual.Usuario;
+
     private string PrimerNombre => RolActual.PrimerNombre;
 
-    private (string, string, string, string)[] Resumen =>
-    [
-        ("/sesiones", "Próximas sesiones", proximas.Length.ToString(), "bi-calendar-event"),
-        ("/sesiones", "Sesiones realizadas", "4", "bi-check-circle"),
-        ("/sesiones/calificar?sesion=" + porCalificar.Numero, "Por calificar", "1", "bi-star"),
-        ("/mensajes", "Mensajes sin leer", "2", "bi-chat-dots"),
-    ];
+    // Aquí solo cuentan las sesiones que recibo como estudiante
+    private List<SesionRestDTO> Mias =>
+        (sesiones ?? []).Where(s => s.IdEstudiante == Yo?.IdUsuario).ToList();
 
-    protected override void OnInitialized() => RolActual.Cambio += AlCambiarRol;
+    private static bool EsProgramada(SesionRestDTO s) => s.Estado is "PROGRAMADA" or "EN_CURSO";
+
+    private static bool SinCalificar(SesionRestDTO s) => s.Estado == "REALIZADA" && s.Puntaje is null;
+
+    private List<SesionRestDTO> Proximas => SesionRestDTO.Proximas(Mias, MaxProximas);
+
+    // La última sesión realizada que todavía no se calificó
+    private SesionRestDTO? PorCalificar => Mias.Where(SinCalificar).OrderByDescending(s => s.Inicio).FirstOrDefault();
+
+    private (string, string, string, string)[] Resumen
+    {
+        get
+        {
+            var mias = Mias;
+            var cargado = sesiones is not null;
+            string N(int n) => cargado ? n.ToString() : "—";
+            return
+            [
+                ("/sesiones", "Próximas sesiones", N(mias.Count(EsProgramada)), "bi-calendar-event"),
+                ("/sesiones", "Sesiones realizadas", N(mias.Count(s => s.Estado == "REALIZADA")), "bi-check-circle"),
+                (PorCalificar is { } p ? $"/sesiones/calificar?id={p.IdSesion}" : "/sesiones", "Por calificar", N(mias.Count(SinCalificar)), "bi-star"),
+                ("/mensajes", "Mensajes sin leer", "2", "bi-chat-dots"),   // dato de ejemplo
+            ];
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        RolActual.Cambio += AlCambiarRol;
+        await Cargar();
+    }
+
+    private async Task Cargar()
+    {
+        if (Yo is null)
+        {
+            cargando = false;
+            return;
+        }
+        cargando = true;
+        error = null;
+        try
+        {
+            sesiones = await Rest.ListarDeUsuarioAsync(Yo.IdUsuario);
+        }
+        catch (Exception ex)
+        {
+            error = AcademicoRestService.MensajeDeError(ex);
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
 
     private void AlCambiarRol() => InvokeAsync(StateHasChanged);
 
