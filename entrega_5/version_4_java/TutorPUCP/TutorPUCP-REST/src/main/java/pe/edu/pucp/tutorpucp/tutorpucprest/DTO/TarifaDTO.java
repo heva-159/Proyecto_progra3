@@ -1,5 +1,6 @@
 package pe.edu.pucp.tutorpucp.tutorpucprest.DTO;
 
+import pe.edu.pucp.tutorPUCP.modelo.academico.Curso;
 import pe.edu.pucp.tutorPUCP.modelo.tutoria.Tarifa;
 import java.math.BigDecimal;
 
@@ -12,6 +13,13 @@ public class TarifaDTO {
     private BigDecimal montoPorHora;
 
     public TarifaDTO() {}
+
+    // Curso con postulación aprobada que todavía no tiene tarifa: idTarifa = 0 y montoPorHora = null.
+    public TarifaDTO(Curso curso) {
+        this.idCurso = curso.getIdCurso();
+        this.cursoCodigo = curso.getCodigo();
+        this.cursoNombre = curso.getNombre();
+    }
 
     public TarifaDTO(Tarifa tarifa) {
         this.idTarifa = tarifa.getIdTarifa();

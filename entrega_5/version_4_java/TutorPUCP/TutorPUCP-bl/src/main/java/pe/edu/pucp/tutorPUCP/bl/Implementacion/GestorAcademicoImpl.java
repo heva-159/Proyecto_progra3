@@ -218,6 +218,39 @@ public class GestorAcademicoImpl implements GestorAcademico {
         return postulacionDAO.save(postulacion);
     }
 
+    // RF004: primero se valida y se guarda el PDF, y con esa ruta se registra la postulacion
+    // (postular revisa que el curso este activo y que no haya otra pendiente o aprobada).
+    @Override
+    public Postulacion postularConCertificado(Tutor tutor, Curso curso, byte[] certificadoPdf) {
+        if (tutor == null || tutor.getUsuario() == null) {
+            throw new BL_exeption("El tutor no existe");
+        }
+        if (curso == null) {
+            throw new BL_exeption("El curso no existe");
+        }
+        AlmacenCertificados.validarPdf(certificadoPdf);
+        String ruta = AlmacenCertificados.guardar(certificadoPdf, tutor.getUsuario().getCodigoPucp(), curso.getCodigo());
+        try {
+            return postular(tutor, curso, ruta);
+        } catch (RuntimeException e) {
+            AlmacenCertificados.borrar(ruta);   // la postulacion no se registro: el PDF no se queda guardado
+            throw e;
+        }
+    }
+
+    @Override
+    public byte[] obtenerCertificado(Postulacion postulacion) {
+        if (postulacion == null) {
+            throw new BL_exeption("La postulacion no existe");
+        }
+        return AlmacenCertificados.leer(postulacion.getArchivoCertificadoUrl());
+    }
+
+    @Override
+    public boolean tieneCertificado(Postulacion postulacion) {
+        return postulacion != null && AlmacenCertificados.existe(postulacion.getArchivoCertificadoUrl());
+    }
+
     @Override
     public Postulacion modificarPostulacion(Postulacion postulacion) {
         Postulacion guardada = postulacionDAO.load(postulacion.getIdPostulacion());
@@ -316,6 +349,22 @@ public class GestorAcademicoImpl implements GestorAcademico {
         }
         tarifa.setMontoPorHora(validarMonto(tarifa.getMontoPorHora()));
         return tarifaDAO.update(tarifa);
+    }
+
+    // RF008: una sola tarifa por tutor y curso. Si ya existe se modifica el monto; si no, se registra.
+    // modificarTarifa y registrarTarifa validan el monto, y registrarTarifa que el curso este aprobado.
+    @Override
+    public Tarifa guardarTarifa(Tutor tutor, Curso curso, BigDecimal montoPorHora) {
+        if (tutor == null || curso == null) {
+            throw new BL_exeption("Faltan el tutor o el curso de la tarifa");
+        }
+        for (Tarifa tarifa : tarifaDAO.listarPorTutor(tutor)) {
+            if (tarifa.getCurso() != null && tarifa.getCurso().getIdCurso() == curso.getIdCurso()) {
+                tarifa.setMontoPorHora(montoPorHora);
+                return modificarTarifa(tarifa);
+            }
+        }
+        return registrarTarifa(tutor, curso, montoPorHora);
     }
 
     @Override

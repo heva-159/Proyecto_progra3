@@ -44,6 +44,13 @@ public interface GestorAcademico {
 
     // ---- Postulacion ----
     Postulacion postular(Tutor tutor, Curso curso, String archivoCertificadoUrl);
+    // RF004: postula adjuntando el PDF del certificado (maximo 5 MB). El PDF se guarda en el servidor
+    // y en la BD queda su ruta (archivo_certificado_url).
+    Postulacion postularConCertificado(Tutor tutor, Curso curso, byte[] certificadoPdf);
+    // RF005: el PDF del certificado, para que el administrador lo revise. null si el archivo no esta en el servidor.
+    byte[] obtenerCertificado(Postulacion postulacion);
+    // true si el PDF del certificado esta en el servidor (algunas postulaciones solo guardaron un nombre).
+    boolean tieneCertificado(Postulacion postulacion);
     // Solo se puede modificar una postulacion pendiente.
     Postulacion modificarPostulacion(Postulacion postulacion);
     // No se puede eliminar una postulacion aprobada.
@@ -57,6 +64,8 @@ public interface GestorAcademico {
     // ---- Tarifa ----
     Tarifa registrarTarifa(Tutor tutor, Curso curso, BigDecimal montoPorHora);
     Tarifa modificarTarifa(Tarifa tarifa);
+    // RF008: si el tutor ya cobra en ese curso, cambia el monto; si no, registra la tarifa.
+    Tarifa guardarTarifa(Tutor tutor, Curso curso, BigDecimal montoPorHora);
     void eliminarTarifa(Tarifa tarifa);
     Tarifa obtenerTarifaPorId(int idTarifa);
     List<Tarifa> listarTarifas();

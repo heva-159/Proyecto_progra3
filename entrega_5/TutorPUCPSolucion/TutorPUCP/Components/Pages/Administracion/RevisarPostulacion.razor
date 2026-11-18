@@ -1,8 +1,11 @@
 ﻿@page "/admin/postulaciones/revisar"
 @inject AcademicoRestService Rest
+@inject RolActual RolActual
 
 @* Requisito: RF005. Los datos vienen de la BD a través del servicio REST (GestorAcademicoRecurso).
-   Se abre con ?id=5; sin id, se abre la primera postulación pendiente. *@
+   Se abre con ?id=5; sin id, se abre la primera postulación pendiente.
+   "Ver certificado" muestra el PDF que subió el tutor (GET /postulaciones/{id}/certificado, a través de
+   /certificados/postulacion/{id} de esta web, ver Program.cs) para verificarlo antes de decidir. *@
 
 <PageTitle>Revisar postulación</PageTitle>
 
@@ -111,9 +114,27 @@ else
                         <i class="bi bi-file-earmark-pdf-fill text-danger fs-2"></i>
                         <div class="lh-sm">
                             <div class="fw-semibold">Certificado de notas</div>
-                            <small class="text-muted">PDF · máximo 5 MB</small>
+                            @if (!p.CertificadoDisponible)
+                            {
+                                <small class="text-muted">Se registró sin el archivo PDF</small>
+                            }
+                            else if (certificadoRevisado)
+                            {
+                                <small class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Revisado</small>
+                            }
+                            else
+                            {
+                                <small class="text-muted">PDF · máximo 5 MB</small>
+                            }
                         </div>
-                        <button type="button" class="btn btn-outline-primary btn-sm ms-auto"><i class="bi bi-eye me-1"></i>Ver certificado</button>
+                        @if (p.CertificadoDisponible)
+                        {
+                            <button type="button" class="btn btn-outline-primary btn-sm ms-auto" @onclick="VerCertificado"><i class="bi bi-eye me-1"></i>Ver certificado</button>
+                        }
+                        else
+                        {
+                            <span class="badge text-bg-light border ms-auto"><i class="bi bi-file-earmark-x me-1"></i>PDF no disponible</span>
+                        }
                     </div>
                 </div>
             </div>
@@ -149,6 +170,10 @@ else
                             <small class="contador-caracteres @(motivo.Length > 220 ? "cerca" : "")">@motivo.Length / 255</small>
                         </div>
 
+                        @if (p.CertificadoDisponible && !certificadoRevisado)
+                        {
+                            <p class="small text-warning-emphasis mb-2"><i class="bi bi-exclamation-circle me-1"></i>Abre el certificado de notas para verificarlo antes de decidir.</p>
+                        }
                         <p class="small text-muted"><i class="bi bi-info-circle me-1"></i>La fecha de revisión se registra automáticamente.</p>
 
                         <div class="d-flex justify-content-end gap-2">
@@ -182,6 +207,20 @@ else
     </div>
 }
 
+<Modal @ref="visorCertificado" Title="Certificado de notas" Size="ModalSize.ExtraLarge" IsVerticallyCentered="true" OnHidden="CerrarVisor">
+    <BodyTemplate>
+        @if (postulacion is not null && mostrarVisor)
+        {
+            <div class="small text-muted mb-2">@postulacion.Tutor · @postulacion.CodigoCurso @postulacion.Curso · @postulacion.NombreCertificado</div>
+            <iframe src="@UrlCertificado" title="Certificado de notas" style="width:100%; height:70vh; border:0;" class="rounded-3 bg-light"></iframe>
+        }
+    </BodyTemplate>
+    <FooterTemplate>
+        <a class="btn btn-outline-secondary" href="@UrlCertificado" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right me-1"></i>Abrir en otra pestaña</a>
+        <button type="button" class="btn btn-primary" @onclick="() => visorCertificado.HideAsync()">Listo</button>
+    </FooterTemplate>
+</Modal>
+
 <Modal @ref="confirmar" Title="Confirmar resolución" IsVerticallyCentered="true">
     <BodyTemplate>
         <Pasos Etapas="Etapas" Actual="2" />
@@ -204,12 +243,20 @@ else
     // Viene en la URL: /admin/postulaciones/revisar?id=5
     [SupplyParameterFromQuery(Name = "id")] public int? Id { get; set; }
 
-    // Administrador que revisa: Carla Mendoza Rios (id 1 en la BD), mientras no haya inicio de sesión.
-    private const int IdAdministrador = 1;
+    // Administrador que revisa: el que inició sesión en /admin/login.
+    // Si nadie inició sesión (pruebas), queda Carla Mendoza Rios (id 1 en la BD).
+    private const int AdministradorDePrueba = 1;
+    private int IdAdministrador => RolActual.Administrador?.IdAdministrador ?? AdministradorDePrueba;
 
     private static readonly string[] Etapas = ["Revisar", "Decidir", "Confirmar"];
 
     private Modal confirmar = default!;
+    private Modal visorCertificado = default!;
+    private bool mostrarVisor;          // el iframe del PDF solo se crea al abrir el visor
+    private bool certificadoRevisado;   // el administrador ya abrió el certificado
+
+    // El PDF lo entrega esta misma web (Program.cs), que se lo pide al REST de Java.
+    private string UrlCertificado => $"/certificados/postulacion/{postulacion?.IdPostulacion}";
     private readonly List<ToastMessage> avisos = [];
 
     // Datos de la BD, pedidos al servicio REST.
@@ -266,6 +313,15 @@ else
             cargando = false;
         }
     }
+
+    private async Task VerCertificado()
+    {
+        mostrarVisor = true;
+        certificadoRevisado = true;
+        await visorCertificado.ShowAsync();
+    }
+
+    private void CerrarVisor() => mostrarVisor = false;
 
     // Igual que la regla del backend: el motivo solo es obligatorio al rechazar.
     private bool PuedeGuardar => decision == "Aprobada" || (decision == "Rechazada" && !string.IsNullOrWhiteSpace(motivo));

@@ -5,95 +5,149 @@
 
 <PageTitle>Mis postulaciones</PageTitle>
 
-<EncabezadoPagina Icono="bi-file-earmark-text-fill" Titulo="Mis Postulaciones a Cursos"
-                  Subtitulo="Consulta el historial y el estado de acreditación de tus solicitudes académicas.">
-    <a href="/tutor" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i>Volver al Panel del Tutor</a>
-    <a href="/tutor/postular" class="btn btn-primary"><i class="bi bi-plus-lg"></i>Nueva Postulación</a>
-</EncabezadoPagina>
+@* =============================================================================
+   ENCABEZADO Y BOTÓN DE ACCIÓN
+   ============================================================================= *@
+<div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+    <div>
+        <h2 class="text-primary fw-bold mb-1">Mis Postulaciones a Cursos</h2>
+        <p class="text-muted mb-0">Consulta el historial y el estado de acreditación de tus solicitudes académicas.</p>
+    </div>
+    <a href="/tutor/postular" class="btn btn-primary shadow-sm">
+        + Nueva Postulación
+    </a>
+</div>
 
 @* Alerta de error si falla la comunicación con REST *@
 @if (!string.IsNullOrEmpty(mensajeError))
 {
-    <div class="alert alert-warning alert-dismissible fade show d-flex gap-2 mb-4" role="alert">
-        <i class="bi bi-exclamation-triangle-fill"></i><div>@mensajeError</div>
+    <div class="alert alert-warning alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> @mensajeError
         <button type="button" class="btn-close" @onclick="() => mensajeError = null"></button>
     </div>
 }
 
-@* Resumen rápido *@
+@* =============================================================================
+   TARJETAS DE RESUMEN RÁPIDO
+   ============================================================================= *@
 <div class="row g-3 mb-4">
-    <div class="col-sm-4">
-        <TarjetaDato Icono="bi-collection" Valor="@listaPostulaciones.Count.ToString()" Etiqueta="Total postulaciones" />
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0 p-3 bg-light text-center">
+            <span class="text-muted small fw-semibold">TOTAL POSTULACIONES</span>
+            <h4 class="text-dark fw-bold mb-0">@listaPostulaciones.Count</h4>
+        </div>
     </div>
-    <div class="col-sm-4">
-        <TarjetaDato Icono="bi-check-circle" Valor="@listaPostulaciones.Count(p => p.Estado == "APROBADA").ToString()" Etiqueta="Aprobadas" />
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0 p-3 bg-light text-center">
+            <span class="text-muted small fw-semibold">APROBADAS</span>
+            <h4 class="text-success fw-bold mb-0">
+                @listaPostulaciones.Count(p => p.Estado == "APROBADA")
+            </h4>
+        </div>
     </div>
-    <div class="col-sm-4">
-        <TarjetaDato Icono="bi-hourglass-split" Valor="@listaPostulaciones.Count(p => p.Estado == "PENDIENTE").ToString()" Etiqueta="En revisión" />
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0 p-3 bg-light text-center">
+            <span class="text-muted small fw-semibold">EN REVISIÓN</span>
+            <h4 class="text-warning fw-bold mb-0">
+                @listaPostulaciones.Count(p => p.Estado == "PENDIENTE")
+            </h4>
+        </div>
     </div>
 </div>
 
-@* Tabla de postulaciones *@
-<div class="card mb-4">
-    <div class="card-header cabecera">
-        <h2 class="card-titulo">Historial de Solicitudes</h2>
+@* =============================================================================
+   TABLA DE POSTULACIONES 
+   ============================================================================= *@
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white py-3 border-0">
+        <h5 class="fw-bold mb-0 text-dark">Historial de Solicitudes</h5>
     </div>
-    @if (cargando)
-    {
-        <div class="estado-vacio">
-            <div class="spinner-border text-primary" role="status"></div>
-            <div class="small mt-2">Cargando tus postulaciones desde el servidor...</div>
-        </div>
-    }
-    else
-    {
-        <div class="table-responsive">
-            <table class="table table-hover align-middle tabla-tp">
-                <thead class="table-primary">
-                    <tr>
-                        <th>Curso</th>
-                        <th>Fecha de Envío</th>
-                        <th>Certificado PDF</th>
-                        <th>Estado</th>
-                        <th>Resolución / Observación del Administrador</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (listaPostulaciones != null && listaPostulaciones.Count > 0)
-                    {
-                        @foreach (var post in listaPostulaciones)
+    <div class="card-body p-0">
+        @if (cargando)
+        {
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="text-muted mt-2 mb-0">Cargando tus postulaciones desde el servidor...</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">Curso</th>
+                            <th>Fecha de Envío</th>
+                            <th>Certificado PDF</th>
+                            <th>Estado</th>
+                            <th>Resolución / Observación del Administrador</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (listaPostulaciones != null && listaPostulaciones.Count > 0)
+                        {
+                            @foreach (var post in listaPostulaciones)
+                            {
+                                <tr>
+                                    @* Nombre y código del curso *@
+                                    <td class="ps-3 fw-semibold">@post.CursoCodigo - @post.CursoNombre</td>
+                                    @* Fecha en que se envió *@
+                                    <td class="text-muted">@FormatearFecha(post.FechaPostulacion)</td>
+                                    @* Archivo adjunto con ícono PDF *@
+                                    <td>
+                                        @if (post.CertificadoDisponible)
+                                        {
+                                            <a class="badge bg-secondary text-white text-decoration-none" href="/certificados/postulacion/@post.IdPostulacion"
+                                               target="_blank" rel="noopener" title="Ver el PDF que enviaste">
+                                                <i class="bi bi-file-earmark-pdf"></i> @System.IO.Path.GetFileName(post.ArchivoCertificadoUrl)
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-light text-muted border" title="Esta postulación se registró sin el archivo PDF">
+                                                <i class="bi bi-file-earmark-x"></i> Sin archivo
+                                            </span>
+                                        }
+                                    </td>
+                                    @* Estado con insignia de color dinámico *@
+                                    <td>
+                                        <span class="badge @ObtenerColorBadge(post.Estado)">
+                                            @post.Estado
+                                        </span>
+                                    </td>
+                                    @* Dictamen del administrador *@
+                                    <td class="small @(post.Estado == "RECHAZADA" ? "text-danger" : "text-muted")">
+                                        @(string.IsNullOrEmpty(post.Resolucion) ? "En espera de revisión por el administrador." : post.Resolucion)
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
                         {
                             <tr>
-                                <td class="fw-semibold">@post.CursoCodigo - @post.CursoNombre</td>
-                                <td class="text-muted text-nowrap">@(string.IsNullOrEmpty(post.FechaPostulacion) ? "Reciente" : post.FechaPostulacion)</td>
-                                <td>
-                                    <span class="etiqueta"><i class="bi bi-file-earmark-pdf"></i>@post.ArchivoCertificadoUrl</span>
-                                </td>
-                                <td><EstadoBadge Estado="@post.Estado" /></td>
-                                <td class="small @(post.Estado == "RECHAZADA" ? "text-danger" : "text-muted")">
-                                    @(string.IsNullOrEmpty(post.Resolucion) ? "En espera de revisión por el administrador." : post.Resolucion)
+                                <td colspan="5" class="text-center py-4 text-muted">
+                                    No tienes ninguna postulación registrada todavía.
+                                    <a href="/tutor/postular" class="alert-link ms-1">¡Postula a tu primer curso aquí!</a>
                                 </td>
                             </tr>
                         }
-                    }
-                    else
-                    {
-                        <tr>
-                            <td colspan="5" class="p-0">
-                                <div class="estado-vacio">
-                                    <i class="bi bi-inbox"></i>
-                                    <div class="fw-semibold">No tienes ninguna postulación registrada todavía.</div>
-                                    <a href="/tutor/postular" class="small">¡Postula a tu primer curso aquí!</a>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
 </div>
 
+@* Botón para regresar al panel *@
+<div class="mt-3">
+    <a href="/tutor" class="btn btn-outline-secondary btn-sm">
+        ← Volver al Panel del Tutor
+    </a>
+</div>
+
+@* =============================================================================
+   LÓGICA Y MODELO EN C# (RF004)
+   ============================================================================= *@
 @code {
     private bool cargando = true;
     private string? mensajeError = null;
@@ -111,12 +165,6 @@
         if (error != null)
         {
             mensajeError = error;
-            // Datos iniciales de cortesía en caso de no conectar a BD aún
-            listaPostulaciones = new()
-            {
-                new PostulacionDto(1, 1, "1INF30", "Programación 3", "certificado_p3.pdf", "APROBADA", "2026-10-15", "2026-10-16", "Aprobado por coordinación académica."),
-                new PostulacionDto(2, 2, "1INF01", "Algoritmia", "cert_algoritmia.pdf", "PENDIENTE", "2026-10-22", null, "En evaluación.")
-            };
         }
         else if (postulaciones != null)
         {
@@ -125,6 +173,13 @@
 
         cargando = false;
     }
+
+    // "2026-09-20" -> "20/09/2026"
+    private static string FormatearFecha(string? fecha) =>
+        DateOnly.TryParseExact(fecha, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture,
+                               System.Globalization.DateTimeStyles.None, out var dia)
+            ? dia.ToString("dd/MM/yyyy")
+            : (string.IsNullOrEmpty(fecha) ? "Reciente" : fecha);
 
     private string ObtenerColorBadge(string estado)
     {

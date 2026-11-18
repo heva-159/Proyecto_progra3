@@ -6,6 +6,8 @@ public class PostularRequest {
     private int idCurso;
     private String archivoCertificadoUrl;
     private String comentarios;
+    // El PDF del certificado en Base64 (JSON solo lleva texto). Si llega, Java guarda el archivo de verdad.
+    private String certificadoBase64;
 
     public PostularRequest() {}
 
@@ -20,4 +22,7 @@ public class PostularRequest {
 
     public String getComentarios() { return comentarios; }
     public void setComentarios(String comentarios) { this.comentarios = comentarios; }
+
+    public String getCertificadoBase64() { return certificadoBase64; }
+    public void setCertificadoBase64(String certificadoBase64) { this.certificadoBase64 = certificadoBase64; }
 }

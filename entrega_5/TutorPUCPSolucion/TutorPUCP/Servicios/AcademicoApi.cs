@@ -52,20 +52,23 @@ public record PostulacionDto(
     string Estado,
     string? FechaPostulacion,
     string? FechaResolucion,
-    string? Resolucion);
+    string? Resolucion,
+    bool CertificadoDisponible = true);   // false: se registró solo el nombre, sin el PDF
 
 public record PostularDto(
     int IdTutor,
     int IdCurso,
     string ArchivoCertificadoUrl,
-    string? Comentarios);
+    string? Comentarios,
+    string? CertificadoBase64 = null);   // el PDF en Base64: Java guarda el archivo de verdad
 
 // RF008
-public record TarifaDto(int IdTarifa, int IdCurso, string CursoCodigo, string CursoNombre, decimal MontoPorHora);
+// MontoPorHora = null: el curso está aprobado pero todavía no tiene tarifa (IdTarifa = 0)
+public record TarifaDto(int IdTarifa, int IdCurso, string CursoCodigo, string CursoNombre, decimal? MontoPorHora);
 public record GuardarTarifaDto(int IdTutor, int IdCurso, decimal MontoPorHora);
 
 // RF009
-public record CursoDto(int IdCurso, string Codigo, string Nombre);
+public record CursoDto(int IdCurso, string Codigo, string Nombre, bool Activo = true);
 public record TutorBusquedaDto(
     int IdTutor,
     string Nombre,

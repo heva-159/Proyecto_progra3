@@ -22,6 +22,7 @@ public class PostulacionRestDTO
     public string? FechaResolucion { get; set; }
     public string? Resolucion { get; set; }
     public string? Revisor { get; set; }
+    public bool CertificadoDisponible { get; set; }   // false: se registró sin el archivo PDF
 
     // ---- Solo para mostrar en pantalla ----
 

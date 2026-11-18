@@ -31,6 +31,7 @@ public class PostulacionDTO {
     private String fechaResolucion;
     private String resolucion;
     private String revisor;
+    private boolean certificadoDisponible;   // false: se registró solo el nombre, sin el PDF
 
     public PostulacionDTO() {
     }
@@ -208,5 +209,13 @@ public class PostulacionDTO {
 
     public void setRevisor(String revisor) {
         this.revisor = revisor;
+    }
+
+    public boolean isCertificadoDisponible() {
+        return certificadoDisponible;
+    }
+
+    public void setCertificadoDisponible(boolean certificadoDisponible) {
+        this.certificadoDisponible = certificadoDisponible;
     }
 }
