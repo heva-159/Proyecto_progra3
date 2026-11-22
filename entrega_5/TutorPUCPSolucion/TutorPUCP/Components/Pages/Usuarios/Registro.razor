@@ -192,7 +192,15 @@
     <div class="reg-acciones">
         @if (errorServidor is not null && paso == Etapas.Length - 1)
         {
-            <div class="acc-alerta mb-3"><i class="bi bi-exclamation-circle"></i><span>@errorServidor</span></div>
+            <div class="acc-alerta mb-3"><i class="bi bi-exclamation-circle"></i>
+                <span>@errorServidor
+                    @* La cuenta ya existe pero quizá nunca se verificó: desde aquí se pide un código nuevo y se termina el registro *@
+                    @if (CorreoYaRegistrado)
+                    {
+                        <a href="@($"/verificar-cuenta?correo={Uri.EscapeDataString(correo.Trim().ToLowerInvariant())}&reenviar=1")" class="fw-semibold ms-1">Verificar mi correo</a>
+                    }
+                </span>
+            </div>
     }
         @if (paso > 0)
         {
@@ -228,6 +236,10 @@
     private bool aceptaDatos, aceptaCalificaciones;
     private bool enviando;
     private string? errorServidor;
+    // El REST responde "Ya existe un usuario registrado con ese correo": se ofrece verificarlo en vez de dejarlo en el limbo.
+    private bool CorreoYaRegistrado => errorServidor is not null
+        && errorServidor.Contains("existe", StringComparison.OrdinalIgnoreCase)
+        && errorServidor.Contains("correo", StringComparison.OrdinalIgnoreCase);
 
     // ---------- Pasos ----------
     private static readonly string[] Etapas = ["Datos", "Cuenta PUCP", "Rol", "Seguridad"];
