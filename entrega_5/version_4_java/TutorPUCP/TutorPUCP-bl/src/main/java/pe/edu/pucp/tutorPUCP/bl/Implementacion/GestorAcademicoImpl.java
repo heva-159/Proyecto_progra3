@@ -4,12 +4,14 @@ import pe.edu.pucp.tutorPUCP.dao.DAOs.CursoDAO;
 import pe.edu.pucp.tutorPUCP.dao.DAOs.PostulacionDAO;
 import pe.edu.pucp.tutorPUCP.dao.DAOs.TarifaDAO;
 import pe.edu.pucp.tutorPUCP.dao.DAOs.TemaDAO;
+import pe.edu.pucp.tutorPUCP.dao.DAOs.TutorDAO;
 import pe.edu.pucp.tutorPUCP.bl.Exeptions.BL_exeption;
 import pe.edu.pucp.tutorPUCP.bl.Clases.GestorAcademico;
 import pe.edu.pucp.tutorPUCP.dao.Impl.CursoDAOImpl;
 import pe.edu.pucp.tutorPUCP.dao.Impl.PostulacionDAOImpl;
 import pe.edu.pucp.tutorPUCP.dao.Impl.TarifaDAOImpl;
 import pe.edu.pucp.tutorPUCP.dao.Impl.TemaDAOImpl;
+import pe.edu.pucp.tutorPUCP.dao.Impl.TutorDAOImpl;
 import pe.edu.pucp.tutorPUCP.dbmanager.TransactionContext;
 import pe.edu.pucp.tutorPUCP.modelo.academico.Curso;
 import pe.edu.pucp.tutorPUCP.modelo.academico.Postulacion;
@@ -17,6 +19,7 @@ import pe.edu.pucp.tutorPUCP.modelo.academico.Tema;
 import pe.edu.pucp.tutorPUCP.modelo.enums.EstadoAprobacion;
 import pe.edu.pucp.tutorPUCP.modelo.tutoria.Tarifa;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Administrador;
+import pe.edu.pucp.tutorPUCP.modelo.usuario.PerfilTutor;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Tutor;
 
 import java.math.BigDecimal;
@@ -34,6 +37,7 @@ public class GestorAcademicoImpl implements GestorAcademico {
     private final TemaDAO temaDAO = new TemaDAOImpl();
     private final PostulacionDAO postulacionDAO = new PostulacionDAOImpl();
     private final TarifaDAO tarifaDAO = new TarifaDAOImpl();
+    private final TutorDAO tutorDAO = new TutorDAOImpl();
 
     // ---- Curso ----
 
@@ -414,6 +418,11 @@ public class GestorAcademicoImpl implements GestorAcademico {
             }
         }
         return tutores;
+    }
+
+    @Override
+    public PerfilTutor obtenerPerfilTutor(int idTutor) {
+        return tutorDAO.obtenerPerfil(idTutor);
     }
 
     private void validarDatosCurso(String codigo, String nombre) {

@@ -15,6 +15,7 @@ import pe.edu.pucp.tutorPUCP.modelo.academico.Tema;
 import pe.edu.pucp.tutorPUCP.modelo.enums.EstadoAprobacion;
 import pe.edu.pucp.tutorPUCP.modelo.tutoria.Tarifa;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Administrador;
+import pe.edu.pucp.tutorPUCP.modelo.usuario.PerfilTutor;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Tutor;
 import pe.edu.pucp.tutorpucp.tutorpucprest.DTO.*;
 
@@ -53,6 +54,7 @@ import java.util.logging.Logger;
  *  RF008  GET  /tarifas/tutor/{idTutor}             cursos aprobados del tutor, con su tarifa o sin ella
  *         POST /tarifas                              body: {idTutor, idCurso, montoPorHora} (registra o modifica)
  *  RF009  GET  /tutores/buscar[?idCurso=N]
+ *         GET  /tutores/{idTutor}/perfil             datos del tutor, cursos aprobados con tarifa y calificaciones (404 si no existe)
  *
  * Las reglas del BL que no se cumplen se responden con 400 y {"error": "..."};
  * lo que no existe, con 404; y cualquier otra falla, con 500 (el detalle queda en server.log).
@@ -373,6 +375,23 @@ public class GestorAcademicoRecurso {
         } catch (Exception e) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity(Map.of("error", e.getMessage())).build();
+        }
+    }
+
+    // El perfil del tutor que el estudiante eligió en la búsqueda: sus datos públicos, los cursos en los que está
+    // aprobado con su tarifa y las calificaciones que recibió (sin correo ni teléfono, RNF005).
+    @GET
+    @Path("/tutores/{idTutor}/perfil")
+    public Response perfilDelTutor(@PathParam("idTutor") int idTutor) {
+        try {
+            PerfilTutor perfil = gestorAcademicoBL.obtenerPerfilTutor(idTutor);
+            if (perfil == null) {
+                return error(Response.Status.NOT_FOUND, "No existe el tutor " + idTutor);
+            }
+            return Response.ok(new PerfilTutorDTO(perfil)).build();
+        } catch (Exception e) {
+            LOG.log(Level.SEVERE, "Error al obtener el perfil del tutor " + idTutor, e);
+            return error(Response.Status.INTERNAL_SERVER_ERROR, "No se pudo cargar el perfil del tutor");
         }
     }
 

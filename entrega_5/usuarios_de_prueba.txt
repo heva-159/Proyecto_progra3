@@ -57,9 +57,7 @@ cmendoza@pucp.edu.pe     admin123   TOTAL     Carla Mendoza Rios
 jsalas@pucp.edu.pe       admin456   REVISOR   Jorge Salas Vega
 
 
-CUENTAS NUEVAS Y OTRAS CUENTAS DE LA BASE
+CUENTAS NUEVAS
 -----------------------------------------
 - Quien se registra recibe un codigo de 6 digitos por correo (vale 15 minutos y admite 5 intentos
   fallidos) y debe verificarlo antes de poder entrar.
-- Las cuentas "Usuario DePrueba...", "Usuario Crud..." y "Usuario Tutor..." las crean las pruebas
-  automaticas del Main. No tienen el correo verificado, asi que no pueden entrar.

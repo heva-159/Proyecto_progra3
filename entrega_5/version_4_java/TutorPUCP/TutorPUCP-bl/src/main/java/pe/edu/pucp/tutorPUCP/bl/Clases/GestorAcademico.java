@@ -5,6 +5,7 @@ import pe.edu.pucp.tutorPUCP.modelo.academico.Postulacion;
 import pe.edu.pucp.tutorPUCP.modelo.academico.Tema;
 import pe.edu.pucp.tutorPUCP.modelo.tutoria.Tarifa;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Administrador;
+import pe.edu.pucp.tutorPUCP.modelo.usuario.PerfilTutor;
 import pe.edu.pucp.tutorPUCP.modelo.usuario.Tutor;
 
 import java.math.BigDecimal;
@@ -72,4 +73,8 @@ public interface GestorAcademico {
     List<Tarifa> listarTarifasPorTutor(Tutor tutor);
 
     List<Tutor> buscarTutoresPorCurso(Curso curso);
+
+    // RF009: el perfil publico del tutor que el estudiante eligio (sus datos, los cursos aprobados con su tarifa y las
+    // calificaciones que recibio; sin correo ni telefono). Devuelve null si no existe ese tutor.
+    PerfilTutor obtenerPerfilTutor(int idTutor);
 }

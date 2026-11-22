@@ -39,6 +39,11 @@ public class AcademicoApi(IHttpClientFactory fabrica) : ClienteRest(fabrica)
             ? $"academico/tutores/buscar?idCurso={idCurso.Value}"
             : "academico/tutores/buscar");
 
+    // El perfil público del tutor elegido: sus datos, los cursos en los que está aprobado con su tarifa y las
+    // calificaciones que recibió (sin correo ni teléfono)
+    public Task<(PerfilTutorDto? Valor, string? Error)> ObtenerPerfilTutorAsync(int idTutor) =>
+        Enviar<PerfilTutorDto>(HttpMethod.Get, $"academico/tutores/{idTutor}/perfil");
+
 
     // =========================================================================
     // REQUERIMIENTO RF017: REPORTE DE TUTORÍAS POR RANGO DE FECHAS
@@ -103,3 +108,18 @@ public record TutorBusquedaDto(
     string CursoCodigo,
     string CursoNombre,
     decimal TarifaPorHora);
+
+// Perfil del tutor (RF009). Calificacion = null: todavía no lo calificaron; TarifaPorHora = null: aún no la registró.
+public record PerfilTutorDto(
+    int IdTutor,
+    string Nombre,
+    string? Facultad,
+    string? Especialidad,
+    bool CorreoVerificado,
+    double? Calificacion,
+    int CantidadCalificaciones,
+    int SesionesDictadas,
+    List<CursoDelTutorDto> Cursos,
+    List<ResenaDto> Resenas);
+public record CursoDelTutorDto(int IdCurso, string Codigo, string Nombre, decimal? TarifaPorHora, List<string> Temas);
+public record ResenaDto(string CodigoCurso, string Curso, int Puntaje, string? Comentario, string? Fecha);
