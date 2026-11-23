@@ -1,0 +1,178 @@
+﻿@page "/admin/reportes"
+@inject RolActual RolActual
+@inject ReclamosApi ReclamosApi
+
+@* Requisito: RF018 (reportes de sesiones y de reclamos por rango de fechas) *@
+
+<PageTitle>Reportes</PageTitle>
+
+<EncabezadoPagina Icono="bi-bar-chart-line-fill" Titulo="Reportes"
+                  Subtitulo="Elige un periodo y descarga en PDF las sesiones y los reclamos de la plataforma." />
+
+@if (RolActual.Administrador is null)
+{
+    <div class="alert alert-warning d-flex gap-2"><i class="bi bi-person-lock"></i><div>Inicia sesión como administrador para descargar los reportes.</div></div>
+}
+else
+{
+    @* ---------- Periodo ---------- *@
+    <div class="card tarjeta-form mb-4 entrar" style="--i: 0;">
+        <div class="card-header cabecera d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <h2 class="card-titulo"><i class="bi bi-funnel me-2 text-primary"></i>Periodo del reporte</h2>
+            <span class="etiqueta"><i class="bi bi-calendar-range"></i>@Dias día@(Dias == 1 ? "" : "s")</span>
+        </div>
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-sm-6 col-lg-3">
+                    <label for="desde" class="form-label">Desde</label>
+                    <RadzenDatePicker TValue="DateOnly" @bind-Value="desde" DateFormat="dd/MM/yyyy" Max="@hasta.ToDateTime(TimeOnly.MinValue)" Culture="@Peru" Placeholder="dd/mm/aaaa" class="tp-fecha" />
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <label for="hasta" class="form-label">Hasta</label>
+                    <RadzenDatePicker TValue="DateOnly" @bind-Value="hasta" DateFormat="dd/MM/yyyy" Min="@desde.ToDateTime(TimeOnly.MinValue)" Culture="@Peru" Placeholder="dd/mm/aaaa" class="tp-fecha" />
+                </div>
+                <div class="col-lg-6">
+                    <div class="form-label">Atajos</div>
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach (var (nombre, d, h) in Rangos)
+                        {
+                            <button type="button" class="chip @(desde == d && hasta == h ? "activo" : "")" @onclick="() => { desde = d; hasta = h; }">@nombre</button>
+                        }
+                    </div>
+                </div>
+            </div>
+            @if (desde > hasta)
+            {
+                <div class="alert alert-warning py-2 small mt-3 mb-0 alerta-sacudir"><i class="bi bi-exclamation-triangle me-1"></i>La fecha «Desde» no puede ser posterior a «Hasta».</div>
+            }
+            else
+            {
+                <div class="small text-muted mt-3"><i class="bi bi-info-circle me-1"></i>Los reportes incluyen del <strong>@desde.ToString("dd/MM/yyyy", Peru)</strong> al <strong>@hasta.ToString("dd/MM/yyyy", Peru)</strong>, ambos días incluidos.</div>
+            }
+        </div>
+    </div>
+
+    @* ---------- Vista previa con datos reales de reclamos ---------- *@
+    @if (reclamos is not null && desde <= hasta)
+    {
+        <h2 class="seccion-titulo entrar" style="--i: 1;">Reclamos en el periodo</h2>
+        <div class="row g-3 mb-4">
+            <div class="col-sm-6 col-xl-3 entrar" style="--i: 1;"><TarjetaDato Icono="bi-flag" Valor="@EnRango.Count().ToString()" Etiqueta="Registrados" /></div>
+            <div class="col-sm-6 col-xl-3 entrar" style="--i: 2;"><TarjetaDato Icono="bi-hourglass-split" Valor="@Contar("PENDIENTE")" Etiqueta="Pendientes" /></div>
+            <div class="col-sm-6 col-xl-3 entrar" style="--i: 3;"><TarjetaDato Icono="bi-check-circle" Valor="@Contar("APROBADA")" Etiqueta="Aprobados" /></div>
+            <div class="col-sm-6 col-xl-3 entrar" style="--i: 4;"><TarjetaDato Icono="bi-x-circle" Valor="@Contar("RECHAZADA")" Etiqueta="Rechazados" /></div>
+        </div>
+    }
+
+    @* ---------- Reportes disponibles ---------- *@
+    <h2 class="seccion-titulo">Reportes disponibles</h2>
+    <div class="row g-4">
+        <div class="col-lg-6 entrar" style="--i: 2;">
+            @* GET normal (sin Blazor): el navegador descarga el PDF que devuelve /reportes/sesiones/descargar *@
+            <form method="get" action="reportes/sesiones/descargar" class="card h-100" data-enhance="false">
+                <input type="hidden" name="desde" value="@Iso(desde)" />
+                <input type="hidden" name="hasta" value="@Iso(hasta)" />
+                <div class="card-body d-flex flex-column gap-3">
+                    <div class="d-flex align-items-start gap-3">
+                        <span class="kpi-icono" style="background:#dbeafe;color:#2563eb;"><i class="bi bi-calendar-check"></i></span>
+                        <div>
+                            <h3 class="card-titulo mb-1">Reporte de sesiones</h3>
+                            <p class="small text-muted mb-0">Todas las sesiones programadas dentro del periodo elegido.</p>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="small fw-semibold mb-2">Columnas incluidas</div>
+                        <div class="d-flex flex-wrap gap-1">
+                            @foreach (var c in new[] { "Fecha", "Curso", "Tutor", "Estudiante", "Estado", "Calificación" })
+                            {
+                                <span class="etiqueta">@c</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent d-flex align-items-center gap-2 py-3">
+                    <small class="text-muted me-auto"><i class="bi bi-filetype-pdf me-1"></i>PDF</small>
+                    <button type="submit" class="btn btn-primary" disabled="@(desde > hasta)"><i class="bi bi-download me-1"></i>Descargar</button>
+                </div>
+            </form>
+        </div>
+        <div class="col-lg-6 entrar" style="--i: 3;">
+            <form method="get" action="reportes/reclamos/descargar" class="card h-100" data-enhance="false">
+                <input type="hidden" name="desde" value="@Iso(desde)" />
+                <input type="hidden" name="hasta" value="@Iso(hasta)" />
+                <div class="card-body d-flex flex-column gap-3">
+                    <div class="d-flex align-items-start gap-3">
+                        <span class="kpi-icono" style="background:#fee2e2;color:#dc2626;"><i class="bi bi-flag"></i></span>
+                        <div>
+                            <h3 class="card-titulo mb-1">Reporte de reclamos</h3>
+                            <p class="small text-muted mb-0">Los reclamos registrados dentro del periodo elegido.</p>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="small fw-semibold mb-2">Columnas incluidas</div>
+                        <div class="d-flex flex-wrap gap-1">
+                            @foreach (var c in new[] { "Fecha", "Sesión", "Reclamante", "Rol", "Estado" })
+                            {
+                                <span class="etiqueta">@c</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent d-flex align-items-center gap-2 py-3">
+                    <small class="text-muted me-auto">
+                        @if (reclamos is not null && desde <= hasta)
+                        {
+                            <span>@EnRango.Count() reclamo@(EnRango.Count() == 1 ? "" : "s") en el periodo</span>
+                        }
+                        else
+                        {
+                            <span><i class="bi bi-filetype-pdf me-1"></i>PDF</span>
+                        }
+                    </small>
+                    <button type="submit" class="btn btn-primary" disabled="@(desde > hasta)"><i class="bi bi-download me-1"></i>Descargar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+@code {
+    private static readonly System.Globalization.CultureInfo Peru = new("es-PE");
+
+    private static DateOnly Hoy => DateOnly.FromDateTime(DateTime.Today);
+    private static DateOnly InicioMes => new(Hoy.Year, Hoy.Month, 1);
+
+    // atajos de rango, calculados con la fecha de hoy
+    private (string, DateOnly, DateOnly)[] Rangos =>
+    [
+        ("Este mes", InicioMes, Hoy),
+        ("Mes anterior", InicioMes.AddMonths(-1), InicioMes.AddDays(-1)),
+        ("Últimos 3 meses", InicioMes.AddMonths(-2), Hoy),
+    ];
+
+    private DateOnly desde = InicioMes;
+    private DateOnly hasta = Hoy;
+
+    private int Dias => desde > hasta ? 0 : hasta.DayNumber - desde.DayNumber + 1;
+
+    // Vista previa: mismos reclamos que lista el REST, filtrados como el PDF (fecha del reclamo entre desde y hasta)
+    private List<ReclamoDto>? reclamos;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (RolActual.Administrador is null) return;
+        var (valor, _) = await ReclamosApi.ListarAsync();
+        reclamos = valor; // si el servidor falla, simplemente no se muestra la vista previa
+    }
+
+    private IEnumerable<ReclamoDto> EnRango => (reclamos ?? []).Where(r =>
+    {
+        var f = DateOnly.FromDateTime(r.Registrado);
+        return f >= desde && f <= hasta;
+    });
+
+    private string Contar(string estado) => EnRango.Count(r => r.Estado == estado).ToString();
+
+    // Java recibe las fechas como yyyy-MM-dd
+    private static string Iso(DateOnly fecha) => fecha.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+}

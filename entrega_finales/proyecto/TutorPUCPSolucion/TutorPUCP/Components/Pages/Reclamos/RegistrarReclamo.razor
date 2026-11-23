@@ -1,0 +1,369 @@
+﻿@page "/reclamos/nuevo"
+@inject RolActual RolActual
+@inject ReclamosApi ReclamosApi
+
+@* Requisito: RF015 (registrar reclamos asociados a sesiones) *@
+
+<PageTitle>Registrar reclamo</PageTitle>
+
+<Toasts class="p-3" Messages="avisos" AutoHide="true" Delay="4500" Placement="ToastsPlacement.TopRight" />
+
+<EncabezadoPagina Icono="bi-flag-fill" Titulo="Reclamos"
+                  Subtitulo="Si algo salió mal en una sesión, cuéntanos. Un administrador lo revisará y lo aprobará o rechazará.">
+    <button type="button" class="btn btn-primary" @onclick="AbrirAsistente" disabled="@(Yo is null)">
+        <i class="bi bi-plus-lg"></i>Registrar reclamo
+    </button>
+</EncabezadoPagina>
+
+@if (Yo is null)
+{
+    <div class="alert alert-warning d-flex gap-2"><i class="bi bi-person-lock"></i><div>Inicia sesión para ver y registrar reclamos.</div></div>
+}
+else
+{
+<div class="row g-3 mb-4">
+    @{ var k = 0; }
+    @foreach (var (titulo, valor, icono) in Resumen)
+    {
+        <div class="col-sm-4 entrar" style="--i: @(k++);">
+            <TarjetaDato Icono="@icono" Valor="@valor.ToString()" Etiqueta="@titulo" />
+        </div>
+    }
+</div>
+
+<div class="card">
+    <div class="card-header cabecera">
+        <h2 class="card-titulo">Mis reclamos</h2>
+    </div>
+    <div class="card-body p-0">
+        @if (cargando)
+        {
+            <div class="estado-vacio">
+                <div class="spinner-border text-primary" role="status"></div>
+                <div class="small mt-2">Cargando tus reclamos...</div>
+            </div>
+        }
+        else if (error is not null)
+        {
+            <div class="estado-vacio">
+                <i class="bi bi-wifi-off"></i>
+                <div class="fw-semibold">No se pudieron cargar los reclamos</div>
+                <div class="small">@error</div>
+                <button type="button" class="btn btn-outline-primary btn-sm mt-2" @onclick="CargarReclamos">Reintentar</button>
+            </div>
+        }
+        else if (reclamos.Count == 0)
+        {
+            <div class="estado-vacio">
+                <i class="bi bi-emoji-smile"></i>
+                <div class="fw-semibold">No has registrado reclamos</div>
+                <div class="small">Si algo salió mal en una sesión, usa «Registrar reclamo».</div>
+            </div>
+        }
+        else
+        {
+            var j = 0;
+            @foreach (var r in reclamos)
+            {
+                <div class="d-flex gap-3 p-3 border-bottom entrar @(r.IdReclamo == resaltado ? "resaltado" : "")" style="--i: @(j++);" @key="r.IdReclamo">
+                    <span class="kpi-icono flex-shrink-0" aria-hidden="true">
+                        <i class="bi @IconoEstado(r.EstadoTexto)"></i>
+                    </span>
+                    <div class="flex-grow-1" style="min-width: 0;">
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <span class="fw-bold">N.º @r.IdReclamo · @(r.Curso ?? "Sesión " + r.IdSesion)</span>
+                            <EstadoBadge Estado="@r.EstadoTexto" />
+                            <span class="badge etiqueta">Como @r.Rol</span>
+                        </div>
+                        <div class="small text-muted">
+                            Sesión del @r.Sesion.ToString("dd/MM/yyyy") con @(r.Reclamado ?? "—") · registrado el @r.Registrado.ToString("dd/MM/yyyy")
+                        </div>
+                        <div class="mt-1">@r.Motivo</div>
+                        @if (r.Resolucion is not null)
+                        {
+                            <div class="nota small mt-2">
+                                <i class="bi bi-chat-square-quote me-1 text-primary"></i><b>Resolución</b>
+                                @if (r.FechaResolucion is not null)
+                                {
+                                    <span class="text-muted">(@r.Resuelto.ToString("dd/MM/yyyy"))</span>
+                                }:
+                                @r.Resolucion
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+}
+
+@* Asistente por pasos: 1 sesión, 2 motivo, 3 confirmar, y al final la pantalla de éxito *@
+<Modal @ref="modal" Title="Registrar reclamo" Size="ModalSize.Large" IsVerticallyCentered="true" UseStaticBackdrop="true">
+    <BodyTemplate>
+        @if (paso < 3)
+        {
+            <Pasos Etapas="Etapas" Actual="paso" />
+        }
+
+        @if (paso == 0)
+        {
+            <div class="paso-panel" @key="0">
+                <p class="text-muted small mb-3">Elige la sesión sobre la que quieres reclamar. Solo se puede registrar un reclamo por sesión.</p>
+                @if (sesiones is null)
+                {
+                    <div class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div></div>
+                }
+                else if (errorSesiones is not null)
+                {
+                    <div class="alert alert-danger small mb-0">@errorSesiones</div>
+                }
+                else if (sesiones.Count == 0)
+                {
+                    <div class="text-muted small">Todavía no tienes sesiones registradas.</div>
+                }
+                else
+                {
+                    <div class="d-grid gap-2" style="max-height: 360px; overflow-y: auto;">
+                        @foreach (var s in sesiones)
+                        {
+                            <button type="button" class="opcion-tarjeta @(sesion == s ? "elegida" : "")" disabled="@s.YaReclamada"
+                                    @onclick="() => sesion = s" title="@(s.YaReclamada ? "Ya registraste un reclamo para esta sesión" : "")">
+                                <span class="opcion-marca"><i class="bi bi-check"></i></span>
+                                <span class="kpi-icono" aria-hidden="true"><i class="bi bi-calendar-check"></i></span>
+                                <span class="flex-grow-1 lh-sm">
+                                    <span class="d-block fw-semibold">@(s.Curso ?? "Sesión " + s.IdSesion)</span>
+                                    <small class="text-muted">@Fecha(s.Inicio) · con @(s.NombreContraparte ?? "—") · como @s.Rol</small>
+                                </span>
+                                @if (s.YaReclamada)
+                                {
+                                    <span class="badge estado-badge estado-neutro">Ya reclamada</span>
+                                }
+                                else
+                                {
+                                    <EstadoBadge Estado="@s.Estado" Texto="@s.EstadoTexto" />
+                                }
+                            </button>
+                        }
+                    </div>
+                }
+            </div>
+        }
+        else if (paso == 1)
+        {
+            <div class="paso-panel" @key="1">
+                <div class="small text-muted mb-3">
+                    Reclamas como <b>@sesion!.Rol</b> de la sesión de <b>@sesion.Curso</b> con @sesion.NombreContraparte.
+                </div>
+
+                <label class="form-label fw-semibold">Motivo</label>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                    @foreach (var m in MotivosRapidos)
+                    {
+                        <button type="button" class="chip" @onclick="() => motivo = m">@m</button>
+                    }
+                </div>
+                <textarea class="form-control" rows="4" maxlength="255" placeholder="Ejemplo: el tutor llegó 30 minutos tarde y la sesión se acortó."
+                          @bind="motivo" @bind:event="oninput"></textarea>
+                <div class="d-flex justify-content-between align-items-center mt-1">
+                    <small class="text-muted">Explica qué pasó con el mayor detalle posible.</small>
+                    <small class="contador-caracteres @(motivo.Length > 220 ? "cerca" : "")">@motivo.Length / 255</small>
+                </div>
+                <div class="barra-progreso mt-1">
+                    <span style="width:@(motivo.Length * 100 / 255)%;background:@(motivo.Length > 220 ? "#d97706" : "#2563eb");"></span>
+                </div>
+                @if (DatosContacto.Contiene(motivo))
+                {
+                    <div class="alert alert-warning d-flex gap-2 mt-3 mb-0 small alerta-sacudir">
+                        <i class="bi bi-shield-exclamation"></i>
+                        <div>Quita el teléfono o correo del motivo: no se comparten datos de contacto.</div>
+                    </div>
+                }
+            </div>
+        }
+        else if (paso == 2)
+        {
+            <div class="paso-panel" @key="2">
+                <p class="text-muted small">Revisa los datos antes de registrar el reclamo.</p>
+                <div class="rounded-4 p-3 mb-3 caja-suave">
+                    <dl class="row datos mb-0">
+                        <dt class="col-4">Sesión</dt>
+                        <dd class="col-8">@sesion!.Curso · @Fecha(sesion.Inicio)</dd>
+                        <dt class="col-4">Con</dt>
+                        <dd class="col-8">@sesion.NombreContraparte</dd>
+                        <dt class="col-4">Reclamo como</dt>
+                        <dd class="col-8">@sesion.Rol</dd>
+                        <dt class="col-4">Motivo</dt>
+                        <dd class="col-8 mb-0 fw-normal">@motivo</dd>
+                    </dl>
+                </div>
+                @if (errorRegistro is not null)
+                {
+                    <div class="alert alert-danger d-flex gap-2 small alerta-sacudir"><i class="bi bi-exclamation-triangle"></i><div>@errorRegistro</div></div>
+                }
+                <div class="alert alert-info d-flex gap-2 small mb-0">
+                    <i class="bi bi-info-circle"></i>
+                    <div>El reclamo quedará como <b>Pendiente</b> hasta que un administrador lo resuelva. Verás su respuesta en «Mis reclamos».</div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="paso-panel text-center py-3" @key="3">
+                <div class="exito-icono"><i class="bi bi-check-lg"></i></div>
+                <h3 class="h4">¡Reclamo registrado!</h3>
+                <p class="text-muted mb-0">Tu reclamo <b>N.º @resaltado</b> sobre @sesion?.Curso quedó pendiente de revisión.</p>
+            </div>
+        }
+    </BodyTemplate>
+    <FooterTemplate>
+        @if (paso == 3)
+        {
+            <button type="button" class="btn btn-primary" @onclick="Cerrar">Ver mis reclamos</button>
+        }
+        else
+        {
+            @if (paso > 0)
+            {
+                <button type="button" class="btn btn-light me-auto" @onclick="() => paso--"><i class="bi bi-arrow-left me-1"></i>Atrás</button>
+            }
+            <button type="button" class="btn btn-outline-secondary" @onclick="Cerrar">Cancelar</button>
+            @if (paso < 2)
+            {
+                <button type="button" class="btn btn-primary" disabled="@(!PuedeAvanzar)" @onclick="() => paso++">
+                    Siguiente <i class="bi bi-arrow-right ms-1"></i>
+                </button>
+            }
+            else
+            {
+                <button type="button" class="btn btn-danger" disabled="@guardando" @onclick="Registrar">
+                    @if (guardando)
+                    {
+                        <span class="spinner-border spinner-border-sm me-1"></span>
+                    }
+                    else
+                    {
+                        <i class="bi bi-flag me-1"></i>
+                    }
+                    Registrar reclamo
+                </button>
+            }
+        }
+    </FooterTemplate>
+</Modal>
+
+@code {
+    private static readonly string[] Etapas = ["Sesión", "Motivo", "Confirmar"];
+
+    private static readonly string[] MotivosRapidos =
+        ["Llegó tarde", "No se presentó", "La sesión se acortó", "Problema con el check-in"];
+
+    private Modal modal = default!;
+    private readonly List<ToastMessage> avisos = [];
+
+    private List<ReclamoDto> reclamos = [];
+    private bool cargando = true;
+    private string? error;
+    private int? resaltado;
+
+    private List<SesionReclamableDto>? sesiones;
+    private string? errorSesiones;
+
+    private int paso;
+    private SesionReclamableDto? sesion;
+    private string motivo = "";
+    private bool guardando;
+    private string? errorRegistro;
+
+    // Se abre solo cuando se llega desde el detalle de la sesión (?abrir=true&idSesion=N).
+    [SupplyParameterFromQuery] public bool Abrir { get; set; }
+    [SupplyParameterFromQuery] public int? IdSesion { get; set; }
+
+    private UsuarioDto? Yo => RolActual.Usuario;
+
+    private static string Fecha(DateTime d) => d == DateTime.MinValue ? "—" : d.ToString("dd/MM/yyyy, h:mm tt");
+
+    private IEnumerable<(string, int, string)> Resumen =>
+    [
+        ("Pendientes", reclamos.Count(r => r.EstadoTexto == "Pendiente"), "bi-hourglass-split"),
+        ("Aprobados", reclamos.Count(r => r.EstadoTexto == "Aprobado"), "bi-check-circle"),
+        ("Rechazados", reclamos.Count(r => r.EstadoTexto == "Rechazado"), "bi-x-circle"),
+    ];
+
+    private bool PuedeAvanzar => paso switch
+    {
+        0 => sesion is not null,
+        1 => !string.IsNullOrWhiteSpace(motivo) && !DatosContacto.Contiene(motivo),
+        _ => true,
+    };
+
+    protected override async Task OnInitializedAsync() => await CargarReclamos();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || !Abrir || Yo is null) return;
+        await Task.Delay(500); // deja terminar la animación de entrada de la página
+        await AbrirAsistente();
+    }
+
+    private async Task CargarReclamos()
+    {
+        if (Yo is null) { cargando = false; return; }
+        cargando = true;
+        var (lista, fallo) = await ReclamosApi.ListarDeUsuarioAsync(Yo.IdUsuario);
+        reclamos = lista ?? [];
+        error = fallo;
+        cargando = false;
+    }
+
+    private async Task CargarSesiones()
+    {
+        sesiones = null;
+        errorSesiones = null;
+        var (lista, fallo) = await ReclamosApi.SesionesDeUsuarioAsync(Yo!.IdUsuario);
+        errorSesiones = fallo;
+        sesiones = lista ?? [];
+        // Si viene del detalle de una sesión, esa queda elegida.
+        sesion = sesiones.FirstOrDefault(s => s.IdSesion == IdSesion && !s.YaReclamada);
+        StateHasChanged();
+    }
+
+    private async Task AbrirAsistente()
+    {
+        paso = 0;
+        sesion = null;
+        motivo = "";
+        errorRegistro = null;
+        await modal.ShowAsync();
+        await CargarSesiones();
+    }
+
+    private async Task Cerrar() => await modal.HideAsync();
+
+    private async Task Registrar()
+    {
+        guardando = true;
+        errorRegistro = null;
+        var (nuevo, fallo) = await ReclamosApi.RegistrarAsync(sesion!.IdSesion, Yo!.IdUsuario, sesion.RolUsuario, motivo.Trim());
+        guardando = false;
+
+        if (fallo is not null) { errorRegistro = fallo; return; }
+
+        resaltado = nuevo!.IdReclamo;
+        paso = 3;
+        await CargarReclamos();
+        avisos.Add(new ToastMessage
+        {
+            Type = ToastType.Success,
+            Title = "Reclamo registrado",
+            Message = $"El reclamo N.º {nuevo.IdReclamo} quedó pendiente de revisión.",
+        });
+    }
+
+    private static string IconoEstado(string estado) => estado switch
+    {
+        "Aprobado" => "bi-check-circle",
+        "Rechazado" => "bi-x-circle",
+        _ => "bi-hourglass-split",
+    };
+}

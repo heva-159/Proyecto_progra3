@@ -1,0 +1,24 @@
+@* Tarjeta de indicador: ícono, valor y etiqueta (misma altura en toda la fila).
+   Uso:  <TarjetaDato Icono="bi-star" Valor="4.8" Sufijo="/ 5" Etiqueta="Calificación promedio" /> *@
+
+<div class="card kpi tarjeta-dato h-100">
+    <div class="card-body">
+        <span class="kpi-icono" aria-hidden="true"><i class="bi @Icono"></i></span>
+        <div class="min-w-0">
+            <div class="kpi-valor">@Valor@if (!string.IsNullOrEmpty(Sufijo)) {<small class="kpi-sufijo">@Sufijo</small>}</div>
+            <div class="kpi-etiqueta">@Etiqueta</div>
+            @if (!string.IsNullOrEmpty(Detalle))
+            {
+                <div class="kpi-detalle">@Detalle</div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Icono { get; set; } = "bi-bar-chart";
+    [Parameter, EditorRequired] public string Valor { get; set; } = "";
+    [Parameter, EditorRequired] public string Etiqueta { get; set; } = "";
+    [Parameter] public string? Sufijo { get; set; }
+    [Parameter] public string? Detalle { get; set; }
+}

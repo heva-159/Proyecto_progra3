@@ -1,0 +1,218 @@
+@page "/"
+@layout PortadaLayout
+@inject NavigationManager Navigation
+
+@* Portada pública de TutorPUCP. Para entrar se usa /login/usuario (estudiantes y tutores). *@
+
+<PageTitle>TutorPUCP · Tutorías entre estudiantes</PageTitle>
+
+@* Encabezado *@
+<header class="pt-cabecera">
+    <div class="container-xl d-flex align-items-center gap-3">
+        <a class="pt-marca" href="/">
+            <span class="pt-logo"><i class="bi bi-mortarboard-fill"></i></span>
+            <span>Tutor<b>PUCP</b></span>
+        </a>
+        <nav class="pt-nav d-none d-lg-flex">
+            <a href="#cursos">Cursos</a>
+            <a href="#como-funciona">Cómo funciona</a>
+            <a href="#confianza">Seguridad</a>
+        </nav>
+        <div class="ms-auto d-flex align-items-center gap-2">
+            <BotonTema />
+            <a class="btn pt-btn-borde d-none d-sm-inline-flex" href="/login/usuario">Iniciar sesión</a>
+            <a class="btn pt-btn" href="/registro">Crear cuenta</a>
+        </div>
+    </div>
+</header>
+
+@* Portada principal *@
+<section class="pt-hero">
+    <div class="container-xl position-relative">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <span class="pt-insignia"><span class="pt-punto"></span> Tutorías entre estudiantes PUCP</span>
+                <h1 class="pt-titulo">
+                    Aprende con quien
+                    <span class="pt-degradado">ya aprobó el curso</span>
+                </h1>
+                <p class="pt-bajada">Encuentra un tutor por curso y tarifa, coordina por mensajería interna y registra tu sesión con check-in y check-out. Sin compartir tu teléfono ni tu correo.</p>
+
+                <form class="pt-buscador" @onsubmit="Buscar">
+                    <i class="bi bi-search"></i>
+                    <input placeholder="¿Qué curso necesitas? Ej. Cálculo 1" @bind="busqueda" @bind:event="oninput" aria-label="Buscar curso" />
+                    <button type="submit" class="btn pt-btn">Buscar tutor</button>
+                </form>
+                <div class="d-flex flex-wrap gap-2 mt-3 justify-content-center">
+                    @foreach (var c in Sugerencias)
+                    {
+                        <button type="button" class="pt-sugerencia @(c == busqueda ? "activa" : "")" @onclick="() => busqueda = c">@c</button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@* Cursos *@
+<section class="pt-seccion" id="cursos">
+    <div class="container-xl">
+        <div class="pt-encabezado">
+            <span class="pt-etiqueta">Cursos</span>
+            <h2>Los cursos más buscados</h2>
+            <p>Solo aparecen tutores con la postulación aprobada por un administrador.</p>
+        </div>
+        <div class="row g-3">
+            @foreach (var c in CursosFiltrados)
+            {
+                <div class="col-sm-6 col-lg-4" @key="c.Nombre">
+                    <a class="pt-curso" href="/login/usuario">
+                        <span class="pt-curso-icono" style="background:@c.Fondo;color:@c.Color;"><i class="bi @c.Icono"></i></span>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold">@c.Nombre</div>
+                            <div class="small text-muted">@c.Tutores tutores · desde S/ @c.Desde por hora</div>
+                        </div>
+                        <i class="bi bi-arrow-right pt-curso-flecha"></i>
+                    </a>
+                </div>
+            }
+            @if (!CursosFiltrados.Any())
+            {
+                <div class="col-12 text-center text-muted py-4">
+                    <i class="bi bi-search fs-3 d-block mb-2"></i>
+                    No encontramos «@busqueda». Inicia sesión para ver todo el catálogo.
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+@* Cómo funciona, según el rol *@
+<section class="pt-seccion pt-alterna" id="como-funciona">
+    <div class="container-xl">
+        <div class="pt-encabezado">
+            <span class="pt-etiqueta">Cómo funciona</span>
+            <h2>Cuatro pasos y listo</h2>
+            <div class="segmento mt-2">
+                @foreach (var r in new[] { "Estudiante", "Tutor" })
+                {
+                    <button type="button" class="@(r == rolPasos ? "activo" : "")" @onclick="() => rolPasos = r">
+                        <i class="bi @(r == "Tutor" ? "bi-person-workspace" : "bi-backpack2-fill") me-1"></i>Soy @r.ToLower()
+                    </button>
+                }
+            </div>
+        </div>
+        <div class="row g-3" @key="rolPasos">
+            @{ var n = 0; }
+            @foreach (var (icono, titulo, texto) in rolPasos == "Tutor" ? PasosTutor : PasosEstudiante)
+            {
+                <div class="col-sm-6 col-lg-3">
+                    <div class="pt-paso entrar" style="--i: @n;">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <span class="pt-paso-icono"><i class="bi @icono"></i></span>
+                            <span class="pt-paso-num">@(++n)</span>
+                        </div>
+                        <div class="fw-bold mb-1">@titulo</div>
+                        <div class="small text-muted">@texto</div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+@* Confianza y seguridad *@
+<section class="pt-seccion" id="confianza">
+    <div class="container-xl">
+        <div class="pt-encabezado">
+            <span class="pt-etiqueta">Seguridad</span>
+            <h2>Pensado para cuidarte</h2>
+        </div>
+        <div class="row g-3">
+            @foreach (var (icono, titulo, texto, fondo, color) in Confianza)
+            {
+                <div class="col-md-4">
+                    <div class="pt-paso h-100">
+                        <span class="pt-paso-icono mb-3" style="background:@fondo;color:@color;"><i class="bi @icono"></i></span>
+                        <div class="fw-bold mb-1">@titulo</div>
+                        <div class="small text-muted">@texto</div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+@* Franja final *@
+<section class="pt-franja">
+    <div class="container-xl text-center">
+        <h2>¿Ya aprobaste un curso?</h2>
+        <p>Postula como tutor, define tu tarifa y ayuda a otros estudiantes de la PUCP.</p>
+        <div class="d-flex flex-wrap gap-2 justify-content-center">
+            <a class="btn pt-btn-blanco" href="/registro"><i class="bi bi-person-plus me-1"></i> Crear mi cuenta</a>
+            <a class="btn pt-btn-transparente" href="/login/usuario">Ya tengo cuenta</a>
+        </div>
+    </div>
+</section>
+
+<footer class="pt-pie">
+    <div class="container-xl d-flex flex-wrap justify-content-between gap-2">
+        <span>© 2026 TutorPUCP · Proyecto de Programación 3</span>
+        <span>Toda la comunicación se hace dentro de la plataforma.</span>
+    </div>
+</footer>
+
+@code {
+    private record Curso(string Nombre, string Icono, int Tutores, int Desde, string Fondo, string Color);
+
+    private string busqueda = "";
+    private string rolPasos = "Estudiante";
+
+    private static readonly string[] Sugerencias = ["Cálculo 1", "Física 1", "Programación 3", "Química General"];
+
+    private static readonly Curso[] Cursos =
+    [
+        new("Cálculo 1", "bi-graph-up", 24, 30, "#dbeafe", "#2563eb"),
+        new("Física 1", "bi-lightning-charge-fill", 18, 32, "#fef3c7", "#b45309"),
+        new("Química General", "bi-droplet-half", 12, 28, "#dcfce7", "#16a34a"),
+        new("Programación 3", "bi-code-slash", 15, 35, "#ede9fe", "#7c3aed"),
+        new("Álgebra Matricial", "bi-grid-3x3-gap-fill", 10, 30, "#fce7f3", "#db2777"),
+        new("Estadística", "bi-bar-chart-fill", 9, 27, "#cffafe", "#0891b2"),
+    ];
+
+    private static readonly (string, string, string)[] PasosEstudiante =
+    [
+        ("bi-person-check", "Crea tu cuenta", "Regístrate con tu correo PUCP y verifica tu cuenta con el código que te enviamos."),
+        ("bi-search", "Busca un tutor", "Filtra por curso y compara tarifas de tutores aprobados."),
+        ("bi-chat-dots", "Coordina", "Acuerda fecha y tema por la mensajería interna. Verás si leyeron tu mensaje."),
+        ("bi-star", "Asiste y califica", "Marca check-in y check-out; al terminar califica del 1 al 5."),
+    ];
+
+    private static readonly (string, string, string)[] PasosTutor =
+    [
+        ("bi-journal-plus", "Postula a un curso", "Adjunta tu certificado de notas para que un administrador lo revise."),
+        ("bi-cash-coin", "Define tu tarifa", "Pon tu precio por hora en cada curso aprobado."),
+        ("bi-calendar-plus", "Registra la sesión", "Elige estudiante, curso, tema y fecha. Queda Programada."),
+        ("bi-bar-chart", "Revisa tus reportes", "Mira las tutorías dictadas y tus calificaciones por fechas."),
+    ];
+
+    private static readonly (string, string, string, string, string)[] Confianza =
+    [
+        ("bi-shield-lock-fill", "Tus datos no se muestran", "Nadie ve tu teléfono ni tu correo; los mensajes que los incluyan se bloquean.", "#dbeafe", "#2563eb"),
+        ("bi-patch-check-fill", "Tutores revisados", "Cada tutor pasa por la revisión de un administrador antes de dictar.", "#dcfce7", "#16a34a"),
+        ("bi-flag-fill", "Reclamos atendidos", "Si algo sale mal en una sesión, registras un reclamo y un administrador lo resuelve.", "#fee2e2", "#dc2626"),
+    ];
+
+    private IEnumerable<Curso> CursosFiltrados => string.IsNullOrWhiteSpace(busqueda)
+        ? Cursos
+        : Cursos.Where(c => Normalizar(c.Nombre).Contains(Normalizar(busqueda)));
+
+    private static string Normalizar(string s) => new string(s.ToLowerInvariant().Normalize(System.Text.NormalizationForm.FormD)
+        .Where(ch => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(ch) != System.Globalization.UnicodeCategory.NonSpacingMark).ToArray()).Trim();
+
+    private void Buscar()
+    {
+        // Sin cuenta solo se filtra la lista de abajo; para ver tutores y tarifas hay que iniciar sesión
+        Navigation.NavigateTo("/login/usuario");
+    }
+}

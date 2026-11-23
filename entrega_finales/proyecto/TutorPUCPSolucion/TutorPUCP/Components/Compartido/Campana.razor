@@ -1,0 +1,142 @@
+@implements IDisposable
+@inject NavigationManager Navigation
+@inject RolActual RolActual
+
+@* Campana de avisos de la barra superior: sesiones, reclamos, postulaciones y calificaciones.
+   Los mensajes NO van aquí: tienen su propio ícono. Los avisos son de ejemplo (sin BD). *@
+
+<div class="campana">
+    <button type="button" class="topbar-icono @(NoLeidas > 0 ? "con-avisos" : "")" aria-label="Notificaciones, @NoLeidas sin leer"
+            aria-haspopup="menu" aria-expanded="@abierta" @onclick="() => abierta = !abierta">
+        <i class="bi bi-bell-fill"></i>
+        @if (NoLeidas > 0)
+        {
+            <span class="topbar-contador">@NoLeidas</span>
+        }
+    </button>
+
+    @if (abierta)
+    {
+        <div class="campana-capa" @onclick="() => abierta = false"></div>
+        <div class="campana-panel" role="menu">
+            <div class="campana-cabecera">
+                <b>Notificaciones</b>
+                <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" disabled="@(NoLeidas == 0)" @onclick="MarcarTodas">
+                    Marcar todo como leído
+                </button>
+            </div>
+
+            <div class="segmento campana-filtro">
+                <button type="button" class="@(soloNoLeidas ? "" : "activo")" @onclick="() => soloNoLeidas = false">Todas</button>
+                <button type="button" class="@(soloNoLeidas ? "activo" : "")" @onclick="() => soloNoLeidas = true">No leídas (@NoLeidas)</button>
+            </div>
+
+            <div class="campana-lista">
+                @if (!Visibles.Any())
+                {
+                    <div class="campana-vacia">
+                        <i class="bi bi-bell-slash"></i>
+                        <span>Estás al día, no tienes avisos pendientes.</span>
+                    </div>
+                }
+                @foreach (var a in Visibles)
+                {
+                    <button type="button" class="campana-item @(a.Leida ? "" : "nueva")" role="menuitem" @onclick="() => Abrir(a)">
+                        <span class="campana-icono" style="background:@a.Fondo;color:@a.Color;"><i class="bi @a.Icono"></i></span>
+                        <span class="campana-texto">
+                            <b>@a.Titulo</b>
+                            <span>@a.Detalle</span>
+                            <small><i class="bi bi-clock me-1"></i>@a.Hace</small>
+                        </span>
+                        @if (!a.Leida)
+                        {
+                            <span class="campana-punto"></span>
+                        }
+                    </button>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private class Aviso
+    {
+        public required string Icono, Color, Fondo, Titulo, Detalle, Hace, Href;
+        public bool Leida;
+    }
+
+    private bool abierta;
+    private bool soloNoLeidas;
+    private List<Aviso> avisos = [];
+
+    private bool EsAdmin => Navigation.ToBaseRelativePath(Navigation.Uri).StartsWith("admin", StringComparison.OrdinalIgnoreCase);
+    private int NoLeidas => avisos.Count(a => !a.Leida);
+    private IEnumerable<Aviso> Visibles => soloNoLeidas ? avisos.Where(a => !a.Leida) : avisos;
+
+    // Colores por tipo de aviso
+    private const string Azul = "#2563eb", AzulF = "#dbeafe";
+    private const string Verde = "#059669", VerdeF = "#d1fae5";
+    private const string Rojo = "#dc2626", RojoF = "#fee2e2";
+    private const string Ambar = "#d97706", AmbarF = "#fef3c7";
+
+    private string? clave;
+
+    protected override void OnInitialized()
+    {
+        Cargar();
+        Navigation.LocationChanged += AlNavegar;
+        RolActual.Cambio += AlCambiarRol;
+    }
+
+    // Avisos distintos para estudiante, tutor y administrador.
+    private void Cargar()
+    {
+        var nueva = EsAdmin ? "admin" : RolActual.Rol;
+        if (nueva == clave) return;
+        clave = nueva;
+        soloNoLeidas = false;
+
+        avisos = EsAdmin ?
+        [
+            new() { Icono = "bi-flag-fill", Color = Rojo, Fondo = RojoF, Titulo = "Nuevo reclamo pendiente", Detalle = "Lucía Ramos reclamó por la sesión de Cálculo 1.", Hace = "Hace 10 min", Href = "/admin/reclamos" },
+            new() { Icono = "bi-person-check-fill", Color = Azul, Fondo = AzulF, Titulo = "3 postulaciones por revisar", Detalle = "Tutores esperan aprobación para dictar cursos.", Hace = "Hace 1 h", Href = "/admin/postulaciones" },
+            new() { Icono = "bi-hourglass-split", Color = Ambar, Fondo = AmbarF, Titulo = "Reclamo sin resolver", Detalle = "El reclamo R-009 lleva 2 días pendiente.", Hace = "Ayer", Href = "/admin/reclamos" },
+            new() { Icono = "bi-graph-up-arrow", Color = Verde, Fondo = VerdeF, Titulo = "Reporte del mes listo", Detalle = "Ya puedes ver las sesiones de octubre.", Hace = "Hace 2 días", Href = "/admin/reportes", Leida = true },
+        ]
+        : RolActual.Rol == RolActual.Tutor ?
+        [
+            new() { Icono = "bi-alarm-fill", Color = Azul, Fondo = AzulF, Titulo = "Tu clase empieza en 15 min", Detalle = "Programación 3 con Lucía Ramos. No olvides hacer check-in.", Hace = "Hace 2 min", Href = "/sesiones/detalle" },
+            new() { Icono = "bi-patch-check-fill", Color = Verde, Fondo = VerdeF, Titulo = "Postulación aprobada", Detalle = "Ya puedes dictar Física 1.", Hace = "Hace 3 h", Href = "/tutor/postulaciones" },
+            new() { Icono = "bi-x-circle-fill", Color = Rojo, Fondo = RojoF, Titulo = "Sesión cancelada", Detalle = "Un estudiante canceló la clase del viernes.", Hace = "Ayer", Href = "/sesiones" },
+            new() { Icono = "bi-star-fill", Color = Ambar, Fondo = AmbarF, Titulo = "Nueva calificación", Detalle = "Te calificaron con 5 estrellas en Cálculo 1.", Hace = "Hace 2 días", Href = "/tutor/reportes", Leida = true },
+        ]
+        :
+        [
+            new() { Icono = "bi-alarm-fill", Color = Azul, Fondo = AzulF, Titulo = "Tu clase empieza en 15 min", Detalle = "Programación 3 con Andrés Villanueva. No olvides hacer check-in.", Hace = "Hace 2 min", Href = "/sesiones/detalle" },
+            new() { Icono = "bi-flag-fill", Color = Verde, Fondo = VerdeF, Titulo = "Tu reclamo fue aprobado", Detalle = "El administrador resolvió tu reclamo R-012.", Hace = "Hace 1 h", Href = "/reclamos/nuevo" },
+            new() { Icono = "bi-star-half", Color = Ambar, Fondo = AmbarF, Titulo = "Califica tu sesión", Detalle = "¿Cómo te fue en Cálculo 1? Tu opinión ayuda a otros.", Hace = "Ayer", Href = "/sesiones/detalle" },
+            new() { Icono = "bi-calendar-check-fill", Color = Azul, Fondo = AzulF, Titulo = "Sesión programada", Detalle = "Tu tutor registró la sesión del jueves 10:00.", Hace = "Hace 2 días", Href = "/sesiones", Leida = true },
+        ];
+    }
+
+    private void Abrir(Aviso a)
+    {
+        a.Leida = true;
+        abierta = false;
+        Navigation.NavigateTo(a.Href);
+    }
+
+    private void MarcarTodas() => avisos.ForEach(a => a.Leida = true);
+
+    private void AlNavegar(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e) =>
+        InvokeAsync(() => { abierta = false; Cargar(); StateHasChanged(); });
+
+    private void AlCambiarRol() => InvokeAsync(() => { Cargar(); StateHasChanged(); });
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= AlNavegar;
+        RolActual.Cambio -= AlCambiarRol;
+    }
+}

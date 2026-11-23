@@ -1,0 +1,266 @@
+﻿@page "/mensajes/conversacion"
+@page "/mensajes/conversacion/{IdOtro:int}"
+@implements IDisposable
+@inject NavigationManager Navigation
+@inject RolActual RolActual
+@inject MensajesApi MensajesApi
+@inject UsuariosApi UsuariosApi
+
+@* Requisito: RF010 (enviar, recibir y marcar como leídos) *@
+
+<PageTitle>Conversación</PageTitle>
+
+<a href="/mensajes" class="small text-decoration-none"><i class="bi bi-arrow-left me-1"></i>Volver a mensajes</a>
+
+@if (Yo is null)
+{
+    <div class="alert alert-warning d-flex gap-2 mt-3"><i class="bi bi-person-lock"></i><div>Inicia sesión para ver tus mensajes.</div></div>
+}
+else
+{
+<div class="row g-4 mt-0">
+    <div class="col-lg-8">
+        <div class="card overflow-hidden">
+            <div class="card-header py-3">
+                <div class="d-flex align-items-center gap-3" style="min-width: 0;">
+                    <div class="avatar-envoltura">
+                        <Avatar Nombre="@nombreOtro" />
+                    </div>
+                    <div style="min-width: 0;">
+                        <h1 class="h5 mb-0 text-truncate">@nombreOtro</h1>
+                        <div class="small text-muted">@RolDelOtro</div>
+                    </div>
+                </div>
+            </div>
+
+            @* column-reverse mantiene la vista pegada al último mensaje *@
+            <div class="chat-zona">
+                <div>
+                    @if (cargando)
+                    {
+                        <div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></div>
+                    }
+                    else if (error is not null)
+                    {
+                        <div class="alert alert-danger small m-3">@error</div>
+                    }
+                    else if (mensajes.Count == 0)
+                    {
+                        <div class="text-center text-muted small py-5">
+                            <i class="bi bi-chat-square-text d-block fs-2 mb-2"></i>
+                            Aún no hay mensajes. Escribe el primero.
+                        </div>
+                    }
+
+                    @foreach (var grupo in mensajes.GroupBy(m => Dia(m.Enviado)))
+                    {
+                        <div class="chat-dia"><span>@grupo.Key</span></div>
+                        @foreach (var m in grupo)
+                        {
+                            var mio = m.IdEmisor == Yo.IdUsuario;
+                            <div class="d-flex mb-2 @(mio ? "justify-content-end" : "justify-content-start")" @key="m.IdMensaje">
+                                <div class="burbuja @(mio ? "mia" : "suya")">
+                                    <div class="chat-texto">@m.Contenido</div>
+                                    <div class="meta" title="@Detalle(m)">
+                                        @Hora(m.Enviado)
+                                        @if (mio)
+                                        {
+                                            <i class="bi @(m.Leido ? "bi-check2-all leido" : "bi-check2")"></i>
+                                            <span class="visually-hidden">@(m.Leido ? "Leído" : "Enviado")</span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+
+            <div class="card-footer py-3">
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                    @foreach (var s in RespuestasRapidas)
+                    {
+                        <button type="button" class="chip" @onclick="() => texto = s">@s</button>
+                    }
+                </div>
+
+                @if (avisoContacto)
+                {
+                    <div class="alert alert-danger d-flex gap-2 py-2 small alerta-sacudir" @key="intentos">
+                        <i class="bi bi-shield-exclamation"></i>
+                        <div>No se puede enviar: el mensaje tiene un <b>teléfono o correo</b>. Quítalo y coordina por aquí.</div>
+                    </div>
+                }
+
+                @if (errorEnvio is not null)
+                {
+                    <div class="alert alert-danger d-flex gap-2 py-2 small alerta-sacudir"><i class="bi bi-exclamation-triangle"></i><div>@errorEnvio</div></div>
+                }
+
+                <form class="chat-redactor" @onsubmit="Enviar">
+                    <div class="chat-caja">
+                        <SelectorEmoji AlElegir="e => texto += e" />
+                        <input maxlength="500" placeholder="Escribe un mensaje" autocomplete="off" aria-label="Mensaje"
+                               @bind="texto" @bind:event="oninput" />
+                        @if (texto.Length > 400)
+                        {
+                            <small class="text-muted me-2">@texto.Length/500</small>
+                        }
+                    </div>
+                    <button type="submit" class="chat-enviar" disabled="@(string.IsNullOrWhiteSpace(texto) || enviando)" title="Enviar" aria-label="Enviar">
+                        <i class="bi bi-send-fill"></i>
+                    </button>
+                </form>
+                <div class="form-text"><i class="bi bi-lock me-1"></i>No compartas teléfono ni correo personal: toda la coordinación se hace por aquí.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-4 entrar" style="--i: 1;">
+            <div class="card-body">
+                <div class="small text-uppercase text-muted fw-bold mb-2">¿Algún problema con una sesión?</div>
+                <p class="small text-muted">Si una tutoría con @nombreOtro no se realizó como se acordó, puedes registrar un reclamo.</p>
+                <a class="btn btn-light btn-sm w-100" href="/reclamos/nuevo"><i class="bi bi-flag me-1"></i>Registrar un reclamo</a>
+            </div>
+        </div>
+
+        <div class="card entrar" style="--i: 2;">
+            <div class="card-body">
+                <div class="d-flex gap-3">
+                    <span class="kpi-icono" style="background:#dcfce7;color:#16a34a;"><i class="bi bi-shield-lock"></i></span>
+                    <div class="small">
+                        <div class="fw-bold mb-1">Tu privacidad está protegida</div>
+                        <span class="text-muted">TutorPUCP no muestra teléfonos ni correos. Cada mensaje guarda su fecha de envío y si ya fue leído: pasa el cursor sobre la hora para verlo.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+}
+
+@code {
+    [Parameter] public int? IdOtro { get; set; }
+
+    private List<MensajeDto> mensajes = [];
+    private string nombreOtro = "";
+    private bool cargando = true;
+    private string? error;
+
+    private string texto = "";
+    private bool enviando;
+    private string? errorEnvio;
+    private bool avisoContacto;
+    private int intentos;
+
+    // Cada 5 s se vuelve a consultar el REST para ver mensajes nuevos y los ✓✓ de leído.
+    private PeriodicTimer? temporizador;
+    private CancellationTokenSource? cancelar;
+
+    private UsuarioDto? Yo => RolActual.Usuario;
+    private string RolDelOtro => RolActual.Rol == RolActual.Tutor ? "Estudiante" : "Tutor";
+
+    // ---------- Fechas en formato DD/MM/AAAA (RNF006) ----------
+    private static string Hora(DateTime d) => d.ToString("h:mm tt");
+    private static string Fecha(DateTime d) => d.ToString("dd/MM/yyyy h:mm tt");
+    private static string Detalle(MensajeDto m) => "Enviado el " + Fecha(m.Enviado) + (m.Leido ? " · Leído" : " · Aún no leído");
+    private static string Dia(DateTime d) =>
+        d.Date == DateTime.Today ? "Hoy" : d.Date == DateTime.Today.AddDays(-1) ? "Ayer" : d.ToString("dd/MM/yyyy");
+
+    private string[] RespuestasRapidas => RolActual.Rol == RolActual.Tutor
+        ? ["Te confirmo la sesión.", "Revisa los ejercicios de la práctica.", "¡Buen trabajo hoy!"]
+        : ["¡Perfecto, ahí estaré!", "¿Podemos empezar 15 minutos antes?", "Gracias por la ayuda."];
+
+    protected override async Task OnInitializedAsync()
+    {
+        RolActual.Cambio += AlCambiarRol;
+
+        // Sin destinatario no hay conversación: se vuelve a la bandeja.
+        if (IdOtro is null) { Navigation.NavigateTo("/mensajes"); return; }
+        if (Yo is null) { cargando = false; return; }
+
+        await Cargar();
+        cargando = false;
+
+        if (string.IsNullOrEmpty(nombreOtro))
+        {
+            var (otro, _) = await UsuariosApi.ObtenerUsuarioAsync(IdOtro.Value);
+            nombreOtro = otro is null ? "Usuario" : $"{otro.Nombres} {otro.Apellidos}";
+        }
+
+        _ = Refrescar();
+    }
+
+    private async Task Cargar()
+    {
+        var (lista, fallo) = await MensajesApi.ConversacionAsync(Yo!.IdUsuario, IdOtro!.Value);
+        if (fallo is not null) { error = fallo; return; }
+        error = null;
+        mensajes = lista ?? [];
+
+        var delOtro = mensajes.FirstOrDefault(m => m.IdEmisor == IdOtro);
+        var mioAlOtro = mensajes.FirstOrDefault(m => m.IdReceptor == IdOtro);
+        if (delOtro is not null) nombreOtro = delOtro.NombreEmisor;
+        else if (mioAlOtro is not null) nombreOtro = mioAlOtro.NombreReceptor;
+
+        // RF010: al abrir la conversación, lo que el otro me mandó queda leído.
+        if (mensajes.Any(m => m.IdReceptor == Yo.IdUsuario && !m.Leido))
+        {
+            await MensajesApi.MarcarConversacionLeidaAsync(Yo.IdUsuario, IdOtro.Value);
+        }
+    }
+
+    private async Task Refrescar()
+    {
+        cancelar = new CancellationTokenSource();
+        temporizador = new PeriodicTimer(TimeSpan.FromSeconds(5));
+        try
+        {
+            while (await temporizador.WaitForNextTickAsync(cancelar.Token))
+            {
+                if (enviando) continue;
+                await InvokeAsync(async () =>
+                {
+                    await Cargar();
+                    StateHasChanged();
+                });
+            }
+        }
+        catch (OperationCanceledException) { }
+        catch (ObjectDisposedException) { }
+    }
+
+    private void AlCambiarRol() => InvokeAsync(StateHasChanged);
+
+    private async Task Enviar()
+    {
+        if (string.IsNullOrWhiteSpace(texto) || enviando) return;
+
+        // RNF005: no se envían datos de contacto personales.
+        if (DatosContacto.Contiene(texto))
+        {
+            avisoContacto = true;
+            intentos++;
+            return;
+        }
+
+        avisoContacto = false;
+        errorEnvio = null;
+        enviando = true;
+        var (nuevo, fallo) = await MensajesApi.EnviarAsync(Yo!.IdUsuario, IdOtro!.Value, texto.Trim());
+        enviando = false;
+
+        if (fallo is not null) { errorEnvio = fallo; return; }
+
+        mensajes.Add(nuevo!);
+        texto = "";
+    }
+
+    public void Dispose()
+    {
+        RolActual.Cambio -= AlCambiarRol;
+        cancelar?.Cancel();
+        temporizador?.Dispose();
+    }
+}

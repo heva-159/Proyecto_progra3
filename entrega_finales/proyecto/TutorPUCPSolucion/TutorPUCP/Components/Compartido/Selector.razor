@@ -1,0 +1,112 @@
+@* Lista desplegable con buscador. A diferencia del <select> del navegador, siempre se abre
+   hacia abajo y con el mismo alto, así Facultad y Especialidad se comportan igual. *@
+
+<div class="selector campo">
+    @if (!string.IsNullOrEmpty(Icono))
+    {
+        <i class="bi @Icono"></i>
+    }
+    <button type="button" id="@Id" class="selector-boton @(abierto ? "abierto" : "")" disabled="@Deshabilitado"
+            aria-haspopup="listbox" aria-expanded="@abierto" @onclick="Alternar">
+        @if (Elegida is { } e)
+        {
+            @if (e.Clase is not null)
+            {
+                <span class="bandera @e.Clase"></span>
+            }
+            else if (!string.IsNullOrEmpty(e.Prefijo))
+            {
+                <span class="bandera">@e.Prefijo</span>
+            }
+            <span class="texto">@(MostrarDetalleEnBoton && e.Detalle is not null ? e.Detalle : e.Texto)</span>
+        }
+        else
+        {
+            <span class="vacio texto">@Placeholder</span>
+        }
+    </button>
+    <i class="bi bi-chevron-down selector-flecha"></i>
+
+    @if (abierto)
+    {
+        <div class="selector-capa" @onclick="() => abierto = false"></div>
+        <div class="selector-panel" role="listbox">
+            @if (Buscable)
+            {
+                <div class="selector-buscar">
+                    <i class="bi bi-search"></i>
+                    <input placeholder="Buscar…" @bind="filtro" @bind:event="oninput" />
+                </div>
+            }
+            <div class="selector-lista">
+                @foreach (var o in Filtradas)
+                {
+                    <button type="button" class="selector-opcion @(o.Valor == Valor ? "elegida" : "")" role="option"
+                            aria-selected="@(o.Valor == Valor)" @onclick="() => Elegir(o)">
+                        @if (o.Clase is not null)
+                        {
+                            <span class="bandera @o.Clase"></span>
+                        }
+                        else if (!string.IsNullOrEmpty(o.Prefijo))
+                        {
+                            <span class="bandera">@o.Prefijo</span>
+                        }
+                        <span>@o.Texto</span>
+                        @if (o.Detalle is not null)
+                        {
+                            <small>@o.Detalle</small>
+                        }
+                        else if (o.Valor == Valor)
+                        {
+                            <i class="bi bi-check2 ms-auto"></i>
+                        }
+                    </button>
+                }
+                @if (!Filtradas.Any())
+                {
+                    <div class="selector-vacio">No hay resultados para «@filtro».</div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    public record Opcion(string Valor, string Texto, string? Prefijo = null, string? Detalle = null, string? Clase = null);
+
+    [Parameter, EditorRequired] public IEnumerable<Opcion> Opciones { get; set; } = [];
+    [Parameter] public string Valor { get; set; } = "";
+    [Parameter] public EventCallback<string> ValorChanged { get; set; }
+    [Parameter] public string Placeholder { get; set; } = "Selecciona";
+    [Parameter] public string? Icono { get; set; }
+    [Parameter] public string? Id { get; set; }
+    [Parameter] public bool Deshabilitado { get; set; }
+    [Parameter] public bool Buscable { get; set; } = true;
+    [Parameter] public bool MostrarDetalleEnBoton { get; set; }
+
+    private bool abierto;
+    private string filtro = "";
+
+    private Opcion? Elegida => Opciones.FirstOrDefault(o => o.Valor == Valor);
+
+    private IEnumerable<Opcion> Filtradas =>
+        string.IsNullOrWhiteSpace(filtro) ? Opciones
+        : Opciones.Where(o => SinTildes(o.Texto + " " + o.Detalle).Contains(SinTildes(filtro.Trim())));
+
+    private void Alternar()
+    {
+        abierto = !abierto;
+        filtro = "";
+    }
+
+    private async Task Elegir(Opcion o)
+    {
+        abierto = false;
+        await ValorChanged.InvokeAsync(o.Valor);
+    }
+
+    private static string SinTildes(string texto) =>
+        new string(texto.Normalize(System.Text.NormalizationForm.FormD)
+            .Where(c => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.NonSpacingMark)
+            .ToArray()).ToLowerInvariant();
+}

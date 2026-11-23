@@ -1,0 +1,50 @@
+@implements IDisposable
+@inject IJSRuntime JS
+
+@* Botón de carita que abre el selector de emojis (librería emoji-picker-element, en español,
+   con buscador y categorías). Al elegir uno se lo pasa al componente que lo usa. *@
+
+<div class="emoji-envoltura">
+    <button type="button" class="chat-cabecera-accion @(abierto ? "activo" : "")" title="Emojis" aria-label="Emojis" @onclick="Alternar">
+        <i class="bi bi-emoji-smile"></i>
+    </button>
+    @if (abierto)
+    {
+        <div class="selector-capa" @onclick="() => abierto = false"></div>
+        <div class="emoji-panel" @ref="panel">
+            <div class="emoji-cargando"><span class="spinner-border spinner-border-sm me-2"></span>Cargando emojis…</div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public EventCallback<string> AlElegir { get; set; }
+
+    private bool abierto, montar;
+    private ElementReference panel;
+    private DotNetObjectReference<SelectorEmoji>? yo;
+
+    private void Alternar()
+    {
+        abierto = !abierto;
+        montar = abierto;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool primera)
+    {
+        if (!montar) return;
+        montar = false;
+        yo ??= DotNetObjectReference.Create(this);
+        try { await JS.InvokeVoidAsync("tp.emojis", panel, yo); }
+        catch (JSException) { /* Sin internet no carga la librería; el chat sigue funcionando. */ }
+    }
+
+    [JSInvokable]
+    public async Task Elegir(string emoji)
+    {
+        await AlElegir.InvokeAsync(emoji);
+        StateHasChanged();
+    }
+
+    public void Dispose() => yo?.Dispose();
+}

@@ -1,0 +1,79 @@
+﻿@inherits LayoutComponentBase
+@inject NavigationManager Navigation
+
+@* Marco de las pantallas de acceso (login, registro, verificar), al estilo del login de Laboremos:
+   a la izquierda un panel de color con lo que ofrece la plataforma; a la derecha el formulario.
+   En celular queda solo el formulario con el logo encima. *@
+
+<div class="acc @(EsAdmin ? "acc-admin" : "")">
+    <aside class="acc-panel">
+        <div class="acc-trama"></div>
+        <div class="acc-luz uno"></div>
+        <div class="acc-luz dos"></div>
+
+        <a class="acc-marca" href="/">
+            <span class="acc-logo"><i class="bi @(EsAdmin ? "bi-shield-lock-fill" : "bi-mortarboard-fill")"></i></span>
+            <span>
+                <small>@(EsAdmin ? "Panel de administración" : "Tutorías entre estudiantes")</small>
+                Tutor<b>PUCP</b>
+            </span>
+        </a>
+
+        @* El eslogan y la lista de beneficios son para estudiantes y tutores, a quienes hay que convencer;
+           el administrador entra a trabajar y su panel queda sin mensaje. *@
+        @if (!EsAdmin)
+        {
+            <div class="acc-mensaje">
+                <h2>@Titular</h2>
+                <p>@Bajada</p>
+                <ul>
+                    @foreach (var (icono, texto) in Puntos)
+                    {
+                        <li><span><i class="bi @icono"></i></span>@texto</li>
+                    }
+                </ul>
+            </div>
+
+            <div class="acc-pie"><i class="bi bi-shield-check me-1"></i>Tus datos de contacto nunca se muestran a otros usuarios.</div>
+        }
+    </aside>
+
+    <main class="acc-lado">
+        <div class="acc-barra">
+            <a class="acc-marca-movil" href="/">
+                <span class="acc-logo"><i class="bi @(EsAdmin ? "bi-shield-lock-fill" : "bi-mortarboard-fill")"></i></span>
+                <span>Tutor<b>PUCP</b></span>
+            </a>
+            <div class="ms-auto d-flex align-items-center gap-2">
+                <BotonTema />
+                <a class="acc-volver" href="/"><i class="bi bi-arrow-left"></i><span class="d-none d-sm-inline">Volver al inicio</span></a>
+            </div>
+        </div>
+
+        <div class="acc-formulario @(EsRegistro ? "ancho" : "")">
+            @Body
+        </div>
+    </main>
+</div>
+
+@code {
+    private string Ruta => Navigation.ToBaseRelativePath(Navigation.Uri).Split('?')[0].ToLowerInvariant();
+    private bool EsAdmin => Ruta.StartsWith("login/administrador");
+    private bool EsRegistro => Ruta.StartsWith("registro");
+
+    private string Titular =>
+        EsRegistro ? "Únete a la comunidad de tutorías PUCP."
+        : "Aprende y enseña entre compañeros.";
+
+    private string Bajada =>
+        EsRegistro ? "Una sola cuenta te sirve como Estudiante, como Tutor o como ambos."
+        : "Entra con tu correo PUCP. Si eres estudiante y tutor, cambias de rol dentro sin cerrar sesión.";
+
+    private (string, string)[] Puntos =>
+    [
+        ("bi-search", "Busca tutores por curso y tarifa"),
+        ("bi-chat-dots", "Coordina por la mensajería interna"),
+        ("bi-calendar-check", "Check-in y check-out de cada sesión"),
+        ("bi-star", "Califica y reclama si algo sale mal"),
+    ];
+}

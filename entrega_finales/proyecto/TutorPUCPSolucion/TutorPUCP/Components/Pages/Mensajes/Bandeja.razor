@@ -1,0 +1,378 @@
+﻿@page "/mensajes"
+@implements IDisposable
+@inject NavigationManager Navigation
+@inject RolActual RolActual
+@inject MensajesApi MensajesApi
+@inject UsuariosApi UsuariosApi
+
+@* Requisito: RF010 *@
+
+<PageTitle>Mensajes</PageTitle>
+
+<Toasts class="p-3" Messages="avisos" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
+
+<EncabezadoPagina Icono="bi-chat-dots-fill" Titulo="Mensajes"
+                  Subtitulo="Coordina tus tutorías por la mensajería interna de TutorPUCP.">
+    <button type="button" class="btn btn-primary" @onclick="AbrirNuevo" disabled="@(Yo is null)">
+        <i class="bi bi-pencil-square"></i>Nuevo mensaje
+    </button>
+</EncabezadoPagina>
+
+@if (Yo is null)
+{
+    <div class="alert alert-warning d-flex gap-2"><i class="bi bi-person-lock"></i><div>Inicia sesión para ver tus mensajes.</div></div>
+}
+else
+{
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-4 entrar" style="--i: 0;">
+        <TarjetaDato Icono="bi-chat-left-text" Valor="@conversaciones.Count.ToString()" Etiqueta="Conversaciones" />
+    </div>
+    <div class="col-6 col-md-4 entrar" style="--i: 1;">
+        <TarjetaDato Icono="bi-envelope-exclamation" Valor="@conversaciones.Sum(c => c.NoLeidos).ToString()" Etiqueta="Sin leer" />
+    </div>
+    <div class="col-12 col-md-4 entrar" style="--i: 2;">
+        <div class="card kpi tarjeta-dato h-100">
+            <div class="card-body">
+                <span class="kpi-icono" aria-hidden="true"><i class="bi bi-shield-check"></i></span>
+                <div class="small text-muted lh-sm">Tu teléfono y correo <b>no se muestran</b> a nadie. Todo se coordina por aquí.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header cabecera">
+        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+            <div class="buscador flex-grow-1" style="max-width: 380px;">
+                <i class="bi bi-search"></i>
+                <input type="text" class="form-control" placeholder="Buscar por nombre"
+                       @bind="busqueda" @bind:event="oninput" aria-label="Buscar conversación" />
+            </div>
+            <div class="segmento" role="group" aria-label="Filtrar conversaciones">
+                <button type="button" class="@(soloNoLeidas ? "" : "activo")" @onclick="() => soloNoLeidas = false">Todas</button>
+                <button type="button" class="@(soloNoLeidas ? "activo" : "")" @onclick="() => soloNoLeidas = true">No leídas</button>
+            </div>
+        </div>
+    </div>
+
+    @if (cargando)
+    {
+        <div class="estado-vacio">
+            <div class="spinner-border text-primary" role="status"></div>
+            <div class="small mt-2">Cargando tus conversaciones...</div>
+        </div>
+    }
+    else if (error is not null)
+    {
+        <div class="estado-vacio">
+            <i class="bi bi-wifi-off"></i>
+            <div class="fw-semibold">No se pudieron cargar los mensajes</div>
+            <div class="small">@error</div>
+            <button type="button" class="btn btn-outline-primary btn-sm mt-2" @onclick="CargarBandeja">Reintentar</button>
+        </div>
+    }
+    else if (Filtradas.Any())
+    {
+        <div>
+            @{ var i = 0; }
+            @foreach (var c in Filtradas)
+            {
+                <div class="conversacion entrar @(c.NoLeidos > 0 ? "no-leida" : "") @(c.IdContacto == resaltado ? "resaltado" : "")"
+                     style="--i: @(i++);" @key="c.IdContacto" @onclick="() => AbrirConversacion(c.IdContacto)" role="button" tabindex="0">
+                    <div class="avatar-envoltura">
+                        <Avatar Nombre="@c.NombreContacto" />
+                    </div>
+                    <div class="flex-grow-1" style="min-width: 0;">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="fw-bold text-truncate">@c.NombreContacto</span>
+                            <span class="badge etiqueta">@RolDelOtro</span>
+                        </div>
+                        <div class="ultimo text-muted text-truncate small">@(c.UltimoEsMio ? "Tú: " : "")@c.UltimoMensaje</div>
+                    </div>
+                    <div class="text-end flex-shrink-0">
+                        <div class="small text-muted mb-1">@Cuando(c.Ultimo)</div>
+                        @if (c.NoLeidos > 0)
+                        {
+                            <span class="badge rounded-pill text-bg-primary">@c.NoLeidos</span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-check2-all text-primary"></i>
+                        }
+                    </div>
+                    <i class="bi bi-chevron-right flecha"></i>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="estado-vacio">
+            <i class="bi bi-inbox"></i>
+            @if (conversaciones.Count == 0)
+            {
+                <div class="fw-semibold">Aún no tienes conversaciones</div>
+                <div class="small">Usa «Nuevo mensaje» para escribirle a @(RolActual.Rol == RolActual.Tutor ? "un estudiante" : "un tutor").</div>
+            }
+            else
+            {
+                <div class="fw-semibold">No hay conversaciones con ese filtro</div>
+                <div class="small">Prueba con otro nombre o vuelve a «Todas».</div>
+            }
+        </div>
+    }
+</div>
+}
+
+@* Modal por pasos: 1 destinatario, 2 mensaje, 3 revisar y enviar *@
+<Modal @ref="modalNuevo" Title="Nuevo mensaje" Size="ModalSize.Large" IsVerticallyCentered="true" UseStaticBackdrop="true">
+    <BodyTemplate>
+        <Pasos Etapas="EtapasNuevo" Actual="paso" />
+
+        @if (paso == 0)
+        {
+            <div class="paso-panel" @key="0">
+                <p class="text-muted small mb-3">¿A quién le quieres escribir? Solo aparecen @(RolActual.Rol == RolActual.Tutor ? "estudiantes" : "tutores") de la plataforma.</p>
+                @if (contactos is null)
+                {
+                    <div class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div></div>
+                }
+                else if (errorContactos is not null)
+                {
+                    <div class="alert alert-danger small mb-0">@errorContactos</div>
+                }
+                else if (contactos.Count == 0)
+                {
+                    <div class="text-muted small">No hay @(RolActual.Rol == RolActual.Tutor ? "estudiantes" : "tutores") activos todavía.</div>
+                }
+                else
+                {
+                    <div class="row g-2">
+                        @foreach (var p in contactos)
+                        {
+                            <div class="col-md-6">
+                                <button type="button" class="opcion-tarjeta @(destinatario == p ? "elegida" : "")" @onclick="() => destinatario = p">
+                                    <span class="opcion-marca"><i class="bi bi-check"></i></span>
+                                    <Avatar Nombre="@p.Nombre" Tamano="sm" />
+                                    <span class="lh-sm">
+                                        <span class="d-block fw-semibold">@p.Nombre</span>
+                                        <small class="text-muted">@p.Detalle</small>
+                                    </span>
+                                </button>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+        else if (paso == 1)
+        {
+            <div class="paso-panel" @key="1">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <Avatar Nombre="@destinatario!.Nombre" Tamano="sm" />
+                    <div class="lh-sm"><b>Para: @destinatario.Nombre</b><br /><small class="text-muted">@destinatario.Detalle</small></div>
+                </div>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                    @foreach (var s in Sugerencias)
+                    {
+                        <button type="button" class="chip" @onclick="() => texto = s">@s</button>
+                    }
+                </div>
+                <textarea class="form-control" rows="4" maxlength="500" placeholder="Escribe tu mensaje..."
+                          @bind="texto" @bind:event="oninput"></textarea>
+                <div class="d-flex justify-content-between mt-1">
+                    <small class="text-muted">Se registrará la fecha de envío y si fue leído.</small>
+                    <small class="contador-caracteres @(texto.Length > 450 ? "cerca" : "")">@texto.Length / 500</small>
+                </div>
+                @if (TieneContacto)
+                {
+                    <div class="alert alert-danger d-flex gap-2 mt-3 mb-0 alerta-sacudir" @key="texto.Length">
+                        <i class="bi bi-shield-exclamation"></i>
+                        <div>Tu mensaje parece tener un <b>teléfono o correo</b>. Por seguridad, quítalo: la coordinación se hace solo por aquí.</div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="paso-panel" @key="2">
+                <p class="text-muted small">Revisa cómo se verá tu mensaje antes de enviarlo.</p>
+                <div class="rounded-4 p-3 caja-suave">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <Avatar Nombre="@destinatario!.Nombre" Tamano="sm" />
+                        <b>@destinatario.Nombre</b>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <div class="burbuja mia">
+                            <div>@texto</div>
+                            <div class="meta text-end">Ahora · se enviará</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </BodyTemplate>
+    <FooterTemplate>
+        @if (paso > 0)
+        {
+            <button type="button" class="btn btn-light me-auto" @onclick="() => paso--"><i class="bi bi-arrow-left me-1"></i>Atrás</button>
+        }
+        <button type="button" class="btn btn-outline-secondary" @onclick="CerrarNuevo">Cancelar</button>
+        @if (paso < 2)
+        {
+            <button type="button" class="btn btn-primary" disabled="@(!PuedeAvanzar)" @onclick="() => paso++">
+                Siguiente <i class="bi bi-arrow-right ms-1"></i>
+            </button>
+        }
+        else
+        {
+            <button type="button" class="btn btn-primary" disabled="@enviando" @onclick="Enviar">
+                @if (enviando)
+                {
+                    <span class="spinner-border spinner-border-sm me-1"></span>
+                }
+                else
+                {
+                    <i class="bi bi-send me-1"></i>
+                }
+                Enviar mensaje
+            </button>
+        }
+    </FooterTemplate>
+</Modal>
+
+@code {
+    // Persona a la que se le puede escribir (sale de usuario/tutores o usuario/estudiantes)
+    private record Contacto(int Id, string Nombre, string Detalle);
+
+    private Modal modalNuevo = default!;
+    private readonly List<ToastMessage> avisos = [];
+
+    private List<ConversacionDto> conversaciones = [];
+    private bool cargando = true;
+    private string? error;
+    private int? resaltado;
+
+    private List<Contacto>? contactos;
+    private string? errorContactos;
+
+    private string busqueda = "";
+    private bool soloNoLeidas;
+    private int paso;
+    private Contacto? destinatario;
+    private string texto = "";
+    private bool enviando;
+
+    private static readonly string[] EtapasNuevo = ["Destinatario", "Mensaje", "Enviar"];
+
+    private static readonly string[] Sugerencias =
+    [
+        "Hola, ¿tienes disponibilidad esta semana?",
+        "¿Podemos repasar los temas del parcial?",
+        "Gracias por la sesión de hoy.",
+    ];
+
+    private UsuarioDto? Yo => RolActual.Usuario;
+
+    // Si navego como tutor, le escribo a estudiantes, y al revés.
+    private string RolDelOtro => RolActual.Rol == RolActual.Tutor ? "Estudiante" : "Tutor";
+
+    private IEnumerable<ConversacionDto> Filtradas => conversaciones
+        .Where(c => !soloNoLeidas || c.NoLeidos > 0)
+        .Where(c => string.IsNullOrWhiteSpace(busqueda)
+                    || c.NombreContacto.Contains(busqueda, StringComparison.OrdinalIgnoreCase));
+
+    private bool TieneContacto => DatosContacto.Contiene(texto);
+
+    private bool PuedeAvanzar => paso switch
+    {
+        0 => destinatario is not null,
+        1 => !string.IsNullOrWhiteSpace(texto) && !TieneContacto,
+        _ => true,
+    };
+
+    // "10:42 a. m." si es de hoy, "Ayer", o la fecha DD/MM/AAAA (RNF006)
+    private static string Cuando(DateTime fecha) =>
+        fecha.Date == DateTime.Today ? fecha.ToString("h:mm tt")
+        : fecha.Date == DateTime.Today.AddDays(-1) ? "Ayer"
+        : fecha.ToString("dd/MM/yyyy");
+
+    protected override async Task OnInitializedAsync()
+    {
+        RolActual.Cambio += AlCambiarRol;
+        await CargarBandeja();
+    }
+
+    private async Task CargarBandeja()
+    {
+        if (Yo is null) { cargando = false; return; }
+        cargando = true;
+        error = null;
+        var (bandeja, fallo) = await MensajesApi.BandejaAsync(Yo.IdUsuario);
+        conversaciones = bandeja ?? [];
+        error = fallo;
+        cargando = false;
+    }
+
+    // Al cambiar de rol cambian los destinatarios posibles.
+    private void AlCambiarRol() => InvokeAsync(() =>
+    {
+        contactos = null;
+        StateHasChanged();
+    });
+
+    private void AbrirConversacion(int idContacto) => Navigation.NavigateTo($"/mensajes/conversacion/{idContacto}");
+
+    private async Task AbrirNuevo()
+    {
+        paso = 0;
+        destinatario = null;
+        texto = "";
+        await modalNuevo.ShowAsync();
+        if (contactos is null) await CargarContactos();
+    }
+
+    private async Task CargarContactos()
+    {
+        errorContactos = null;
+        var (perfiles, fallo) = RolActual.Rol == RolActual.Tutor
+            ? await UsuariosApi.ListarEstudiantesAsync()
+            : await UsuariosApi.ListarTutoresAsync();
+        errorContactos = fallo;
+        contactos = (perfiles ?? [])
+            .Where(p => p.IdUsuario != Yo!.IdUsuario) // no me escribo a mí mismo
+            .Select(p => new Contacto(p.IdUsuario, $"{p.Nombres} {p.Apellidos}",
+                string.IsNullOrWhiteSpace(p.Especialidad) ? p.Facultad : $"{p.Facultad} · {p.Especialidad}"))
+            .OrderBy(c => c.Nombre)
+            .ToList();
+        StateHasChanged();
+    }
+
+    private async Task CerrarNuevo() => await modalNuevo.HideAsync();
+
+    private async Task Enviar()
+    {
+        enviando = true;
+        var (_, fallo) = await MensajesApi.EnviarAsync(Yo!.IdUsuario, destinatario!.Id, texto.Trim());
+        enviando = false;
+
+        if (fallo is not null)
+        {
+            avisos.Add(new ToastMessage { Type = ToastType.Danger, Title = "No se envió el mensaje", Message = fallo });
+            return;
+        }
+
+        await modalNuevo.HideAsync();
+        resaltado = destinatario.Id;
+        await CargarBandeja();
+        avisos.Add(new ToastMessage
+        {
+            Type = ToastType.Success,
+            Title = "Mensaje enviado",
+            Message = $"Tu mensaje a {destinatario.Nombre} se envió por la mensajería interna.",
+        });
+    }
+
+    public void Dispose() => RolActual.Cambio -= AlCambiarRol;
+}

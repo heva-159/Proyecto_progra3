@@ -1,0 +1,272 @@
+﻿@page "/sesiones"
+@implements IDisposable
+@using System.Globalization
+@inject RolActual RolActual
+@inject SesionRestService Rest
+
+@* Las sesiones salen de la BD a través del servicio REST (GET sesion/usuario/{id}, en GestorSesionesRecurso).
+   Cada persona ve las suyas: las que dicta si entra como tutor, las que recibe si entra como estudiante. *@
+
+<PageTitle>Mis sesiones</PageTitle>
+
+<EncabezadoPagina Icono="bi-calendar-week-fill" Titulo="Mis sesiones"
+                  Subtitulo="@(EsTutor
+                      ? "Las tutorías que registraste con tus estudiantes."
+                      : "Tus tutorías agendadas y pasadas. Entra a una para hacer check-in, calificar o reclamar.")">
+    @if (EsTutor)
+    {
+        <a class="btn btn-primary" href="/tutor/sesiones/nueva"><i class="bi bi-calendar-plus"></i>Registrar sesión</a>
+    }
+    else
+    {
+        <a class="btn btn-primary" href="/estudiante/buscar-tutores"><i class="bi bi-compass"></i>Buscar tutores</a>
+    }
+</EncabezadoPagina>
+
+@if (Yo is null)
+{
+    <div class="alert alert-warning d-flex gap-2">
+        <i class="bi bi-person-lock"></i>
+        <div>Inicia sesión para ver tus sesiones. <a href="/login/usuario" class="fw-semibold">Iniciar sesión</a></div>
+    </div>
+}
+else if (cargando)
+{
+    <div class="card">
+        <div class="estado-vacio">
+            <div class="spinner-border text-primary" role="status"></div>
+            <div class="small mt-2">Cargando tus sesiones...</div>
+        </div>
+    </div>
+}
+else if (error is not null)
+{
+    <div class="card">
+        <div class="estado-vacio">
+            <i class="bi bi-wifi-off"></i>
+            <div class="fw-semibold">No se pudieron cargar tus sesiones</div>
+            <div class="small">@error</div>
+            <button type="button" class="btn btn-outline-primary btn-sm mt-2" @onclick="Cargar">Reintentar</button>
+        </div>
+    </div>
+}
+else
+{
+    var mias = Mias;
+    var lista = mias.Where(CumpleFiltro).Where(CumpleBusqueda).ToList();
+
+    <div class="row g-3 mb-4">
+        @{ var k = 0; }
+        @foreach (var (titulo, valor, icono) in Resumen(mias))
+        {
+            <div class="col-6 col-lg-3 entrar" style="--i: @(k++);">
+                <TarjetaDato Icono="@icono" Valor="@valor" Etiqueta="@titulo" />
+            </div>
+        }
+    </div>
+
+    <div class="card entrar" style="--i: 4;">
+        <div class="card-header cabecera">
+            <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                <div class="buscador flex-grow-1" style="max-width: 380px;">
+                    <i class="bi bi-search"></i>
+                    <input type="text" class="form-control" placeholder="Buscar por curso, tema o nombre"
+                           @bind="busqueda" @bind:event="oninput" aria-label="Buscar sesión" />
+                </div>
+                <div class="segmento" style="max-width: 100%; overflow-x: auto; scrollbar-width: none;" role="group" aria-label="Filtrar por estado">
+                    @foreach (var f in Filtros)
+                    {
+                        <button type="button" class="@(filtro == f ? "activo" : "")" @onclick="() => filtro = f">@f</button>
+                    }
+                </div>
+            </div>
+        </div>
+
+        @if (lista.Count > 0)
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle tabla-tp">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>N.º</th>
+                            <th>Curso</th>
+                            <th>Fecha y hora</th>
+                            <th>@(EsTutor ? "Estudiante" : "Tutor")</th>
+                            <th>Estado</th>
+                            <th>Calificación</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var s in lista)
+                        {
+                            <tr @key="s.IdSesion">
+                                <td class="fw-semibold">@s.IdSesion</td>
+                                <td class="lh-sm"><div class="fw-semibold">@s.Curso</div><small class="text-muted">@s.TemasTexto</small></td>
+                                <td class="text-nowrap">@s.FechaTexto<br /><small class="text-muted">@s.HoraTexto</small></td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <Avatar Nombre="@Contraparte(s)" Tamano="sm" />
+                                        <span>@Contraparte(s)</span>
+                                    </div>
+                                </td>
+                                <td><EstadoBadge Estado="@s.Estado" Texto="@s.EstadoTexto" /></td>
+                                <td class="text-nowrap">
+                                    @if (s.Puntaje is int p)
+                                    {
+                                        <span class="estrellas" title="@p de 5">
+                                            @for (var i = 1; i <= 5; i++)
+                                            {
+                                                <i class="bi @(i <= p ? "bi-star-fill" : "bi-star")"></i>
+                                            }
+                                        </span>
+                                    }
+                                    else if (s.Estado == "REALIZADA")
+                                    {
+                                        <span class="small text-muted">Sin calificar</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                </td>
+                                <td class="text-end text-nowrap">
+                                    @if (!EsTutor && s.Estado == "REALIZADA" && s.Puntaje is null)
+                                    {
+                                        <a class="btn btn-sm btn-primary me-1" href="/sesiones/calificar?id=@s.IdSesion">Calificar</a>
+                                    }
+                                    <a class="btn btn-sm btn-outline-primary" href="/sesiones/detalle?id=@s.IdSesion">Ver detalle</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer small text-muted">Mostrando @lista.Count de @mias.Count sesiones</div>
+        }
+        else if (mias.Count == 0)
+        {
+            <div class="estado-vacio">
+                <i class="bi bi-calendar-x"></i>
+                <div class="fw-semibold">Todavía no tienes sesiones</div>
+                <div class="small">
+                    @if (EsTutor)
+                    {
+                        <text>Cuando registres una sesión con un estudiante, aparecerá aquí.</text>
+                    }
+                    else
+                    {
+                        <text>Cuando un tutor registre una sesión contigo, aparecerá aquí.</text>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="estado-vacio">
+                <i class="bi bi-calendar-x"></i>
+                <div class="fw-semibold">No hay sesiones con ese filtro</div>
+                <div class="small">Prueba con otra búsqueda o cambia el estado.</div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private static readonly string[] Filtros = ["Todas", "Programadas", "Realizadas", "Canceladas"];
+
+    // null = todavía no llega la respuesta del servicio
+    private List<SesionRestDTO>? sesiones;
+    private bool cargando = true;
+    private string? error;
+
+    private string busqueda = "";
+    private string filtro = "Todas";
+
+    private UsuarioDto? Yo => RolActual.Usuario;
+
+    private bool EsTutor => RolActual.Rol == RolActual.Tutor;
+
+    // El servicio trae todas las sesiones de la persona (como tutor y como estudiante);
+    // según el rol con el que navega se muestran las que dicta o las que recibe.
+    private List<SesionRestDTO> Mias =>
+        (sesiones ?? []).Where(s => (EsTutor ? s.IdTutor : s.IdEstudiante) == Yo?.IdUsuario).ToList();
+
+    private static bool EsProgramada(SesionRestDTO s) => s.Estado is "PROGRAMADA" or "EN_CURSO";
+
+    private static bool EsCancelada(SesionRestDTO s) => s.Estado.StartsWith("CANCELADA", StringComparison.Ordinal);
+
+    private bool CumpleFiltro(SesionRestDTO s) => filtro switch
+    {
+        "Programadas" => EsProgramada(s),
+        "Realizadas" => s.Estado == "REALIZADA",
+        "Canceladas" => EsCancelada(s),
+        _ => true,
+    };
+
+    // Ignora mayúsculas y tildes: "calculo" encuentra "Cálculo"
+    private bool CumpleBusqueda(SesionRestDTO s) =>
+        string.IsNullOrWhiteSpace(busqueda)
+        || new[] { s.IdSesion.ToString(), s.Curso, s.CodigoCurso, s.TemasTexto, Contraparte(s) }.Any(t => Contiene(t, busqueda.Trim()));
+
+    private static bool Contiene(string texto, string buscado) =>
+        CultureInfo.InvariantCulture.CompareInfo.IndexOf(texto, buscado,
+            CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace) >= 0;
+
+    private string Contraparte(SesionRestDTO s) => EsTutor ? s.Estudiante : s.Tutor;
+
+    private (string, string, string)[] Resumen(List<SesionRestDTO> mias) =>
+    [
+        ("Programadas", mias.Count(EsProgramada).ToString(), "bi-calendar-event"),
+        ("Realizadas", mias.Count(s => s.Estado == "REALIZADA").ToString(), "bi-check-circle"),
+        ("Canceladas", mias.Count(EsCancelada).ToString(), "bi-x-circle"),
+        EsTutor
+            ? ("Calificación promedio", Promedio(mias), "bi-star")
+            : ("Por calificar", mias.Count(s => s.Estado == "REALIZADA" && s.Puntaje is null).ToString(), "bi-star"),
+    ];
+
+    private static string Promedio(List<SesionRestDTO> mias)
+    {
+        var notas = mias.Where(s => s.Puntaje is not null).Select(s => s.Puntaje!.Value).ToList();
+        return notas.Count == 0 ? "—" : notas.Average().ToString("0.0", CultureInfo.InvariantCulture);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        RolActual.Cambio += AlCambiarRol;
+        await Cargar();
+    }
+
+    private async Task Cargar()
+    {
+        if (Yo is null)
+        {
+            cargando = false;
+            return;
+        }
+        cargando = true;
+        error = null;
+        try
+        {
+            sesiones = await Rest.ListarDeUsuarioAsync(Yo.IdUsuario);
+        }
+        catch (Exception ex)
+        {
+            error = AcademicoRestService.MensajeDeError(ex);
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    // Al cambiar de rol arriba, se muestran las sesiones del otro lado (ya están cargadas).
+    private void AlCambiarRol() => InvokeAsync(() =>
+    {
+        busqueda = "";
+        filtro = "Todas";
+        StateHasChanged();
+    });
+
+    public void Dispose() => RolActual.Cambio -= AlCambiarRol;
+}

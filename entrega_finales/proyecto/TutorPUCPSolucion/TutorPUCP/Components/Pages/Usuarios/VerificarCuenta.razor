@@ -1,0 +1,211 @@
+@page "/verificar-cuenta"
+@layout AuthLayout
+@implements IDisposable
+@inject NavigationManager Navigation
+@inject UsuariosApi Api
+@inject RolActual RolActual
+
+@* Verificación de la cuenta (RF001): código de 6 dígitos enviado al correo, válido por 15 minutos,
+   con opción de reenviarlo. El REST comprueba el código: máximo 5 intentos fallidos por código y 30 segundos
+   entre un envío y otro (el contador y la espera de esta pantalla son solo informativos). *@
+
+<PageTitle>Verificar cuenta · TutorPUCP</PageTitle>
+
+<span class="acc-logo mb-3" style="width:56px;height:56px;background:rgba(37,99,235,.12);color:var(--tp-azul);box-shadow:none;"><i class="bi bi-envelope-check"></i></span>
+<h1 class="acc-titulo">Revisa tu correo</h1>
+<p class="acc-sub">Enviamos un código de 6 dígitos a <b style="color: var(--tp-texto);">@Correo</b>.</p>
+
+@if (error is not null)
+{
+    <div class="acc-alerta mt-3"><i class="bi bi-exclamation-circle"></i><span>@error</span></div>
+}
+@if (aviso is not null)
+{
+    <div class="nota nota-ok small mt-3"><i class="bi bi-send-check me-1"></i>@aviso</div>
+}
+
+<div class="codigo mt-4" role="group" aria-label="Código de verificación">
+    @for (var i = 0; i < 6; i++)
+    {
+        var n = i;
+        <input @ref="casillas[n]" inputmode="numeric" maxlength="6" autocomplete="@(n == 0 ? "one-time-code" : "off")"
+               aria-label="@($"Dígito {n + 1}")" @bind:get="digitos[n]" @bind:set="valor => Escribir(n, valor)" @bind:event="oninput" @onkeydown="e => Tecla(n, e)" />
+    }
+</div>
+
+<div class="campo-ayuda mt-2 d-flex justify-content-between">
+    <span><i class="bi bi-clock me-1"></i>@(Vencido ? "El código venció." : $"Vence en {restante:mm\\:ss}")</span>
+    @if (reenviando)
+    {
+        <span>Enviando…</span>
+    }
+    else if (esperaReenvio > 0)
+    {
+        <span>Reenviar en @esperaReenvio s</span>
+    }
+    else
+    {
+        <a href="/verificar-cuenta" class="fw-semibold text-decoration-none" @onclick:preventDefault @onclick="Reenviar">Reenviar código</a>
+    }
+</div>
+
+<button type="button" class="acc-boton mt-4" disabled="@(!Completo || verificando)" @onclick="Verificar">
+    @if (verificando)
+    {
+        <span class="spinner-border spinner-border-sm"></span><span>Verificando…</span>
+    }
+    else
+    {
+        <span>Verificar cuenta</span><i class="bi bi-arrow-right"></i>
+    }
+</button>
+
+<p class="text-center small mt-4 mb-0" style="color: var(--tp-tenue);">
+    ¿Correo equivocado? <a href="/registro" class="fw-semibold text-decoration-none">Volver al registro</a>
+</p>
+
+@code {
+    private readonly string[] digitos = new string[6];
+    private readonly ElementReference[] casillas = new ElementReference[6];
+    private TimeSpan restante = TimeSpan.FromMinutes(15);
+    private int esperaReenvio = 30;
+    private string? error, aviso;
+    private bool verificando, reenviando;
+    private System.Threading.Timer? reloj;
+
+    private string Correo => Parametro("correo") ?? "tu correo PUCP";
+
+    // Viene de Perfil («Correo sin verificar · Verificar»): ahí nadie acaba de recibir un código, así que al abrir
+    // la pantalla se manda uno nuevo. Desde el registro no hace falta: el REST ya lo envió.
+    private bool EnviarAlAbrir => Parametro("reenviar") == "1";
+
+    private string? Parametro(string nombre)
+    {
+        var q = new Uri(Navigation.Uri).Query.TrimStart('?').Split('&')
+            .Select(p => p.Split('=', 2)).FirstOrDefault(p => p[0] == nombre && p.Length == 2);
+        return q is null ? null : Uri.UnescapeDataString(q[1]);
+    }
+
+    private bool Completo => digitos.All(d => d is { Length: 1 });
+    private bool Vencido => restante <= TimeSpan.Zero;
+
+    protected override void OnInitialized()
+    {
+        for (var i = 0; i < 6; i++) digitos[i] = "";
+        reloj = new System.Threading.Timer(_ => InvokeAsync(() =>
+        {
+            if (restante > TimeSpan.Zero) restante -= TimeSpan.FromSeconds(1);
+            if (esperaReenvio > 0) esperaReenvio--;
+            StateHasChanged();
+        }), null, 1000, 1000);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool primera)
+    {
+        if (!primera) return;
+        await casillas[0].FocusAsync();
+        // Aquí y no en OnInitialized: este método corre una sola vez y ya con la conexión interactiva
+        // (OnInitialized también corre al pre-renderizar y mandaría el código dos veces).
+        if (EnviarAlAbrir) await EnviarCodigoNuevo(alAbrir: true);
+    }
+
+    // Acepta un dígito por casilla; si se pega el código completo, lo reparte en las seis. Con @bind (y no con value + @oninput) Blazor también borra del cuadro lo que no es dígito.
+    private async Task Escribir(int i, string? valor)
+    {
+        error = null;
+        var solo = new string((valor ?? "").Where(char.IsAsciiDigit).ToArray());
+        if (solo.Length >= 6)
+        {
+            for (var k = 0; k < 6; k++) digitos[k] = solo[k].ToString();
+            await casillas[5].FocusAsync();
+            return;
+        }
+        if (solo.Length > 1) solo = solo[^1].ToString(); // Escribió sobre una casilla llena: queda el último dígito.
+        digitos[i] = solo;
+        if (solo.Length == 1 && i < 5) await casillas[i + 1].FocusAsync();
+    }
+
+    private async Task Tecla(int i, KeyboardEventArgs e)
+    {
+        if (e.Key == "Backspace" && digitos[i] == "" && i > 0)
+        {
+            digitos[i - 1] = "";
+            await casillas[i - 1].FocusAsync();
+        }
+    }
+
+    // correo que llegó en ?correo=; null si se abrió la página sin él
+    private string? CorreoReal => Correo == "tu correo PUCP" ? null : Correo;
+
+    private Task Reenviar() => EnviarCodigoNuevo(alAbrir: false);
+
+    // alAbrir = true: se llamó solo por entrar desde Perfil (nadie pulsó «Reenviar código»). Si el REST contesta
+    // «Espera N segundos» es porque ya se mandó un código hace un momento: no hay nada que avisar.
+    private async Task EnviarCodigoNuevo(bool alAbrir)
+    {
+        if (reenviando) return;
+        error = null;
+        aviso = null;
+        if (CorreoReal is null)
+        {
+            error = "No sabemos a qué correo enviar el código. Vuelve al registro o inicia sesión.";
+            return;
+        }
+        reenviando = true;
+        if (alAbrir) StateHasChanged(); // se llama desde OnAfterRenderAsync: ahí la pantalla no se actualiza sola
+        var fallo = await Api.ReenviarCodigoAsync(CorreoReal);
+        reenviando = false;
+        if (fallo is not null)
+        {
+            if (!(alAbrir && fallo.StartsWith("Espera ")))
+                error = fallo; // por ejemplo: "Espera 12 segundos para pedir otro codigo"
+            if (alAbrir) StateHasChanged();
+            return;
+        }
+        for (var i = 0; i < 6; i++) digitos[i] = "";
+        restante = TimeSpan.FromMinutes(15);
+        esperaReenvio = 30;
+        aviso = alAbrir ? "Te enviamos un código a tu correo." : "Te enviamos un código nuevo. El anterior ya no sirve.";
+        if (alAbrir) StateHasChanged();
+        await casillas[0].FocusAsync();
+    }
+
+    private async Task Verificar()
+    {
+        aviso = null;
+        error = null;
+        if (CorreoReal is null)
+        {
+            error = "No sabemos qué correo verificar. Vuelve al registro o inicia sesión.";
+            return;
+        }
+        if (Vencido)
+        {
+            error = "El código venció. Pide uno nuevo con «Reenviar código».";
+            return;
+        }
+        verificando = true;
+        var (usuario, fallo) = await Api.VerificarCorreoAsync(Correo, string.Concat(digitos));
+        verificando = false;
+        if (fallo is not null)
+        {
+            // por ejemplo: "Codigo incorrecto. Te quedan 4 intentos" o "Demasiados intentos fallidos. Pide un codigo nuevo..."
+            error = fallo;
+            for (var i = 0; i < 6; i++) digitos[i] = "";
+            await casillas[0].FocusAsync();
+            return;
+        }
+
+        // Si quien verificó es la persona que tiene la sesión abierta (entró desde Perfil), su cuenta queda
+        // verificada al instante y vuelve a su perfil; si no, va a iniciar sesión.
+        if (usuario is not null && RolActual.Usuario is { } actual && actual.IdUsuario == usuario.IdUsuario)
+        {
+            RolActual.Usuario = usuario;
+            Navigation.NavigateTo("/perfil");
+            return;
+        }
+        Navigation.NavigateTo("/login/usuario");
+    }
+
+    public void Dispose() => reloj?.Dispose();
+}

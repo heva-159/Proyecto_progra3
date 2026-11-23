@@ -1,0 +1,264 @@
+﻿@page "/sesiones/calificar"
+@using System.Globalization
+@inject RolActual RolActual
+@inject SesionRestService Rest
+
+@* Requisito: RF014 calificar al tutor (puntaje del 1 al 5 y comentario opcional) con datos de la BD
+   a través del servicio REST (GestorSesionesRecurso). Se abre desde el detalle con ?id=5. *@
+
+<PageTitle>Calificar sesión</PageTitle>
+
+<Toasts class="p-3" Messages="avisos" AutoHide="true" Delay="4000" Placement="ToastsPlacement.TopRight" />
+
+<a href="@UrlDetalle" class="small text-decoration-none"><i class="bi bi-arrow-left me-1"></i>Volver a la sesión</a>
+
+@if (cargando)
+{
+    <div class="card mt-3"><div class="estado-vacio">
+        <div class="spinner-border text-primary mb-2" role="status"></div>
+        <div class="fw-semibold">Cargando la sesión...</div>
+    </div></div>
+}
+else if (errorCarga is not null)
+{
+    <div class="card mt-3"><div class="estado-vacio">
+        <i class="bi bi-wifi-off"></i>
+        <div class="fw-semibold">No se pudo cargar la sesión</div>
+        <div class="small">@errorCarga</div>
+    </div></div>
+}
+else if (sesion is null)
+{
+    <div class="card mt-3"><div class="estado-vacio">
+        <i class="bi bi-calendar-x"></i>
+        <div class="fw-semibold">Elige una sesión</div>
+        <div class="small">Abre la calificación desde el detalle de una sesión en <a href="/sesiones">Mis sesiones</a>.</div>
+    </div></div>
+}
+else
+{
+    var s = sesion;
+
+    <div class="titulo-pagina mt-2">
+        <div class="d-flex align-items-center gap-3">
+            <span class="icono-titulo"><i class="bi bi-star-fill"></i></span>
+            <div>
+                <h1 class="h3">Calificar sesión</h1>
+                <p>Cuéntanos cómo te fue con @s.Tutor. Tu opinión ayuda a otros estudiantes a elegir tutor.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card entrar" style="--i: 0;">
+                <div class="card-body">
+                    @if (s.Puntaje is int puntos)
+                    {
+                        <div class="text-center py-3">
+                            <div class="exito-icono"><i class="bi bi-check-lg"></i></div>
+                            <h2 class="h4">@(enviada ? "¡Gracias por calificar!" : "Esta sesión ya fue calificada")</h2>
+                            <p class="text-muted mb-2">La calificación para <b>@s.Tutor</b> quedó registrada.</p>
+                            <div class="estrellas fs-3 mb-3" title="@puntos de 5">
+                                @for (var i = 1; i <= 5; i++)
+                                {
+                                    <i class="bi @(i <= puntos ? "bi-star-fill" : "bi-star")"></i>
+                                }
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(s.Comentario))
+                            {
+                                <div class="nota text-start small mb-3">
+                                    <i class="bi bi-chat-square-quote me-1 text-primary"></i>@s.Comentario
+                                </div>
+                            }
+                            <a class="btn btn-primary" href="/sesiones">Ver mis sesiones</a>
+                        </div>
+                    }
+                    else if (s.Estado != "REALIZADA")
+                    {
+                        <div class="estado-vacio">
+                            <i class="bi bi-hourglass-split"></i>
+                            <div class="fw-semibold">Todavía no se puede calificar</div>
+                            <div class="small">Solo se califican las sesiones Realizadas. Esta sesión está @s.EstadoTexto.ToLower().</div>
+                        </div>
+                    }
+                    else if (SoyTutor)
+                    {
+                        <div class="estado-vacio">
+                            <i class="bi bi-person-lock"></i>
+                            <div class="fw-semibold">Solo el estudiante califica</div>
+                            <div class="small">La calificación la registra @s.Estudiante, el estudiante de esta sesión.</div>
+                        </div>
+                    }
+                    else
+                    {
+                        <h2 class="h5 mb-1">¿Qué tal estuvo la tutoría?</h2>
+                        <p class="text-muted small mb-3">Elige de 1 a 5 estrellas.</p>
+
+                        <div class="d-flex flex-wrap align-items-center gap-3 mb-4">
+                            <div class="estrellas estrellas-selector" role="radiogroup" aria-label="Calificación de 1 a 5 estrellas">
+                                @for (var i = 1; i <= 5; i++)
+                                {
+                                    var estrella = i;
+                                    <button type="button" role="radio" aria-checked="@(puntaje == estrella ? "true" : "false")"
+                                            aria-label="@estrella de 5" @onclick="() => puntaje = estrella">
+                                        <i class="bi @(estrella <= puntaje ? "bi-star-fill" : "bi-star")"></i>
+                                    </button>
+                                }
+                            </div>
+                            <span class="@(puntaje == 0 ? "text-muted" : "fw-semibold")">
+                                @(puntaje == 0 ? "Sin elegir" : puntaje + " de 5 · " + Etiquetas[puntaje])
+                            </span>
+                        </div>
+
+                        <label for="comentario" class="form-label fw-semibold">Comentario <span class="text-muted fw-normal">(opcional)</span></label>
+                        <textarea id="comentario" class="form-control" rows="4" maxlength="500"
+                                  placeholder="¿Qué te pareció la explicación, la puntualidad, el material…?"
+                                  @bind="comentario" @bind:event="oninput"></textarea>
+                        <div class="d-flex justify-content-between align-items-center mt-1">
+                            <small class="text-muted">Cuenta qué funcionó y qué se puede mejorar.</small>
+                            <small class="contador-caracteres @(comentario.Length > 450 ? "cerca" : "")">@comentario.Length / 500</small>
+                        </div>
+                        @if (DatosContacto.Contiene(comentario))
+                        {
+                            <div class="alert alert-warning d-flex gap-2 mt-3 mb-0 small alerta-sacudir">
+                                <i class="bi bi-shield-exclamation"></i>
+                                <div>Quita el teléfono o correo del comentario: no se comparten datos de contacto.</div>
+                            </div>
+                        }
+
+                        <div class="d-flex flex-wrap justify-content-end gap-2 mt-4">
+                            <a class="btn btn-outline-secondary" href="@UrlDetalle">Cancelar</a>
+                            <button type="button" class="btn btn-primary" disabled="@(!PuedeEnviar)" @onclick="Enviar">
+                                @if (guardando)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-1"></span>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-send me-1"></i>
+                                }
+                                Enviar calificación
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card entrar" style="--i: 1;">
+                <div class="card-body">
+                    <h2 class="h5 mb-3"><i class="bi bi-calendar-check me-2 text-primary"></i>La sesión</h2>
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <Avatar Nombre="@s.Tutor" />
+                        <div class="lh-sm">
+                            <div class="fw-semibold">@s.Tutor</div>
+                            <small class="text-muted">Tutor</small>
+                        </div>
+                    </div>
+                    <dl class="row datos mb-0">
+                        <dt class="col-4">Sesión</dt>
+                        <dd class="col-8">N.º @s.IdSesion</dd>
+                        <dt class="col-4">Curso</dt>
+                        <dd class="col-8">@s.CodigoCurso · @s.Curso</dd>
+                        <dt class="col-4">Temas</dt>
+                        <dd class="col-8">@s.TemasTexto</dd>
+                        <dt class="col-4">Fecha</dt>
+                        <dd class="col-8">@FechaTexto(s.Inicio)</dd>
+                        <dt class="col-4">Estado</dt>
+                        <dd class="col-8 mb-0"><span class="badge @(s.Estado == "REALIZADA" ? "text-bg-success" : "text-bg-secondary")">@s.EstadoTexto</span></dd>
+                    </dl>
+                </div>
+            </div>
+            <div class="nota small mt-3">
+                <i class="bi bi-info-circle me-1 text-primary"></i>Solo se califican las sesiones Realizadas y una sola vez. El promedio de las calificaciones aparece en el perfil del tutor.
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    // Viene en la URL: /sesiones/calificar?id=5
+    [SupplyParameterFromQuery(Name = "id")] public int? Id { get; set; }
+
+    private static readonly string[] Etiquetas = ["", "Muy mala", "Mala", "Regular", "Buena", "Excelente"];
+    private static readonly CultureInfo Peru = new("es-PE");
+
+    private readonly List<ToastMessage> avisos = [];
+
+    // La sesión de la BD (GET /sesion/{id}); después de calificar se reemplaza con lo que devuelve el REST.
+    private SesionRestDTO? sesion;
+    private bool cargando = true;
+    private string? errorCarga;
+
+    private int puntaje;
+    private string comentario = "";
+    private bool guardando;
+    private bool enviada;
+
+    // Igual que en el detalle: si inicié sesión uso mi id; si no, el rol elegido arriba (para la demo).
+    private int? IdUsuarioActual => RolActual.Usuario?.IdUsuario;
+    private bool SoyTutor => sesion is not null
+                             && (IdUsuarioActual == sesion.IdTutor
+                                 || (IdUsuarioActual != sesion.IdEstudiante && RolActual.Rol == RolActual.Tutor));
+
+    private string UrlDetalle => sesion is null ? "/sesiones" : $"/sesiones/detalle?id={sesion.IdSesion}";
+
+    private bool PuedeEnviar => puntaje > 0 && !guardando && !DatosContacto.Contiene(comentario);
+
+    // "martes 27/10/2026 · 4:00 p. m."
+    private static string FechaTexto(DateTime? fecha) =>
+        fecha is DateTime f
+            ? $"{f.ToString("dddd dd/MM/yyyy", Peru)} · {(f.Hour % 12 == 0 ? 12 : f.Hour % 12)}:{f.Minute:00} {(f.Hour < 12 ? "a. m." : "p. m.")}"
+            : "—";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (Id is int id && id > 0)
+            {
+                sesion = await Rest.ObtenerAsync(id);
+            }
+        }
+        catch (Exception ex)
+        {
+            errorCarga = AcademicoRestService.MensajeDeError(ex);
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    // PUT /sesion/{id}/calificacion. Califica el estudiante de la sesión.
+    private async Task Enviar()
+    {
+        if (!PuedeEnviar || sesion is null) return;
+        guardando = true;
+        try
+        {
+            var formulario = new CalificarSesionFormulario
+            {
+                IdUsuario = IdUsuarioActual ?? sesion.IdEstudiante,
+                Puntaje = puntaje,
+                Comentario = string.IsNullOrWhiteSpace(comentario) ? null : comentario.Trim(),
+            };
+            sesion = await Rest.CalificarAsync(sesion.IdSesion, formulario);
+            enviada = true;
+            Avisar(ToastType.Success, "Calificación enviada", $"Calificaste a {sesion.Tutor} con {puntaje} de 5.");
+        }
+        catch (Exception ex)
+        {
+            Avisar(ToastType.Danger, "No se pudo enviar la calificación", AcademicoRestService.MensajeDeError(ex));
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private void Avisar(ToastType tipo, string titulo, string texto) =>
+        avisos.Add(new ToastMessage { Type = tipo, Title = titulo, Message = texto });
+}

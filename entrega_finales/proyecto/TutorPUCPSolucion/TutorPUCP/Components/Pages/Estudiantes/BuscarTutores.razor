@@ -1,0 +1,226 @@
+@page "/estudiante/buscar-tutores"
+@using TutorPUCP.Servicios
+@inject AcademicoApi Api
+
+<PageTitle>Buscar tutores</PageTitle>
+
+@* =============================================================================
+   ENCABEZADO PRINCIPAL
+   ============================================================================= *@
+<div class="mb-4 pb-2 border-bottom">
+    <h2 class="text-primary fw-bold mb-1">Buscar Tutores Disponibles</h2>
+    <p class="text-muted mb-0">
+        Encuentra asesoría personalizada con tutores calificados que cuentan con postulación aprobada por la facultad.
+    </p>
+</div>
+
+@* Alerta si hay algún error de conexión *@
+@if (!string.IsNullOrEmpty(mensajeError))
+{
+    <div class="alert alert-warning alert-dismissible fade show shadow-sm border-0 mb-4" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> @mensajeError
+        <button type="button" class="btn-close" @onclick="() => mensajeError = null"></button>
+    </div>
+}
+
+@* =============================================================================
+    CAJA DE FILTROS (RF009)
+   ============================================================================= *@
+<div class="card shadow-sm border-0 bg-light mb-4">
+    <div class="card-body p-4">
+        <h5 class="card-title fw-bold text-dark mb-3">Filtros de Búsqueda</h5>
+
+        <div class="row g-3 align-items-end">
+            @* Filtro 1: Desplegable de Curso traído de la base de datos *@
+            <div class="col-md-4">
+                <label class="form-label fw-semibold small text-muted">CURSO:</label>
+                <select class="form-select shadow-sm" @bind="filtroIdCurso">
+                    <option value="0">-- Todos los cursos --</option>
+                    @if (listaCursos != null)
+                    {
+                        @foreach (var curso in listaCursos)
+                        {
+                            <option value="@curso.IdCurso">@curso.Codigo - @curso.Nombre</option>
+                        }
+                    }
+                </select>
+            </div>
+            @* Filtro 2: Desplegable de Tarifa Máxima *@
+            <div class="col-md-3">
+                <label class="form-label fw-semibold small text-muted">PRECIO MÁXIMO:</label>
+                <select class="form-select shadow-sm" @bind="filtroPrecio">
+                    <option value="0">Cualquier tarifa</option>
+                    <option value="25">Hasta S/ 25.00 / hora</option>
+                    <option value="35">Hasta S/ 35.00 / hora</option>
+                    <option value="50">Hasta S/ 50.00 / hora</option>
+                </select>
+            </div>
+            @* Filtro 3: Desplegable de Calificación Mínima *@
+            <div class="col-md-3">
+                <label class="form-label fw-semibold small text-muted">CALIFICACIÓN MÍNIMA:</label>
+                <select class="form-select shadow-sm" @bind="filtroCalificacion">
+                    <option value="0">Todas las calificaciones</option>
+                    <option value="4.0">⭐ 4.0 o más</option>
+                    <option value="4.5">⭐ 4.5 o más</option>
+                    <option value="4.8">⭐ 4.8 o más</option>
+                </select>
+            </div>
+            @* Botón de Filtrar *@
+            <div class="col-md-2">
+                <button type="button" class="btn btn-primary w-100 shadow-sm" @onclick="AplicarFiltro" disabled="@cargando">
+                    @if (cargando)
+                    {
+                        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                        <span>Buscando...</span>
+                    }
+                    else
+                    {
+                        <span><i class="bi bi-search me-1"></i> Filtrar</span>
+                    }
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* =============================================================================
+   RESULTADOS DE BÚSQUEDA (TARJETAS DE TUTORES)
+   Muestra las cards con foto/avatar, nombre, estrellas, cursos y tarifa por hora.
+   ============================================================================= *@
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold text-dark mb-0">Tutores Acreditados Encontrados (@tutoresMostrados.Count)</h5>
+    <span class="text-muted small">Mostrando tutores con acreditación aprobada y tarifa por hora</span>
+</div>
+
+@if (cargando)
+{
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="text-muted mt-2">Cargando tutores acreditados desde el servidor...</p>
+    </div>
+}
+else if (tutoresMostrados.Count == 0)
+{
+    <div class="card border-0 bg-white p-5 text-center shadow-sm mb-4">
+        <i class="bi bi-person-x fs-1 text-muted mb-2"></i>
+        <h5 class="fw-bold text-secondary">No se encontraron tutores</h5>
+        <p class="text-muted mb-0">No hay tutores con postulación aprobada para los criterios seleccionados.</p>
+    </div>
+}
+else
+{
+    <div class="row g-4 mb-4">
+        @foreach (var tutor in tutoresMostrados)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-body text-center p-4 d-flex flex-column justify-content-between">
+                        <div>
+                            @* Avatar con las iniciales del tutor *@
+                            <div class="mb-2"><Avatar Nombre="@tutor.Nombre" Tamano="lg" /></div>
+
+                            @* Nombre del Tutor *@
+                            <h5 class="card-title fw-bold text-dark mb-1">@tutor.Nombre</h5>
+
+                            @* Especialidad y Ciclo *@
+                            <p class="text-muted small mb-2">@tutor.Especialidad</p>
+
+                            @* Calificación en estrellas y total de sesiones *@
+                            <div class="mb-3 text-warning">
+                                <i class="bi bi-star-fill"></i> <strong>@tutor.Calificacion.ToString("0.0")</strong>
+                                <span class="text-muted small">(@tutor.SesionesDictadas tutorías)</span>
+                            </div>
+
+                            @* Cursos que dicta (Badges) *@
+                            <div class="mb-3">
+                                <span class="badge bg-primary px-2 py-1">@tutor.CursoCodigo - @tutor.CursoNombre</span>
+                            </div>
+                        </div>
+                        <div>
+                            @* Tarifa por hora destacada en verde (RF009) *@
+                            <div class="bg-light rounded p-2 mb-3">
+                                <span class="text-muted small d-block">Tarifa de asesoría:</span>
+                                <h4 class="text-success fw-bold mb-0">
+                                    S/ @tutor.TarifaPorHora.ToString("0.00")
+                                    <span class="fs-6 text-muted fw-normal">/ hora</span>
+                                </h4>
+                            </div>
+                            @* Enlace al perfil del tutor *@
+                            <a href="/estudiante/tutor?id=@tutor.IdTutor" class="btn btn-outline-primary w-100 shadow-sm">
+                                Ver Perfil →
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@* =============================================================================
+   LÓGICA 
+   ============================================================================= *@
+@code {
+    // Variables enlazadas a los filtros
+    private int filtroIdCurso = 0;
+    private double filtroPrecio = 0;
+    private double filtroCalificacion = 0;
+
+    private bool cargando = false;
+    private string? mensajeError = null;
+
+    // Listas reales conectadas a REST
+    private List<CursoDto> listaCursos = new();
+    private List<TutorBusquedaDto> listaTutores = new();
+    private List<TutorBusquedaDto> tutoresMostrados = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarCursos();
+        await AplicarFiltro();
+    }
+
+    // Cargar catálogo de cursos desde Java REST
+    private async Task CargarCursos()
+    {
+        var (cursos, error) = await Api.ListarCursosAsync();
+        if (error != null)
+        {
+            mensajeError = error;
+        }
+        else if (cursos != null)
+        {
+            listaCursos = cursos;
+        }
+        StateHasChanged();
+    }
+
+    //Ejecutar la búsqueda de tutores según los filtros
+    private async Task AplicarFiltro()
+    {
+        cargando = true;
+        mensajeError = null;
+        StateHasChanged();
+
+        int? cursoParam = filtroIdCurso > 0 ? filtroIdCurso : null;
+        var (tutores, error) = await Api.BuscarTutoresAsync(cursoParam);
+
+        if (error != null)
+        {
+            mensajeError = error;
+            tutoresMostrados = new();
+        }
+        else if (tutores != null)
+        {
+            listaTutores = tutores;
+
+            // Filtros en memoria para precio y estrellas
+            tutoresMostrados = listaTutores.Where(t =>
+                (filtroPrecio == 0 || (double)t.TarifaPorHora <= filtroPrecio) &&
+                (filtroCalificacion == 0 || t.Calificacion >= filtroCalificacion)
+            ).ToList();
+        }
+        cargando = false;
+        StateHasChanged();
+    }
+}

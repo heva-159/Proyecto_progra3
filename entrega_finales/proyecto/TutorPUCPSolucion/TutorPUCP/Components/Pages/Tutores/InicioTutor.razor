@@ -1,0 +1,193 @@
+@page "/tutor"
+@inject RolActual RolActual
+@inject SesionRestService Rest
+
+@* Las sesiones y la calificación promedio salen de la BD a través del servicio REST (GET sesion/usuario/{id}).
+   "Cursos habilitados" todavía es un dato de ejemplo. *@
+
+<PageTitle>Inicio Tutor - TutorPUCP</PageTitle>
+
+<EncabezadoPagina Icono="bi-mortarboard-fill" Titulo="Panel del Tutor"
+                  Subtitulo="@($"Hola, {RolActual.PrimerNombre}. Gestiona tus cursos, tarifas y solicitudes académicas.")">
+    <a href="/tutor/postular" class="btn btn-primary"><i class="bi bi-plus-lg"></i>Postular a nuevo curso</a>
+</EncabezadoPagina>
+
+@* Indicadores *@
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-4">
+        <TarjetaDato Icono="bi-star" Valor="@PromedioTexto" Sufijo="@(Calificadas.Count > 0 ? "/ 5.0" : null)"
+                     Etiqueta="Calificación promedio" Detalle="@DetallePromedio" />
+    </div>
+    <div class="col-sm-6 col-lg-4">
+        <TarjetaDato Icono="bi-check-circle" Valor="@(Cargado ? Realizadas.ToString() : "—")"
+                     Etiqueta="Sesiones completadas" Detalle="Tutorías ya dictadas" />
+    </div>
+    <div class="col-sm-12 col-lg-4">
+        <TarjetaDato Icono="bi-journal-check" Valor="@cursosHabilitados.ToString()"
+                     Etiqueta="Cursos habilitados" Detalle="Con postulación aprobada" />
+    </div>
+</div>
+
+@* Accesos directos *@
+<h2 class="seccion-titulo">Gestión de Tutor</h2>
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="acceso">
+                <span class="kpi-icono" aria-hidden="true"><i class="bi bi-file-earmark-text"></i></span>
+                <div class="d-flex flex-column h-100">
+                    <h3>Mis Postulaciones a Cursos</h3>
+                    <p>Revisa el estado de aprobación de tus certificados de notas enviados a coordinación académica.</p>
+                    <a href="/tutor/postulaciones" class="btn btn-outline-primary btn-sm align-self-start mt-auto">
+                        Consultar historial de postulaciones <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="acceso">
+                <span class="kpi-icono" aria-hidden="true"><i class="bi bi-cash-coin"></i></span>
+                <div class="d-flex flex-column h-100">
+                    <h3>Mis Tarifas por Hora</h3>
+                    <p>Establece y modifica el costo en soles por hora de clase para los cursos en los que fuiste aprobado.</p>
+                    <a href="/tutor/tarifas" class="btn btn-outline-primary btn-sm align-self-start mt-auto">
+                        Configurar mis tarifas <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Próximas sesiones *@
+<div class="card mb-4">
+    <div class="card-header cabecera d-flex align-items-center justify-content-between">
+        <h2 class="card-titulo">Próximas Sesiones Programadas</h2>
+        <a class="small text-decoration-none" href="/sesiones">Ver todas <i class="bi bi-arrow-right"></i></a>
+    </div>
+    @if (Yo is null)
+    {
+        <div class="estado-vacio">
+            <i class="bi bi-person-lock"></i>
+            <div class="fw-semibold">Inicia sesión para ver tus sesiones</div>
+            <a class="btn btn-outline-primary btn-sm mt-2" href="/login/usuario">Iniciar sesión</a>
+        </div>
+    }
+    else if (cargando)
+    {
+        <div class="estado-vacio">
+            <div class="spinner-border text-primary" role="status"></div>
+            <div class="small mt-2">Cargando tus sesiones...</div>
+        </div>
+    }
+    else if (error is not null)
+    {
+        <div class="estado-vacio">
+            <i class="bi bi-wifi-off"></i>
+            <div class="fw-semibold">No se pudieron cargar tus sesiones</div>
+            <div class="small">@error</div>
+            <button type="button" class="btn btn-outline-primary btn-sm mt-2" @onclick="Cargar">Reintentar</button>
+        </div>
+    }
+    else if (Proximas.Count == 0)
+    {
+        <div class="estado-vacio">
+            <i class="bi bi-calendar-x"></i>
+            <div class="fw-semibold">No tienes sesiones programadas</div>
+            <a class="btn btn-outline-primary btn-sm mt-2" href="/tutor/sesiones/nueva">Registrar sesión</a>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle tabla-tp">
+                <thead class="table-primary">
+                    <tr>
+                        <th>Estudiante</th>
+                        <th>Curso</th>
+                        <th>Fecha y Hora</th>
+                        <th>Estado</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var sesion in Proximas)
+                    {
+                        <tr @key="sesion.IdSesion">
+                            <td class="fw-semibold">@sesion.Estudiante</td>
+                            <td>@sesion.CodigoCurso - @sesion.Curso</td>
+                            <td class="text-nowrap">@sesion.FechaTexto<br /><small class="text-muted">@sesion.HoraTexto</small></td>
+                            <td><EstadoBadge Estado="@sesion.Estado" Texto="@sesion.EstadoTexto" /></td>
+                            <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="/sesiones/detalle?id=@sesion.IdSesion">Ver detalle</a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    // Cuántas sesiones se muestran en "Próximas Sesiones Programadas" (las demás están en "Mis sesiones")
+    private const int MaxProximas = 5;
+
+    // null = todavía no llega la respuesta del servicio
+    private List<SesionRestDTO>? sesiones;
+    private bool cargando = true;
+    private string? error;
+
+    // Dato de ejemplo (todavía no sale de la BD)
+    private int cursosHabilitados = 2;
+
+    private UsuarioDto? Yo => RolActual.Usuario;
+
+    private bool Cargado => sesiones is not null;
+
+    // Aquí solo cuentan las sesiones que dicto como tutor
+    private List<SesionRestDTO> Mias =>
+        (sesiones ?? []).Where(s => s.IdTutor == Yo?.IdUsuario).ToList();
+
+    private int Realizadas => Mias.Count(s => s.Estado == "REALIZADA");
+
+    private List<SesionRestDTO> Calificadas => Mias.Where(s => s.Puntaje is not null).ToList();
+
+    private string PromedioTexto => Calificadas.Count == 0
+        ? "—"
+        : Calificadas.Average(s => s.Puntaje!.Value).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
+
+    private string DetallePromedio => !Cargado ? "" : Calificadas.Count switch
+    {
+        0 => "Aún no tienes calificaciones",
+        1 => "Basado en 1 calificación",
+        var n => $"Basado en {n} calificaciones",
+    };
+
+    private List<SesionRestDTO> Proximas => SesionRestDTO.Proximas(Mias, MaxProximas);
+
+    protected override async Task OnInitializedAsync() => await Cargar();
+
+    private async Task Cargar()
+    {
+        if (Yo is null)
+        {
+            cargando = false;
+            return;
+        }
+        cargando = true;
+        error = null;
+        try
+        {
+            sesiones = await Rest.ListarDeUsuarioAsync(Yo.IdUsuario);
+        }
+        catch (Exception ex)
+        {
+            error = AcademicoRestService.MensajeDeError(ex);
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+}

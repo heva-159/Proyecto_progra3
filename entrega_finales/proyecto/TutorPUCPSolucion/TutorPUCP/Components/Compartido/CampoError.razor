@@ -1,0 +1,9 @@
+@* Mensaje rojo debajo de un campo. No muestra nada si no hay texto. *@
+@if (!string.IsNullOrEmpty(Texto))
+{
+    <div class="campo-error"><i class="bi bi-exclamation-circle"></i>@Texto</div>
+}
+
+@code {
+    [Parameter] public string? Texto { get; set; }
+}

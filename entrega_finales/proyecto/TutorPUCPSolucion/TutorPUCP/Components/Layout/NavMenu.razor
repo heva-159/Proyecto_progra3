@@ -1,0 +1,359 @@
+﻿@implements IDisposable
+@inject NavigationManager Navigation
+@inject RolActual RolActual
+@inject UsuariosApi Api
+
+@* Menú lateral: el selector de arriba cambia entre Estudiante y Tutor y las secciones se animan al cambiar *@
+
+<nav class="sb" style="--acento: @Acento;">
+    <div class="sb-cabecera">
+        <a class="sb-marca" href="/">
+            <span class="sb-logo"><i class="bi bi-mortarboard-fill"></i></span>
+            <span>Tutor<b>PUCP</b></span>
+        </a>
+        <button class="sb-hamburguesa d-lg-none" type="button" @onclick="() => menuAbierto = !menuAbierto"
+                aria-label="Mostrar u ocultar el menú">
+            <i class="bi @(menuAbierto ? "bi-x-lg" : "bi-list")"></i>
+        </button>
+    </div>
+
+    <div class="sb-cuerpo @(menuAbierto ? "abierto" : "")">
+        @if (EsAdmin)
+        {
+            <div class="sb-rol sb-rol-fijo">
+                <span class="sb-rol-icono"><i class="bi bi-shield-lock-fill"></i></span>
+                <span class="sb-rol-texto">
+                    <small>Panel</small>
+                    Administrador
+                </span>
+            </div>
+        }
+        else
+        {
+            @* RF003: con los dos roles se cambia entre ellos; con uno solo, el otro aparece para activarlo *@
+            <div class="sb-selector">
+                <button type="button" class="sb-rol @(selectorAbierto ? "abierto" : "") @(pulso ? "pulso" : "")"
+                        @onclick="AlternarSelector" aria-haspopup="listbox" aria-expanded="@selectorAbierto">
+                    <span class="sb-rol-icono"><i class="bi @IconoRol(RolActual.Rol)"></i></span>
+                    <span class="sb-rol-texto">
+                        <small>Ingresaste como</small>
+                        @RolActual.Rol
+                    </span>
+                    <i class="bi bi-chevron-down sb-rol-flecha"></i>
+                </button>
+
+                @if (selectorAbierto)
+                {
+                    <div class="sb-rol-menu" role="listbox">
+                        @if (porActivar is { } nuevo)
+                        {
+                            @* Confirmación dentro del mismo menú (sin ventanas del navegador) *@
+                            <div class="sb-rol-confirmar">
+                                <div class="fw-semibold mb-1">¿Activar el rol de @nuevo?</div>
+                                <small class="text-muted d-block mb-2">
+                                    @(nuevo == RolActual.Estudiante
+                                        ? "Podrás buscar tutores y agendar sesiones. Tu cuenta tendrá los dos roles y podrás cambiar entre ellos cuando quieras."
+                                        : "Podrás postular a cursos. Para dictar uno, el administrador debe aprobar tu postulación. Tu cuenta tendrá los dos roles.")
+                                </small>
+                                @if (errorActivar is not null)
+                                {
+                                    <small class="text-danger d-block mb-2">@errorActivar</small>
+                                }
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-primary btn-sm" disabled="@activando" @onclick="() => ActivarRol(nuevo)">
+                                        @if (activando)
+                                        {
+                                            <span class="spinner-border spinner-border-sm me-1"></span>
+                                        }
+                                        Activar
+                                    </button>
+                                    <button type="button" class="btn btn-light btn-sm" disabled="@activando" @onclick="CancelarActivacion">Cancelar</button>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (var rol in RolActual.TodosLosRoles)
+                            {
+                                var tiene = RolActual.TieneRol(rol);
+                                <button type="button" class="sb-rol-opcion @(rol == RolActual.Rol ? "elegida" : "") @(tiene ? "" : "por-activar")"
+                                        role="option" aria-selected="@(rol == RolActual.Rol)" @onclick="() => ElegirRol(rol)">
+                                    <span class="sb-rol-opcion-icono @rol.ToLower()"><i class="bi @IconoRol(rol)"></i></span>
+                                    <span>
+                                        <span class="d-block fw-semibold">@rol</span>
+                                        <small class="text-muted">
+                                            @(!tiene ? "Aún no tienes este rol · Activar"
+                                                : rol == RolActual.Estudiante ? "Busca tutores y agenda sesiones" : "Dicta sesiones y gestiona tarifas")
+                                        </small>
+                                    </span>
+                                    @if (rol == RolActual.Rol)
+                                    {
+                                        <i class="bi bi-check2 ms-auto text-primary"></i>
+                                    }
+                                    else if (!tiene)
+                                    {
+                                        <i class="bi bi-plus-circle ms-auto text-primary"></i>
+                                    }
+                                </button>
+                            }
+                        }
+                    </div>
+                }
+            </div>
+        }
+
+        @* @key hace que la sección se vuelva a crear al cambiar de rol y así se repite la animación *@
+        @{ var n = 0; }
+        <div class="sb-secciones" @key="SeccionClave">
+            @foreach (var seccion in Secciones)
+            {
+                <div class="sb-titulo">@seccion.Titulo</div>
+                <ul class="sb-lista">
+                    @foreach (var item in seccion.Items)
+                    {
+                        <li style="--i: @(n++);">
+                            <NavLink class="sb-link" href="@item.Href" Match="@(item.Exacto ? NavLinkMatch.All : NavLinkMatch.Prefix)">
+                                <i class="bi @item.Icono"></i>
+                                <span>@item.Texto</span>
+                                @if (item.Contador > 0)
+                                {
+                                    <span class="sb-contador">@item.Contador</span>
+                                }
+                            </NavLink>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+
+        @* Perfil abajo: al tocarlo se abre hacia arriba con las opciones de cuenta y "Cerrar sesión" *@
+        <div class="sb-pie">
+            @if (perfilAbierto)
+            {
+                @* Capa invisible: al tocar fuera del menú, se cierra *@
+                <div class="sb-capa" @onclick="() => perfilAbierto = false"></div>
+                <div class="sb-perfil-menu" role="menu">
+                    <div class="sb-perfil-cabecera">
+                        <Avatar Nombre="@NombrePerfil" Tamano="sm" />
+                        <span class="sb-perfil-texto">
+                            <b>@NombrePerfil</b>
+                            <small>@CorreoPerfil</small>
+                        </span>
+                    </div>
+                    <a class="sb-perfil-item" role="menuitem" href="@(EsAdmin ? "/admin/perfil" : "/perfil")">
+                        <i class="bi bi-person-circle"></i>Mi perfil
+                    </a>
+                    <div class="sb-perfil-divisor"></div>
+                    <button type="button" class="sb-perfil-item salir" role="menuitem" @onclick="CerrarSesion">
+                        <i class="bi bi-box-arrow-right"></i>Cerrar sesión
+                    </button>
+                </div>
+            }
+            <button type="button" class="sb-perfil @(perfilAbierto ? "show" : "")" aria-haspopup="menu" aria-expanded="@perfilAbierto"
+                    @onclick="() => perfilAbierto = !perfilAbierto">
+                <Avatar Nombre="@NombrePerfil" Tamano="sm" />
+                <span class="sb-perfil-texto">
+                    <b>@NombrePerfil</b>
+                    <small>@(EsAdmin ? "Panel de administración" : RolActual.Rol + " · PUCP")</small>
+                </span>
+                <i class="bi bi-chevron-@(perfilAbierto ? "down" : "up") ms-auto"></i>
+            </button>
+        </div>
+    </div>
+</nav>
+
+@code {
+    private record Item(string Href, string Icono, string Texto, bool Exacto = false, int Contador = 0);
+    private record Seccion(string Titulo, Item[] Items);
+
+    private bool menuAbierto;
+    private bool selectorAbierto;
+    private bool pulso;
+    private bool perfilAbierto;
+
+    // RF003: rol que la cuenta está por activar (se muestra la confirmación en el selector)
+    private string? porActivar;
+    private bool activando;
+    private string? errorActivar;
+
+    private bool EsAdmin => Navigation.ToBaseRelativePath(Navigation.Uri).StartsWith("admin", StringComparison.OrdinalIgnoreCase);
+
+    private string SeccionClave => EsAdmin ? "admin" : RolActual.Rol;
+
+    private string NombrePerfil => EsAdmin ? RolActual.NombreCortoAdministrador : RolActual.NombreCorto;
+
+    private string CorreoPerfil => EsAdmin ? RolActual.CorreoAdministrador : RolActual.CorreoMostrado;
+
+    private string Acento => "#2563eb"; // un solo color de acento para todos los roles
+
+    private static string IconoRol(string rol) => rol == RolActual.Tutor ? "bi-person-workspace" : "bi-backpack2-fill";
+
+    private static readonly Seccion[] MenuEstudiante =
+    [
+        new("Estudiante", [
+            new("/estudiante", "bi-house-door", "Inicio", Exacto: true),
+            new("/estudiante/buscar-tutores", "bi-compass", "Explorar"),
+        ]),
+    ];
+
+    private static readonly Seccion[] MenuTutor =
+    [
+        new("Tutor", [
+            new("/tutor", "bi-house-door", "Inicio", Exacto: true),
+            new("/tutor/postular", "bi-journal-plus", "Postular a curso"),
+            new("/tutor/postulaciones", "bi-card-checklist", "Mis postulaciones"),
+            new("/tutor/tarifas", "bi-cash-coin", "Mis tarifas"),
+            new("/tutor/sesiones/nueva", "bi-calendar-plus", "Registrar sesión"),
+            new("/tutor/reportes", "bi-bar-chart", "Reportes"),
+        ]),
+    ];
+
+    private static readonly Seccion General = new("General", [
+        new("/sesiones", "bi-calendar-week", "Mis sesiones"),
+        new("/mensajes", "bi-chat-dots", "Mensajes", Contador: 2),
+        new("/reclamos/nuevo", "bi-flag", "Reclamos"),
+    ]);
+
+    private static readonly Seccion[] MenuAdmin =
+    [
+        new("Administrador", [
+            new("/admin", "bi-speedometer2", "Inicio", Exacto: true),
+            new("/admin/postulaciones", "bi-person-check", "Postulaciones"),
+            new("/admin/cursos", "bi-book", "Cursos"),
+            new("/admin/temas", "bi-tags", "Temas"),
+            new("/admin/usuarios", "bi-people", "Usuarios"),
+            new("/admin/reclamos", "bi-flag", "Reclamos", Contador: 4),
+            new("/admin/reportes", "bi-graph-up-arrow", "Reportes"),
+        ]),
+    ];
+
+    private IEnumerable<Seccion> Secciones =>
+        EsAdmin ? MenuAdmin
+        : (RolActual.Rol == RolActual.Tutor ? MenuTutor : MenuEstudiante).Append(General);
+
+    protected override void OnInitialized()
+    {
+        SincronizarConRuta();
+        Navigation.LocationChanged += AlCambiarRuta;
+        RolActual.Cambio += AlCambiarRol;
+    }
+
+    private void AlternarSelector()
+    {
+        selectorAbierto = !selectorAbierto;
+        CancelarActivacion();
+    }
+
+    private async Task ElegirRol(string rol)
+    {
+        if (rol == RolActual.Rol)
+        {
+            selectorAbierto = false;
+            return;
+        }
+
+        // RF003: la cuenta no tiene ese rol, así que se ofrece activarlo (el menú sigue abierto para confirmar)
+        if (!RolActual.TieneRol(rol))
+        {
+            porActivar = rol;
+            errorActivar = null;
+            return;
+        }
+
+        selectorAbierto = false;
+        await IrARol(rol);
+    }
+
+    // RF003: le agrega a la cuenta el perfil que le falta y vuelve a pedir el usuario para que quede como AMBOS
+    private async Task ActivarRol(string rol)
+    {
+        if (RolActual.Usuario is not { } usuario) return;
+        activando = true;
+        errorActivar = null;
+
+        var (_, error) = rol == RolActual.Tutor
+            ? await Api.RegistrarTutorAsync(usuario.IdUsuario)
+            : await Api.RegistrarEstudianteAsync(usuario.IdUsuario);
+        if (error is null)
+        {
+            var (actualizado, errorObtener) = await Api.ObtenerUsuarioAsync(usuario.IdUsuario);
+            error = errorObtener;
+            if (actualizado is not null)
+            {
+                activando = false;
+                porActivar = null;
+                selectorAbierto = false;
+                RolActual.RolActivado(actualizado, rol);
+                await IrARol(rol);
+                return;
+            }
+        }
+
+        activando = false;
+        errorActivar = error ?? "No se pudo activar el rol. Intenta de nuevo.";
+    }
+
+    private void CancelarActivacion()
+    {
+        porActivar = null;
+        errorActivar = null;
+    }
+
+    private async Task IrARol(string rol)
+    {
+        RolActual.Cambiar(rol);
+        Navigation.NavigateTo(RolActual.Inicio(rol));
+
+        pulso = true;
+        await Task.Delay(700);
+        pulso = false;
+        StateHasChanged();
+    }
+
+    // Si se entra directo a /tutor/... o /estudiante/..., el selector se ajusta solo.
+    // Si la cuenta no tiene ese rol (por ejemplo, un estudiante escribe /tutor en la barra), vuelve a su inicio.
+    private void SincronizarConRuta()
+    {
+        var ruta = Navigation.ToBaseRelativePath(Navigation.Uri);
+        string? rolDeLaRuta = null;
+        if (ruta.StartsWith("tutor", StringComparison.OrdinalIgnoreCase)) rolDeLaRuta = RolActual.Tutor;
+        else if (ruta.StartsWith("estudiante", StringComparison.OrdinalIgnoreCase)) rolDeLaRuta = RolActual.Estudiante;
+        if (rolDeLaRuta is null) return;
+
+        if (RolActual.TieneRol(rolDeLaRuta))
+        {
+            RolActual.Cambiar(rolDeLaRuta);
+        }
+        else
+        {
+            Navigation.NavigateTo(RolActual.Inicio(RolActual.Rol), replace: true);
+        }
+    }
+
+    // Olvida al usuario (o administrador) y vuelve a su pantalla de ingreso
+    private void CerrarSesion()
+    {
+        var destino = EsAdmin ? "/login/administrador" : "/login/usuario";
+        perfilAbierto = false;
+        RolActual.CerrarSesion();
+        Navigation.NavigateTo(destino);
+    }
+
+    private void AlCambiarRuta(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        menuAbierto = false;
+        selectorAbierto = false;
+        perfilAbierto = false;
+        if (!activando) CancelarActivacion();
+        SincronizarConRuta();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void AlCambiarRol() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= AlCambiarRuta;
+        RolActual.Cambio -= AlCambiarRol;
+    }
+}
