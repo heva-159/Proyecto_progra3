@@ -1,0 +1,63 @@
+USUARIOS DE PRUEBA DE TUTORPUCP
+===============================
+
+Revisado contra la base de datos el 22/11/2026. Salen del script_tutorPUCP.sql (seccion "datos de prueba");
+los roles y las sesiones pueden cambiar a medida que se hacen pruebas.
+
+
+COMO ENTRAR
+-----------
+- Estudiantes y tutores:  /login/usuario
+- Administradores:        /login/administrador
+- Solo entran las cuentas activas y con el correo verificado.
+- Si la cuenta es tutor y estudiante a la vez, entra como estudiante y cambia de rol en el selector de
+  rol del menu lateral.
+- Despues de entrar no recargues la pagina (F5): la sesion se pierde y hay que entrar otra vez.
+  Muevete con los enlaces de la aplicacion.
+
+
+ESTUDIANTES Y TUTORES (todos con la clave clave123)
+---------------------------------------------------
+Correo                   Clave      Roles                Nombre
+a20201234@pucp.edu.pe    clave123   tutor y estudiante   Ana Lucia Quispe Huaman
+a20211567@pucp.edu.pe    clave123   tutor y estudiante   Diego Ramirez Torres
+a20223345@pucp.edu.pe    clave123   estudiante           Valeria Castro Paredes
+a20224410@pucp.edu.pe    clave123   estudiante           Mateo Flores Chavez
+a20190876@pucp.edu.pe    clave123   tutor y estudiante   Sofia Gutierrez Leon
+
+Que tiene cada cuenta (al 22/11/2026):
+- Ana Lucia: tutora aprobada en Calculo Diferencial. 11 sesiones como tutora (7 realizadas, 1 cancelada
+  y 3 programadas).
+- Diego: tutor aprobado en Calculo Diferencial. 2 sesiones como tutor, las dos realizadas.
+- Valeria: 12 sesiones como estudiante (8 realizadas, 2 canceladas y 2 programadas).
+- Mateo: 1 sesion realizada como estudiante.
+- Sofia: tutora aprobada en Fisica 1. Como estudiante tiene 1 sesion programada y como tutora 1 cancelada.
+
+Todas las sesiones realizadas ya estan calificadas. Para probar la calificacion hay que registrar una
+sesion nueva con una cuenta de tutor, hacer check-in y check-out con las dos cuentas y calificar con la del
+estudiante.
+
+
+CUENTAS PARA PROBAR CASOS ESPECIALES (tambien con la clave clave123)
+--------------------------------------------------------------------
+Renzo Vargas Soto - a20235521@pucp.edu.pe
+  Cuenta BLOQUEADA: al intentar entrar avisa que la cuenta esta bloqueada (RF019).
+  Si la reactivas desde el panel de administracion para probar, vuelve a bloquearla al terminar.
+
+Lucia Paz Mendoza - a20241188@pucp.edu.pe
+  Correo SIN VERIFICAR: al intentar entrar pide verificar el correo (RF001). Su codigo vencio el 28/09/2026.
+  No uses "Verificar ahora" ni "Reenviar codigo" con esta cuenta: la aplicacion enviaria un correo real
+  a esa direccion.
+
+
+ADMINISTRADORES (entran por /login/administrador)
+-------------------------------------------------
+Correo                   Clave      Nivel     Nombre
+cmendoza@pucp.edu.pe     admin123   TOTAL     Carla Mendoza Rios
+jsalas@pucp.edu.pe       admin456   REVISOR   Jorge Salas Vega
+
+
+CUENTAS NUEVAS
+-----------------------------------------
+- Quien se registra recibe un codigo de 6 digitos por correo (vale 15 minutos y admite 5 intentos
+  fallidos) y debe verificarlo antes de poder entrar.
