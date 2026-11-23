@@ -1,13 +1,21 @@
 @implements IDisposable
+@using System.Globalization
 @inject NavigationManager Navigation
 @inject RolActual RolActual
+@inject SesionRestService Sesiones
+@inject ReclamosApi Reclamos
+@inject AcademicoApi Academico
+@inject AcademicoRestService AcademicoRest
 
-@* Campana de avisos de la barra superior: sesiones, reclamos, postulaciones y calificaciones.
-   Los mensajes NO van aquí: tienen su propio ícono. Los avisos son de ejemplo (sin BD). *@
+@* Campana de avisos de la barra superior. Los avisos salen de la BD a través del REST:
+   estudiante: próximas sesiones, sesiones por calificar, sesiones canceladas y reclamos resueltos;
+   tutor: próximas sesiones, sesiones canceladas, calificaciones recibidas y postulaciones resueltas;
+   administrador: postulaciones y reclamos pendientes.
+   Los mensajes NO van aquí: tienen su propio ícono. *@
 
 <div class="campana">
     <button type="button" class="topbar-icono @(NoLeidas > 0 ? "con-avisos" : "")" aria-label="Notificaciones, @NoLeidas sin leer"
-            aria-haspopup="menu" aria-expanded="@abierta" @onclick="() => abierta = !abierta">
+            aria-haspopup="menu" aria-expanded="@abierta" @onclick="Alternar">
         <i class="bi bi-bell-fill"></i>
         @if (NoLeidas > 0)
         {
@@ -62,13 +70,16 @@
 @code {
     private class Aviso
     {
-        public required string Icono, Color, Fondo, Titulo, Detalle, Hace, Href;
+        public required string Clave, Icono, Color, Fondo, Titulo, Detalle, Hace, Href;
+        public DateTime Fecha;
         public bool Leida;
     }
 
     private bool abierta;
     private bool soloNoLeidas;
     private List<Aviso> avisos = [];
+    // Avisos que la persona ya abrió o marcó como leídos (mientras la pestaña esté abierta)
+    private readonly HashSet<string> leidas = [];
 
     private bool EsAdmin => Navigation.ToBaseRelativePath(Navigation.Uri).StartsWith("admin", StringComparison.OrdinalIgnoreCase);
     private int NoLeidas => avisos.Count(a => !a.Leida);
@@ -82,57 +93,241 @@
 
     private string? clave;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        Cargar();
         Navigation.LocationChanged += AlNavegar;
         RolActual.Cambio += AlCambiarRol;
+        await CargarAsync(forzar: true);
     }
 
-    // Avisos distintos para estudiante, tutor y administrador.
-    private void Cargar()
+    // Al abrir la campana se vuelven a consultar los avisos
+    private async Task Alternar()
+    {
+        abierta = !abierta;
+        if (abierta) await CargarAsync(forzar: true);
+    }
+
+    // Avisos distintos para estudiante, tutor y administrador, armados con los datos reales
+    private async Task CargarAsync(bool forzar = false)
     {
         var nueva = EsAdmin ? "admin" : RolActual.Rol;
-        if (nueva == clave) return;
+        if (!forzar && nueva == clave) return;
+        if (nueva != clave) soloNoLeidas = false;
         clave = nueva;
-        soloNoLeidas = false;
 
-        avisos = EsAdmin ?
-        [
-            new() { Icono = "bi-flag-fill", Color = Rojo, Fondo = RojoF, Titulo = "Nuevo reclamo pendiente", Detalle = "Lucía Ramos reclamó por la sesión de Cálculo 1.", Hace = "Hace 10 min", Href = "/admin/reclamos" },
-            new() { Icono = "bi-person-check-fill", Color = Azul, Fondo = AzulF, Titulo = "3 postulaciones por revisar", Detalle = "Tutores esperan aprobación para dictar cursos.", Hace = "Hace 1 h", Href = "/admin/postulaciones" },
-            new() { Icono = "bi-hourglass-split", Color = Ambar, Fondo = AmbarF, Titulo = "Reclamo sin resolver", Detalle = "El reclamo R-009 lleva 2 días pendiente.", Hace = "Ayer", Href = "/admin/reclamos" },
-            new() { Icono = "bi-graph-up-arrow", Color = Verde, Fondo = VerdeF, Titulo = "Reporte del mes listo", Detalle = "Ya puedes ver las sesiones de octubre.", Hace = "Hace 2 días", Href = "/admin/reportes", Leida = true },
-        ]
-        : RolActual.Rol == RolActual.Tutor ?
-        [
-            new() { Icono = "bi-alarm-fill", Color = Azul, Fondo = AzulF, Titulo = "Tu clase empieza en 15 min", Detalle = "Programación 3 con Lucía Ramos. No olvides hacer check-in.", Hace = "Hace 2 min", Href = "/sesiones/detalle" },
-            new() { Icono = "bi-patch-check-fill", Color = Verde, Fondo = VerdeF, Titulo = "Postulación aprobada", Detalle = "Ya puedes dictar Física 1.", Hace = "Hace 3 h", Href = "/tutor/postulaciones" },
-            new() { Icono = "bi-x-circle-fill", Color = Rojo, Fondo = RojoF, Titulo = "Sesión cancelada", Detalle = "Un estudiante canceló la clase del viernes.", Hace = "Ayer", Href = "/sesiones" },
-            new() { Icono = "bi-star-fill", Color = Ambar, Fondo = AmbarF, Titulo = "Nueva calificación", Detalle = "Te calificaron con 5 estrellas en Cálculo 1.", Hace = "Hace 2 días", Href = "/tutor/reportes", Leida = true },
-        ]
-        :
-        [
-            new() { Icono = "bi-alarm-fill", Color = Azul, Fondo = AzulF, Titulo = "Tu clase empieza en 15 min", Detalle = "Programación 3 con Andrés Villanueva. No olvides hacer check-in.", Hace = "Hace 2 min", Href = "/sesiones/detalle" },
-            new() { Icono = "bi-flag-fill", Color = Verde, Fondo = VerdeF, Titulo = "Tu reclamo fue aprobado", Detalle = "El administrador resolvió tu reclamo R-012.", Hace = "Hace 1 h", Href = "/reclamos/nuevo" },
-            new() { Icono = "bi-star-half", Color = Ambar, Fondo = AmbarF, Titulo = "Califica tu sesión", Detalle = "¿Cómo te fue en Cálculo 1? Tu opinión ayuda a otros.", Hace = "Ayer", Href = "/sesiones/detalle" },
-            new() { Icono = "bi-calendar-check-fill", Color = Azul, Fondo = AzulF, Titulo = "Sesión programada", Detalle = "Tu tutor registró la sesión del jueves 10:00.", Hace = "Hace 2 días", Href = "/sesiones", Leida = true },
-        ];
+        var lista = new List<Aviso>();
+        try
+        {
+            if (EsAdmin)
+                await AvisosAdministrador(lista);
+            else if (RolActual.Usuario is { } u)
+            {
+                if (RolActual.Rol == RolActual.Tutor)
+                    await AvisosTutor(lista, u.IdUsuario);
+                else
+                    await AvisosEstudiante(lista, u.IdUsuario);
+            }
+        }
+        catch
+        {
+            // si el REST no responde, la campana queda vacía (nunca con avisos inventados)
+        }
+
+        var ahora = DateTime.Now;
+        foreach (var a in lista) a.Leida = leidas.Contains(a.Clave);
+        // primero lo más cercano a hoy (lo que está por pasar o acaba de pasar)
+        avisos = lista.OrderBy(a => Math.Abs((a.Fecha - ahora).TotalMinutes)).Take(8).ToList();
+    }
+
+    private async Task AvisosEstudiante(List<Aviso> lista, int id)
+    {
+        var ahora = DateTime.Now;
+        var sesiones = await Sesiones.ListarDeUsuarioAsync(id);
+        foreach (var s in sesiones.Where(s => s.IdEstudiante == id && s.Inicio is not null))
+        {
+            var inicio = s.Inicio!.Value;
+            if ((s.Estado == "PROGRAMADA" || s.Estado == "EN_CURSO") && inicio >= ahora.AddHours(-2) && inicio <= ahora.AddDays(7))
+            {
+                var pronto = inicio - ahora <= TimeSpan.FromHours(1);
+                lista.Add(new()
+                {
+                    Clave = $"prox-{s.IdSesion}", Icono = pronto ? "bi-alarm-fill" : "bi-calendar-check-fill", Color = Azul, Fondo = AzulF,
+                    Titulo = pronto ? "Tu sesión empieza pronto" : "Sesión programada",
+                    Detalle = $"{s.Curso} con {s.Tutor}, el {s.FechaTexto} a las {s.HoraTexto}. No olvides hacer check-in.",
+                    Hace = Cuando(inicio), Fecha = inicio, Href = $"/sesiones/detalle?id={s.IdSesion}",
+                });
+            }
+            else if (s.Estado == "REALIZADA" && s.Puntaje is null)
+            {
+                lista.Add(new()
+                {
+                    Clave = $"calif-{s.IdSesion}", Icono = "bi-star-half", Color = Ambar, Fondo = AmbarF,
+                    Titulo = "Califica tu sesión",
+                    Detalle = $"¿Cómo te fue en {s.Curso} con {s.Tutor}? Tu opinión ayuda a otros.",
+                    Hace = Cuando(inicio), Fecha = inicio, Href = $"/sesiones/calificar?id={s.IdSesion}",
+                });
+            }
+            else if ((s.Estado == "CANCELADA" || s.Estado == "CANCELADA_INASISTENCIA") && inicio >= ahora.AddDays(-7))
+            {
+                lista.Add(new()
+                {
+                    Clave = $"canc-{s.IdSesion}", Icono = "bi-x-circle-fill", Color = Rojo, Fondo = RojoF,
+                    Titulo = "Sesión cancelada",
+                    Detalle = $"{s.Curso} con {s.Tutor}, del {s.FechaTexto}.",
+                    Hace = Cuando(inicio), Fecha = inicio, Href = $"/sesiones/detalle?id={s.IdSesion}",
+                });
+            }
+        }
+
+        var (reclamos, _) = await Reclamos.ListarDeUsuarioAsync(id);
+        foreach (var r in (reclamos ?? []).Where(r => r.Estado != "PENDIENTE" && r.Resuelto >= ahora.AddDays(-30)))
+        {
+            var aprobado = r.Estado == "APROBADA";
+            lista.Add(new()
+            {
+                Clave = $"recl-{r.IdReclamo}-{r.Estado}", Icono = "bi-flag-fill",
+                Color = aprobado ? Verde : Rojo, Fondo = aprobado ? VerdeF : RojoF,
+                Titulo = aprobado ? "Tu reclamo fue aprobado" : "Tu reclamo fue rechazado",
+                Detalle = $"Sesión de {r.Curso}: {r.Resolucion}",
+                Hace = Cuando(r.Resuelto), Fecha = r.Resuelto, Href = "/reclamos/nuevo",
+            });
+        }
+    }
+
+    private async Task AvisosTutor(List<Aviso> lista, int id)
+    {
+        var ahora = DateTime.Now;
+        var sesiones = await Sesiones.ListarDeUsuarioAsync(id);
+        foreach (var s in sesiones.Where(s => s.IdTutor == id && s.Inicio is not null))
+        {
+            var inicio = s.Inicio!.Value;
+            if ((s.Estado == "PROGRAMADA" || s.Estado == "EN_CURSO") && inicio >= ahora.AddHours(-2) && inicio <= ahora.AddDays(7))
+            {
+                var pronto = inicio - ahora <= TimeSpan.FromHours(1);
+                lista.Add(new()
+                {
+                    Clave = $"prox-{s.IdSesion}", Icono = pronto ? "bi-alarm-fill" : "bi-calendar-check-fill", Color = Azul, Fondo = AzulF,
+                    Titulo = pronto ? "Tu clase empieza pronto" : "Sesión programada",
+                    Detalle = $"{s.Curso} con {s.Estudiante}, el {s.FechaTexto} a las {s.HoraTexto}. No olvides hacer check-in.",
+                    Hace = Cuando(inicio), Fecha = inicio, Href = $"/sesiones/detalle?id={s.IdSesion}",
+                });
+            }
+            else if (s.Estado == "REALIZADA" && s.Puntaje is int puntaje && inicio >= ahora.AddDays(-14))
+            {
+                lista.Add(new()
+                {
+                    Clave = $"punt-{s.IdSesion}", Icono = "bi-star-fill", Color = Ambar, Fondo = AmbarF,
+                    Titulo = "Nueva calificación",
+                    Detalle = $"{s.Estudiante} te calificó con {puntaje} de 5 en {s.Curso}.",
+                    Hace = Cuando(inicio), Fecha = inicio, Href = "/tutor/reportes",
+                });
+            }
+            else if ((s.Estado == "CANCELADA" || s.Estado == "CANCELADA_INASISTENCIA") && inicio >= ahora.AddDays(-7))
+            {
+                lista.Add(new()
+                {
+                    Clave = $"canc-{s.IdSesion}", Icono = "bi-x-circle-fill", Color = Rojo, Fondo = RojoF,
+                    Titulo = "Sesión cancelada",
+                    Detalle = $"{s.Curso} con {s.Estudiante}, del {s.FechaTexto}.",
+                    Hace = Cuando(inicio), Fecha = inicio, Href = $"/sesiones/detalle?id={s.IdSesion}",
+                });
+            }
+        }
+
+        var (postulaciones, _) = await Academico.ListarPostulacionesPorTutorAsync(id);
+        foreach (var p in postulaciones ?? [])
+        {
+            if (p.Estado == "PENDIENTE" || LeerFecha(p.FechaResolucion) is not DateTime resuelta || resuelta < ahora.AddDays(-30))
+                continue;
+            var aprobada = p.Estado == "APROBADA";
+            lista.Add(new()
+            {
+                Clave = $"post-{p.IdPostulacion}-{p.Estado}", Icono = aprobada ? "bi-patch-check-fill" : "bi-x-octagon-fill",
+                Color = aprobada ? Verde : Rojo, Fondo = aprobada ? VerdeF : RojoF,
+                Titulo = aprobada ? "Postulación aprobada" : "Postulación rechazada",
+                Detalle = aprobada ? $"Ya puedes dictar {p.CursoNombre}." : $"{p.CursoNombre}: {p.Resolucion}",
+                Hace = Cuando(resuelta), Fecha = resuelta, Href = "/tutor/postulaciones",
+            });
+        }
+    }
+
+    private async Task AvisosAdministrador(List<Aviso> lista)
+    {
+        var pendientes = await AcademicoRest.ListarPostulacionesAsync("PENDIENTE");
+        if (pendientes.Count > 0)
+        {
+            var antigua = pendientes.OrderBy(p => LeerFecha(p.FechaPostulacion) ?? DateTime.MaxValue).First();
+            var fecha = LeerFecha(antigua.FechaPostulacion) ?? DateTime.Now;
+            lista.Add(new()
+            {
+                Clave = $"post-pend-{pendientes.Count}", Icono = "bi-person-check-fill", Color = Azul, Fondo = AzulF,
+                Titulo = pendientes.Count == 1 ? "1 postulación por revisar" : $"{pendientes.Count} postulaciones por revisar",
+                Detalle = $"La más antigua es de {antigua.Tutor} para {antigua.Curso}.",
+                Hace = Cuando(fecha), Fecha = fecha, Href = "/admin/postulaciones",
+            });
+        }
+
+        var (reclamos, _) = await Reclamos.ListarPendientesAsync();
+        if (reclamos is { Count: > 0 })
+        {
+            var antiguo = reclamos.OrderBy(r => r.Registrado).First();
+            lista.Add(new()
+            {
+                Clave = $"recl-pend-{reclamos.Count}", Icono = "bi-flag-fill", Color = Rojo, Fondo = RojoF,
+                Titulo = reclamos.Count == 1 ? "1 reclamo pendiente" : $"{reclamos.Count} reclamos pendientes",
+                Detalle = $"El más antiguo es de {antiguo.NombreReclamante}, por la sesión de {antiguo.Curso}.",
+                Hace = Cuando(antiguo.Registrado), Fecha = antiguo.Registrado, Href = "/admin/reclamos",
+            });
+        }
+    }
+
+    private static DateTime? LeerFecha(string? texto) =>
+        DateTime.TryParse(texto, CultureInfo.InvariantCulture, DateTimeStyles.None, out var fecha) ? fecha : null;
+
+    // "Hoy, 4:00 p. m.", "Mañana, 10:00 a. m.", "Hace 20 min", "Ayer", "Hace 3 días", "15/10/2026"
+    private static string Cuando(DateTime fecha)
+    {
+        var ahora = DateTime.Now;
+        var dias = (fecha.Date - ahora.Date).Days;
+        var hora = $"{(fecha.Hour % 12 == 0 ? 12 : fecha.Hour % 12)}:{fecha.Minute:00} {(fecha.Hour < 12 ? "a. m." : "p. m.")}";
+        if (fecha > ahora)
+        {
+            return dias switch
+            {
+                0 => $"Hoy, {hora}",
+                1 => $"Mañana, {hora}",
+                _ => $"El {fecha.ToString("dd/MM", CultureInfo.InvariantCulture)}, {hora}",
+            };
+        }
+        var pasado = ahora - fecha;
+        if (pasado.TotalMinutes < 60) return $"Hace {Math.Max(1, (int)pasado.TotalMinutes)} min";
+        if (dias == 0) return $"Hace {(int)pasado.TotalHours} h";
+        if (dias == -1) return "Ayer";
+        if (dias > -30) return $"Hace {-dias} días";
+        return fecha.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
     }
 
     private void Abrir(Aviso a)
     {
+        leidas.Add(a.Clave);
         a.Leida = true;
         abierta = false;
         Navigation.NavigateTo(a.Href);
     }
 
-    private void MarcarTodas() => avisos.ForEach(a => a.Leida = true);
+    private void MarcarTodas()
+    {
+        foreach (var a in avisos)
+        {
+            leidas.Add(a.Clave);
+            a.Leida = true;
+        }
+    }
 
     private void AlNavegar(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e) =>
-        InvokeAsync(() => { abierta = false; Cargar(); StateHasChanged(); });
+        _ = InvokeAsync(async () => { abierta = false; await CargarAsync(); StateHasChanged(); });
 
-    private void AlCambiarRol() => InvokeAsync(() => { Cargar(); StateHasChanged(); });
+    private void AlCambiarRol() => _ = InvokeAsync(async () => { await CargarAsync(forzar: true); StateHasChanged(); });
 
     public void Dispose()
     {

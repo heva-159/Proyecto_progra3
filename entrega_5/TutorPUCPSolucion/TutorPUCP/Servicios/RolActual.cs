@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using TutorPUCP.DTO;
 
 namespace TutorPUCP.Servicios;
@@ -10,14 +11,85 @@ public class RolActual
     public const string Estudiante = "Estudiante";
     public const string Tutor = "Tutor";
 
+    // La sesión se guarda cifrada en el navegador (sessionStorage de la pestaña). Así no se pierde al recargar
+    // la página, al escribir una dirección o cuando Blazor se reconecta después de cambiar de pestaña.
+    private const string ClaveSesion = "tutorpucp-sesion";
+    private readonly ProtectedSessionStorage? almacen;
+
+    public RolActual(ProtectedSessionStorage? almacen = null) => this.almacen = almacen;
+
     public string Rol { get; private set; } = Estudiante;
 
     public event Action? Cambio;
 
+    private UsuarioDto? usuario;
+    private AdministradorDto? administrador;
+
     // Usuario que inició sesión (lo devuelve el REST); null mientras no haya entrado
-    public UsuarioDto? Usuario { get; set; }
+    public UsuarioDto? Usuario
+    {
+        get => usuario;
+        set { usuario = value; _ = GuardarAsync(); }
+    }
+
     // Administrador que inició sesión (lo devuelve el REST); null mientras no haya entrado
-    public AdministradorDto? Administrador { get; set; }
+    public AdministradorDto? Administrador
+    {
+        get => administrador;
+        set { administrador = value; _ = GuardarAsync(); }
+    }
+
+    public bool HaySesion => usuario is not null || administrador is not null;
+
+    // Lo que se guarda en el navegador
+    public sealed class SesionGuardada
+    {
+        public UsuarioDto? Usuario { get; set; }
+        public AdministradorDto? Administrador { get; set; }
+        public string Rol { get; set; } = Estudiante;
+    }
+
+    private bool recuperada;
+
+    // Se llama una vez por conexión (MainLayout), cuando la página ya es interactiva: si la pestaña tenía una
+    // sesión guardada, la vuelve a cargar.
+    public async Task RecuperarAsync()
+    {
+        if (recuperada) return;
+        recuperada = true;
+        if (HaySesion || almacen is null) return;
+        try
+        {
+            var guardada = await almacen.GetAsync<SesionGuardada>(ClaveSesion);
+            if (guardada.Success && guardada.Value is { } s)
+            {
+                usuario = s.Usuario;
+                administrador = s.Administrador;
+                Rol = TieneRol(s.Rol) ? s.Rol : RolInicial;
+                Cambio?.Invoke();
+            }
+        }
+        catch
+        {
+            // sin acceso al almacenamiento del navegador: se pide iniciar sesión de nuevo
+        }
+    }
+
+    private async Task GuardarAsync()
+    {
+        if (almacen is null) return;
+        try
+        {
+            if (HaySesion)
+                await almacen.SetAsync(ClaveSesion, new SesionGuardada { Usuario = usuario, Administrador = administrador, Rol = Rol });
+            else
+                await almacen.DeleteAsync(ClaveSesion);
+        }
+        catch
+        {
+            // antes de que la página sea interactiva no se puede usar el navegador: no se guarda
+        }
+    }
 
     // Roles que tiene la cuenta: ESTUDIANTE, TUTOR o AMBOS (los dos).
     // Sin sesión iniciada se dejan los dos para poder recorrer las pantallas en la demo.
@@ -37,8 +109,9 @@ public class RolActual
     // y se pasa directo al rol recién activado.
     public void RolActivado(UsuarioDto actualizado, string rol)
     {
-        Usuario = actualizado;
+        usuario = actualizado;
         if (TieneRol(rol)) Rol = rol;
+        _ = GuardarAsync();
         Cambio?.Invoke();
     }
 
@@ -54,16 +127,31 @@ public class RolActual
     {
         if (rol == Rol || !TieneRol(rol)) return;
         Rol = rol;
+        _ = GuardarAsync();
         Cambio?.Invoke();
     }
 
     // Al cerrar sesión se olvida al usuario y se vuelve al rol por defecto
     public void CerrarSesion()
     {
-        Usuario = null;
-        Administrador = null;
+        usuario = null;
+        administrador = null;
         Rol = Estudiante;
+        _ = GuardarAsync();   // sin sesión: se borra lo guardado en el navegador
         Cambio?.Invoke();
+    }
+
+    // Contadores del menú lateral y de la barra superior. Los carga MainLayout desde el REST.
+    public int MensajesNoLeidos { get; private set; }
+    public int ReclamosPendientes { get; private set; }
+    public event Action? ContadoresCambio;
+
+    public void ActualizarContadores(int mensajesNoLeidos, int reclamosPendientes)
+    {
+        if (mensajesNoLeidos == MensajesNoLeidos && reclamosPendientes == ReclamosPendientes) return;
+        MensajesNoLeidos = mensajesNoLeidos;
+        ReclamosPendientes = reclamosPendientes;
+        ContadoresCambio?.Invoke();
     }
 
     // Nombre de ejemplo que se muestra según el rol.

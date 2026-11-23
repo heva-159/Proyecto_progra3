@@ -2,10 +2,15 @@
 @implements IDisposable
 @inject NavigationManager Navigation
 @inject RolActual RolActual
+@inject MensajesApi Mensajes
+@inject ReclamosApi Reclamos
 
 <div class="page">
     <aside class="sidebar">
-        <NavMenu />
+        @if (listo)
+        {
+            <NavMenu />
+        }
     </aside>
 
     <div class="contenido">
@@ -13,13 +18,19 @@
         <header class="topbar sticky-top">
             <div class="topbar-acciones">
                 <BotonTema />
-                <Campana />
-                @if (!EsAdmin)
+                @if (listo)
+                {
+                    <Campana />
+                }
+                @if (listo && !EsAdmin)
                 {
                     <Tooltip Title="Mensajes" Placement="TooltipPlacement.Bottom">
-                        <a class="topbar-icono" href="/mensajes" aria-label="Mensajes, 2 sin leer">
+                        <a class="topbar-icono" href="/mensajes" aria-label="Mensajes, @RolActual.MensajesNoLeidos sin leer">
                             <i class="bi bi-chat-dots-fill"></i>
-                            <span class="topbar-contador">2</span>
+                            @if (RolActual.MensajesNoLeidos > 0)
+                            {
+                                <span class="topbar-contador">@RolActual.MensajesNoLeidos</span>
+                            }
                         </a>
                     </Tooltip>
                 }
@@ -27,9 +38,18 @@
         </header>
 
         <main class="container-xl px-3 px-lg-4 pb-4">
-            <div class="pagina-anim" @key="Navigation.Uri">
-                @Body
-            </div>
+            @if (listo)
+            {
+                <div class="pagina-anim" @key="Navigation.Uri">
+                    @Body
+                </div>
+            }
+            else
+            {
+                <div class="d-flex justify-content-center py-5">
+                    <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando…</span></div>
+                </div>
+            }
         </main>
     </div>
 </div>
@@ -43,6 +63,53 @@
 @code {
     private bool EsAdmin => Navigation.ToBaseRelativePath(Navigation.Uri).StartsWith("admin", StringComparison.OrdinalIgnoreCase);
 
+    // Las páginas se muestran recién cuando se sabe quién inició sesión. Sin sesión, se va al login:
+    // ya no se muestran los usuarios de ejemplo (Lucía Ramos, Andrés Villanueva).
+    private bool listo;
+
+    private bool PuedeVer => EsAdmin ? RolActual.Administrador is not null : RolActual.HaySesion;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        await RolActual.RecuperarAsync();
+        if (!PuedeVer)
+        {
+            Navigation.NavigateTo(EsAdmin ? "/login/administrador" : "/login/usuario", replace: true);
+            return;
+        }
+        listo = true;
+        StateHasChanged();
+        await CargarContadoresAsync();
+        StateHasChanged();
+    }
+
+    // Mensajes sin leer (usuario) y reclamos pendientes (administrador), para los contadores
+    private async Task CargarContadoresAsync()
+    {
+        if (!listo) return;
+        try
+        {
+            var mensajes = 0;
+            if (RolActual.Usuario is { } u)
+            {
+                var (bandeja, _) = await Mensajes.BandejaAsync(u.IdUsuario);
+                mensajes = bandeja?.Sum(c => c.NoLeidos) ?? 0;
+            }
+            var reclamos = 0;
+            if (RolActual.Administrador is not null)
+            {
+                var (pendientes, _) = await Reclamos.ListarPendientesAsync();
+                reclamos = pendientes?.Count ?? 0;
+            }
+            RolActual.ActualizarContadores(mensajes, reclamos);
+        }
+        catch
+        {
+            // si el REST no responde, los contadores quedan como estaban
+        }
+    }
+
     protected override void OnInitialized()
     {
         RolActual.Cambio += Refrescar;
@@ -51,7 +118,14 @@
 
     private void Refrescar() => InvokeAsync(StateHasChanged);
 
-    private void AlNavegar(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e) => Refrescar();
+    // Al cambiar de página se actualizan los contadores (por ejemplo, después de leer los mensajes)
+    private void AlNavegar(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e) =>
+        _ = InvokeAsync(async () =>
+        {
+            StateHasChanged();
+            await CargarContadoresAsync();
+            StateHasChanged();
+        });
 
     public void Dispose()
     {

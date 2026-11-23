@@ -115,9 +115,9 @@
                             <NavLink class="sb-link" href="@item.Href" Match="@(item.Exacto ? NavLinkMatch.All : NavLinkMatch.Prefix)">
                                 <i class="bi @item.Icono"></i>
                                 <span>@item.Texto</span>
-                                @if (item.Contador > 0)
+                                @if (Contador(item) > 0)
                                 {
-                                    <span class="sb-contador">@item.Contador</span>
+                                    <span class="sb-contador">@Contador(item)</span>
                                 }
                             </NavLink>
                         </li>
@@ -210,7 +210,7 @@
 
     private static readonly Seccion General = new("General", [
         new("/sesiones", "bi-calendar-week", "Mis sesiones"),
-        new("/mensajes", "bi-chat-dots", "Mensajes", Contador: 2),
+        new("/mensajes", "bi-chat-dots", "Mensajes"),
         new("/reclamos/nuevo", "bi-flag", "Reclamos"),
     ]);
 
@@ -222,7 +222,7 @@
             new("/admin/cursos", "bi-book", "Cursos"),
             new("/admin/temas", "bi-tags", "Temas"),
             new("/admin/usuarios", "bi-people", "Usuarios"),
-            new("/admin/reclamos", "bi-flag", "Reclamos", Contador: 4),
+            new("/admin/reclamos", "bi-flag", "Reclamos"),
             new("/admin/reportes", "bi-graph-up-arrow", "Reportes"),
         ]),
     ];
@@ -231,11 +231,20 @@
         EsAdmin ? MenuAdmin
         : (RolActual.Rol == RolActual.Tutor ? MenuTutor : MenuEstudiante).Append(General);
 
+    // Mensajes sin leer y reclamos pendientes, con los datos reales (los carga MainLayout)
+    private int Contador(Item item) => item.Href switch
+    {
+        "/mensajes" => RolActual.MensajesNoLeidos,
+        "/admin/reclamos" => RolActual.ReclamosPendientes,
+        _ => item.Contador,
+    };
+
     protected override void OnInitialized()
     {
         SincronizarConRuta();
         Navigation.LocationChanged += AlCambiarRuta;
         RolActual.Cambio += AlCambiarRol;
+        RolActual.ContadoresCambio += AlCambiarRol;
     }
 
     private void AlternarSelector()
@@ -355,5 +364,6 @@
     {
         Navigation.LocationChanged -= AlCambiarRuta;
         RolActual.Cambio -= AlCambiarRol;
+        RolActual.ContadoresCambio -= AlCambiarRol;
     }
 }
